@@ -1,0 +1,203 @@
+id,name,category,kcal,protein_g,carbs_g,fat_g,sugars_g,saturated_g,fiber_g,sodium_mg,salt_g,energy_kj,kcal_derived,source,source_code,source_name,allergens,max_portion_g,section,synonyms,review_note
+pan_blanco,Pan blanco (barra),cereales,287,8.27,58.3,1.4,2.3,0.45,2.7,518,1.3,1220,false,CIQUAL 2020,7001,"Bread, French bread, baguette",gluten,200,panaderia,pan;barra de pan;baguette;pan de barra,
+pan_integral,Pan integral,cereales,244,8.38,44.3,1.8,2.2,0.52,6.9,448,1.12,1030,false,CIQUAL 2020,7110,"Bread, wholemeal or integral bread (made with flour type 150)",gluten,200,panaderia,pan integral de barra,
+pan_molde,Pan de molde,cereales,278,7.13,52.3,3.6,7.8,0.58,1.8,459,1.15,1180,false,CIQUAL 2020,7200,Sandwich loaf,gluten,200,panaderia,pan bimbo;pan de sándwich,
+pan_molde_integral,Pan de molde integral,cereales,262,8.51,43.7,4.06,5.69,0.96,6.23,471,1.18,1110,false,CIQUAL 2020,7111,"Sandwich loaf, wholemeal",gluten,200,panaderia,pan bimbo integral,
+pan_centeno,Pan de centeno,cereales,260,8.27,51.5,1,2.4,0.32,4.5,538,1.35,1100,false,CIQUAL 2020,7125,"Rye bread, and wheat",gluten,200,panaderia,,CIQUAL: rye and wheat bread
+pan_tostado,Pan tostado (biscotes),cereales,409,9.8,76.6,5.9,6.8,1.98,3.1,509,1.27,1730,false,CIQUAL 2020,7300,Rusk,gluten;eggs,100,panaderia,biscotes;tostadas de paquete,CIQUAL: rusk
+pan_tostado_casero,Tostada (pan tostado),cereales,317,9.46,64,1.3,1.4,0.52,3.7,602,1.51,1340,false,CIQUAL 2020,7004,"Toasted bread, home-made",gluten,150,panaderia,tostada;tostadas;pan tostado casero,CIQUAL: toasted bread; home-made
+arroz_blanco_cocido,Arroz blanco cocido,cereales,145,2.92,31.8,0.41,0.1,0.076,0.8,2.5,0.005,615,false,CIQUAL 2020,9104,"Rice, cooked, unsalted",,400,despensa,arroz;arroz cocido;arroz hervido,
+arroz_blanco_crudo,Arroz blanco crudo,cereales,352,7.04,78,0.91,0.16,0.2,1.05,2.28,0.0061,1490,false,CIQUAL 2020,9100,"Rice, raw",,150,despensa,arroz crudo;arroz seco,
+arroz_integral_cocido,Arroz integral cocido,cereales,158,3.21,32.6,1,0.1,0.17,2.3,2.5,0.005,668,false,CIQUAL 2020,9103,"Rice, brown, cooked, unsalted",,400,despensa,arroz integral,
+pasta_cocida,Pasta cocida,cereales,126,3.99,25,0.55,0.6,0.11,1.9,2.5,0.005,535,false,CIQUAL 2020,9811,"Dried pasta, cooked, unsalted",gluten,400,despensa,macarrones;espaguetis;pasta;fideos,
+pasta_cruda,Pasta seca cruda,cereales,336,11.5,65.8,1.79,2.12,0.37,3,9.2,0.031,1420,false,CIQUAL 2020,9810,"Dried pasta, raw",gluten,150,despensa,pasta seca;macarrones crudos,
+pasta_integral_cocida,Pasta integral cocida,cereales,128,4.55,23.4,0.9,0.6,0.099,3.3,2.5,0.005,541,false,CIQUAL 2020,9871,"Dried pasta, wholemeal, cooked, unsalted",gluten,400,despensa,macarrones integrales,
+cuscus_cocido,Cuscús cocido,cereales,157,4.56,31,1,1.6,0.25,2.3,2.5,0.0065,667,false,CIQUAL 2020,9683,"Couscous (precooked durum wheat semolina), cooked, unsalted",gluten,400,despensa,cuscus;couscous,
+quinoa_cocida,Quinoa cocida,cereales,149,4.66,27.9,1.1,0.87,0.14,3.8,6,0.015,631,false,CIQUAL 2020,9341,"Quinoa, boiled/cooked in water, unsalted",,400,despensa,quinua,
+copos_avena,Copos de avena,cereales,367,13.3,57.9,6.51,0.97,1.13,10.2,5.68,0.014,1550,false,CIQUAL 2020,9311,Oatmeal flakes,gluten,100,despensa,avena;porridge,Oats may contain gluten
+corn_flakes,Cereales de desayuno (copos de maíz),cereales,377,7.4,83.2,0.87,9.53,0.28,3.48,660,1.64,1600,false,CIQUAL 2020,32005,"Breakfast cereals, corn flakes, plain, fortified with vitamins and chemical elements",gluten,80,despensa,cereales;copos de maíz;corn flakes,Malt flavouring may contain gluten
+muesli,Muesli,cereales,418,7.49,66.6,12.2,25.9,5.04,6.4,274,0.7,1760,false,CIQUAL 2020,32004,Muesli (average),gluten;tree_nuts,100,despensa,,Allergens vary by brand
+harina_trigo,Harina de trigo,cereales,350,9.03,73.7,1,1.5,0.19,3.2,2.5,0.065,1480,false,CIQUAL 2020,9436,"Wheat flour, type 55 (for bread)",gluten,150,despensa,harina,
+tortitas_arroz,Tortitas de arroz,cereales,385,7.32,80.5,3,0.73,0.54,2.9,72.6,0.18,1630,false,CIQUAL 2020,7352,"Puffed rice textured bread, wholemeal",,60,despensa,tortitas de arroz inflado,CIQUAL: puffed rice textured bread (approximation)
+gofio,Gofio,cereales,397.2,10.8,81.57,2.48,,0.51,1.87,,,1662.05,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),2676,Gofio,gluten,100,despensa,gofio canario;gofio de millo;gofio de trigo,kcal = energy_kj / 4.184; Fallback without BEDCA: CIQUAL 2020
+patata_cocida,Patata hervida,tuberculos,80.5,1.8,16.7,0.34,0.86,0.094,1.8,20.6,0.052,341,false,CIQUAL 2020,4003,"Potato, boiled/cooked in water",,500,fruteria,patata;papa;papas;patata cocida;papa sancochada,
+patata_cruda,Patata cruda,tuberculos,80.5,2.16,16.2,0.18,0.78,0.038,1.8,0.22,0.016,341,false,CIQUAL 2020,4008,"Potato, peeled, raw",,500,fruteria,papa cruda,
+patatas_fritas,Patatas fritas (de freidora),tuberculos,285,3.28,39.4,11.9,0.69,2.94,3.9,29,0.073,1200,false,CIQUAL 2020,4032,"French fries or chips, frozen, deep-fried",,300,congelados,papas fritas;patatas fritas caseras,CIQUAL: frozen fries deep-fried
+patatas_chips,Patatas fritas de bolsa,snacks,545,5.67,51.1,34.3,1.59,3.23,4.57,652,1.65,2270,false,CIQUAL 2020,4004,"Potato, crisps, plain or flavoured",,100,despensa,chips;papas de bolsa;patatas chips,
+boniato_cocido,Boniato cocido,tuberculos,62.8,1.69,12.2,0.15,6.11,0.042,2.9,31.5,0.079,265,false,CIQUAL 2020,4102,"Sweet potato, cooked",,400,fruteria,batata;batata cocida;camote,
+papas_arrugadas,Papas arrugadas,tuberculos,78.89,1.76,16.37,0.33,0.84,0.09,1.76,802.19,2.01,,false,recipe,patata_cocida:98;sal:2,,,500,fruteria,papas arrugás,Recipe: boiled potato + salt; salt share to review
+lentejas_cocidas,Lentejas cocidas,legumbres,127,10.1,16.2,0.58,0.2,0.093,8.45,5.8,0.015,535,false,CIQUAL 2020,20587,"Lentil, green, boiled/cooked in water",,400,despensa,lentejas,
+garbanzos_cocidos,Garbanzos cocidos,legumbres,147,8.31,17.7,3,0.3,0.46,8.2,10.9,0.027,618,false,CIQUAL 2020,20507,"Chick pea, boiled/cooked in water",,400,despensa,garbanzos,
+alubias_blancas_cocidas,Alubias blancas cocidas,legumbres,131,9.63,13.7,0.5,1.1,0.11,15.8,9,0.023,547,false,CIQUAL 2020,20293,"Coco bean, boiled/cooked in water",,400,despensa,judías blancas;habichuelas;alubias,CIQUAL: coco bean
+alubias_rojas_cocidas,Alubias rojas cocidas,legumbres,116,9.63,12.3,0.6,0.5,0.19,11.6,8.4,0.021,487,false,CIQUAL 2020,20503,"Red kidney bean, boiled/cooked in water",,400,despensa,judías rojas;frijoles rojos,
+guisantes_cocidos,Guisantes cocidos,legumbres,61.4,5.8,4.7,0.87,1.8,0.21,5.8,7.1,0.018,,true,CIQUAL 2020,20037,"Garden peas, cooked",,300,congelados,arvejas;chícharos,
+hummus,Hummus,legumbres,288.3,8.2,7.1,23.9,1.38,2.48,5.98,472,1.19,,true,CIQUAL 2020,25621,"Hummus, prepacked",sesame,150,refrigerados,humus,
+tofu,Tofu,legumbres,148,13.4,2.87,8.5,0.57,1.35,0.25,10,0.025,617,false,CIQUAL 2020,20904,"Tofu, plain",soy,300,refrigerados,,
+tomate,Tomate,verduras,19.3,0.86,2.49,0.26,2.48,0.056,1.2,3.22,0.0081,81.1,false,CIQUAL 2020,20047,"Tomato, raw",,400,fruteria,tomates,
+lechuga,Lechuga,verduras,15.1,1.3,1.33,0.2,0.73,0.021,1.2,8.47,0.021,,true,CIQUAL 2020,20031,"Lettuce, raw",,300,fruteria,ensalada verde;lechuga romana;lechuga iceberg,
+cebolla,Cebolla,verduras,39,1.1,6.25,0.62,4.8,0.2,1.7,39,0.098,,true,CIQUAL 2020,20034,"Onion, raw",,300,fruteria,cebollas,
+zanahoria,Zanahoria,verduras,40.2,0.63,7.59,0.25,6,0.005,2.7,43,0.11,169,false,CIQUAL 2020,20009,"Carrot, raw",,300,fruteria,zanahorias,
+pimiento_rojo,Pimiento rojo,verduras,36.6,1.06,5.98,0.25,4.8,0.005,3.2,2.5,0.0065,153,false,CIQUAL 2020,20087,"Sweet pepper, red, raw",,300,fruteria,,
+pimiento_verde,Pimiento verde,verduras,26,0.81,3.43,0.25,3,0.005,3.2,2.5,0.0065,109,false,CIQUAL 2020,20085,"Sweet pepper, green, raw",,300,fruteria,,
+pepino,Pepino,verduras,15.6,0.64,2.54,0.11,1.67,0.035,0.6,4.8,0.012,65.8,false,CIQUAL 2020,20019,"Cucumber, pulp and peel, raw",,300,fruteria,,
+calabacin,Calabacín,verduras,16.5,1.23,1.8,0.26,1.79,0.061,1.05,9,0.023,69.4,false,CIQUAL 2020,20020,"Courgette or zucchini, pulp and peel, raw",,400,fruteria,zucchini,
+berenjena,Berenjena,verduras,21.2,1.12,2.39,0.14,2.39,0.034,2.7,2.5,0.0063,,true,CIQUAL 2020,20053,"Eggplant, raw",,400,fruteria,,
+brocoli_cocido,Brócoli cocido,verduras,23.5,2.5,1.23,0.4,0.8,0.1,2.6,17,0.043,98.1,false,CIQUAL 2020,20302,"Broccoli, boiled/cooked in water, crunchy",,400,fruteria,brócoli;brécol,
+espinacas_crudas,Espinacas crudas,verduras,28.7,2.62,2.25,0.5,0.32,0.064,2.37,66.7,0.17,,true,CIQUAL 2020,20059,"Spinach, raw",,300,fruteria,espinacas frescas,
+espinacas_cocidas,Espinacas cocidas,verduras,28.1,3.38,0.425,0.7,0,0.13,3.5,12,0.03,117,false,CIQUAL 2020,20336,"Spinach, boiled/cooked in water",,400,congelados,espinacas,
+judias_verdes_cocidas,Judías verdes cocidas,verduras,28,1.75,3.39,0.15,2.5,0.005,3.2,2.5,0.0065,117,false,CIQUAL 2020,20320,"French bean, boiled/cooked in water",,400,fruteria,judías verdes;habichuelas verdes;vainas,
+coliflor_cocida,Coliflor cocida,verduras,20.9,1.6,1.6,0.46,1.59,0.097,2,19.5,0.017,87.3,false,CIQUAL 2020,20017,"Cauliflower, cooked",,400,fruteria,coliflor,
+champinones,Champiñones,verduras,28,2.62,3.15,0.36,2.5,0.067,1,39,0.098,118,false,CIQUAL 2020,20056,"Button mushroom or cultivated mushroom, raw",,300,fruteria,setas;champiñón,
+ajo,Ajo,verduras,111,5.31,18.6,0.25,1.2,0.005,5.8,9,0.023,470,false,CIQUAL 2020,11000,"Garlic, fresh",,20,fruteria,ajos,
+calabaza,Calabaza cocida,verduras,30.7,1.06,5.24,0.25,4,0.005,1.8,2.5,0.0065,129,false,CIQUAL 2020,20292,"Pumpkin (cucurbita moschata), pulp, cooked",,400,fruteria,calabaza;bubango,
+alcachofa_cocida,Alcachofa cocida,verduras,33.2,2.53,0.99,0.28,0.99,0.069,8.3,60,0.15,,true,CIQUAL 2020,20000,"Artichoke, globe, cooked",,300,fruteria,alcachofas,
+esparragos,Espárragos verdes cocidos,verduras,26.6,2.69,1.73,0.3,1.3,0.07,2.2,2.5,0.0065,112,false,CIQUAL 2020,20299,"Asparagus, green, boiled/cooked in water",,300,fruteria,espárragos trigueros,
+maiz_dulce,Maíz dulce (lata),verduras,106,2.82,18.4,1.68,5.16,0.26,3.1,236,0.59,447,false,CIQUAL 2020,20066,"Sweet corn, canned, drained",,200,despensa,maíz;millo;millo de lata,
+remolacha,Remolacha cocida,verduras,42.8,1.44,7.13,0.4,6.7,0.15,2.5,90,0.23,180,false,CIQUAL 2020,20003,"Beetroot, cooked",,200,fruteria,,
+repollo,Repollo,verduras,36.5,1.38,4.63,0.6,4.2,0.27,3.5,13,0.033,153,false,CIQUAL 2020,20116,"White cabbage, raw",,300,fruteria,col;berza,
+rucula,Rúcula,verduras,27.9,2.58,2.1,0.66,2.05,0.086,1.6,27,0.068,,true,CIQUAL 2020,20217,"Roman rocket, raw",,100,fruteria,rúcula,
+puerro,Puerro,verduras,32.3,1.49,4.9,0.25,3.15,0.05,2.27,14.5,0.036,136,false,CIQUAL 2020,20039,"Leek, raw",,300,fruteria,puerros,
+apio,Apio,verduras,17.6,0.63,2.41,0.25,1.3,0.005,2.2,79,0.2,73.4,false,CIQUAL 2020,20023,"Celery stalk, raw",celery,200,fruteria,,
+manzana,Manzana,frutas,53.8,0.25,11.6,0.25,9.35,0.052,1.4,1.5,0.0037,,true,CIQUAL 2020,13039,"Apple, pulp and peel, raw",,300,fruteria,manzanas,
+platano,Plátano,frutas,90.5,1.06,19.7,0.25,15.6,0.005,2.7,2.5,0.0065,383,false,CIQUAL 2020,13005,"Banana, pulp, raw",,300,fruteria,plátano de Canarias;banana,BEDCA has Plátano; CIQUAL banana used
+naranja,Naranja,frutas,45.5,0.75,8.03,0.25,7.6,0.005,2.7,2.5,0.0065,192,false,CIQUAL 2020,13034,"Orange, pulp, raw",,400,fruteria,naranjas,
+mandarina,Mandarina,frutas,47.3,0.81,9.17,0.25,8.6,0.005,1.7,2.5,0.0065,200,false,CIQUAL 2020,13024,"Clementine or Mandarin orange, pulp, raw -> ARCHIVE",,300,fruteria,mandarinas;clementina,
+pera,Pera,frutas,58.3,0.49,10.9,0.27,9.01,0.067,2.9,1.8,0.0045,,true,CIQUAL 2020,13037,"Pear, pulp and peel, raw",,300,fruteria,peras,
+fresas,Fresas,frutas,38.6,0.63,6.03,0.25,5.6,0.005,3.8,2.5,0.0065,162,false,CIQUAL 2020,13014,"Strawberry, raw",,300,fruteria,fresón;fresones,
+uvas,Uvas,frutas,73.4,0.75,16.6,0.25,15.5,0.005,1,2.5,0.0065,311,false,CIQUAL 2020,13044,"Grape, white, raw",,300,fruteria,uva,
+melon,Melón,frutas,62.7,1.13,14.8,0.25,10.6,0.005,1.3,24,0.06,265,false,CIQUAL 2020,13026,"Melon, cantaloupe (ex Cavaillon or Charentais melon), pulp, raw",,500,fruteria,,
+sandia,Sandía,frutas,38.9,0.69,8.33,0.25,7.9,0.005,0.5,2.5,0.0065,165,false,CIQUAL 2020,13036,"Watermelon, pulp, raw",,600,fruteria,,
+pina,Piña,frutas,54.4,0.25,11.7,0.25,10.5,0.005,1.2,2.5,0.0065,231,false,CIQUAL 2020,13002,"Pineapple, pulp, raw",,400,fruteria,ananás,
+kiwi,Kiwi,frutas,60.5,0.88,11,0.6,8.9,0.13,2.4,2.5,0.0065,255,false,CIQUAL 2020,13021,"Kiwi fruit, pulp and seeds, raw",,300,fruteria,kiwis,
+melocoton,Melocotón,frutas,48.5,1.08,9,0.33,8.16,0.027,1.6,0.555,0.0075,,true,CIQUAL 2020,13043,"Peach, pulp and peel, raw",,300,fruteria,durazno,
+mango,Mango,frutas,73.9,0.63,14.3,0.25,12.9,0.005,1.6,2.5,0.0065,314,false,CIQUAL 2020,13025,"Mango, pulp, raw",,400,fruteria,,
+papaya,Papaya,frutas,42.2,0.75,8.53,0.15,8.1,0.005,1.8,2.5,0.0065,178,false,CIQUAL 2020,13035,"Papaya, pulp, raw",,400,fruteria,papaya canaria,
+cerezas,Cerezas,frutas,55.7,0.81,13,0.15,10,0.005,1.6,2.5,0.0065,235,false,CIQUAL 2020,13008,"Cherry, pitted, raw",,300,fruteria,,
+arandanos,Arándanos,frutas,57.7,0.87,10.6,0.33,9.96,0.028,2.4,1,0.0025,244,false,CIQUAL 2020,13028,"Blueberry, raw",,200,fruteria,,
+frambuesas,Frambuesas,frutas,49.2,1.19,5.83,0.8,5.4,0.13,4.3,2.5,0.0065,206,false,CIQUAL 2020,13015,"Raspberry, raw",,200,fruteria,,
+limon,Limón,frutas,27.6,0.25,1.56,0.25,0.8,0.005,0.25,2.5,0.0065,118,false,CIQUAL 2020,13009,"Lemon, pulp, raw",,100,fruteria,,Energy check warning expected: organic acids (citric) not in the macro estimate
+higos,Higos,frutas,69.4,1.19,13.5,0.25,12.2,0.005,4.1,5,0.013,293,false,CIQUAL 2020,13012,"Fig, raw",,300,fruteria,higo;breva,
+ciruela,Ciruela,frutas,51.7,0.66,9.92,0.29,9.92,0.038,1.5,3,0.0075,,true,CIQUAL 2020,13100,"Plum, raw",,300,fruteria,ciruelas,
+datiles,Dátiles,frutas,286.7,1.81,64.7,0.25,64.7,0.075,7.3,39,0.098,,true,CIQUAL 2020,13011,"Date, pulp and peel, dried",,100,despensa,dátil,
+pasas,Pasas,frutas,321,3,73.2,0.9,70.3,0.31,4.2,5,0.013,1360,false,CIQUAL 2020,13046,Raisin,sulphites,60,despensa,uvas pasas,
+aguacate,Aguacate,frutas,205,1.56,0.83,20.6,0.4,4.51,3.6,6,0.015,843,false,CIQUAL 2020,13004,"Avocado, pulp, raw",,250,fruteria,palta,
+leche_entera,Leche entera,lacteos,65.1,3.32,4.85,3.63,4.2,2.4,0,44.2,0.11,272,false,CIQUAL 2020,19023,"Milk, whole, UHT",milk,500,lacteos,leche,
+leche_semidesnatada,Leche semidesnatada,lacteos,47,3.38,4.83,1.55,4.66,1.04,0,36,0.09,198,false,CIQUAL 2020,19041,"Milk, semi-skimmed, UHT",milk,500,lacteos,leche semi,
+leche_desnatada,Leche desnatada,lacteos,33.4,3.51,4.64,0.06,4.64,0.03,0,39,0.098,142,false,CIQUAL 2020,19050,"Milk, skimmed, UHT",milk,500,lacteos,leche desnatada,
+yogur_natural,Yogur natural,lacteos,56.8,3.88,4.73,2.3,4.67,1.53,0.86,44.8,0.11,238,false,CIQUAL 2020,19600,"Yoghurt, plain (average)",milk,375,lacteos,yogur;yogurt,
+yogur_desnatado,Yogur natural desnatado,lacteos,43.3,4.39,5.75,0.3,5.75,0.17,0,55,0.14,,true,CIQUAL 2020,19544,"Fermented milk or yogurt type specialty, plain, 0% fat, w bifidus",milk,375,lacteos,yogur 0%;yogur desnatado,
+yogur_griego,Yogur griego,lacteos,113.2,3.32,4.21,9.22,3.9,6.22,0.07,34.5,0.097,,true,CIQUAL 2020,19860,"Yogurt, Greek-style, plain",milk,375,lacteos,,
+kefir,Kéfir,lacteos,62.3,3.19,4.5,3.5,3.62,2.33,0,49,0.12,,true,CIQUAL 2020,19865,Kefir,milk,500,lacteos,kefir,
+queso_fresco,Queso fresco (tipo Burgos),lacteos,84.2,4.47,3.57,5.5,3.57,3.74,0,35,0.088,351,false,CIQUAL 2020,19641,"Drained soft fresh cheese, around 6% fat",milk,250,lacteos,queso de Burgos;queso blanco,CIQUAL: drained soft fresh cheese ~6% fat (approximation)
+requeson,Requesón,lacteos,158.3,8.79,4,11.9,2.25,8.08,0,109,0.3,,true,CIQUAL 2020,19585,Ricotta cheese,milk,250,lacteos,ricotta,
+queso_curado,Queso curado (tipo manchego),lacteos,390,28,0,30.8,0.0086,20.1,0,310,0.8,1620,false,CIQUAL 2020,12100,Hard cheese (average),milk,100,lacteos,queso manchego;queso viejo,CIQUAL: hard cheese average (approximation)
+queso_semicurado,Queso semicurado,lacteos,374,23.2,0,31.5,0.125,20.3,0,795,2,1550,false,CIQUAL 2020,12736,"Gouda cheese, from cow's milk",milk,100,lacteos,queso gouda;queso tierno,CIQUAL: Gouda (approximation)
+mozzarella,Mozzarella,lacteos,227,16.5,0.75,17.7,0.7,11.7,0,240,0.6,943,false,CIQUAL 2020,19590,"Mozzarella cheese, from cow's milk",milk,200,lacteos,,
+queso_cabra,Queso de cabra,lacteos,324,20.7,0,27,,18.7,0,513,1.28,1340,false,CIQUAL 2020,12801,"Cheese, from goat's milk, from raw milk",milk,100,lacteos,,
+queso_majorero,Queso majorero (curado),lacteos,358.5,25.66,0,28.75,0,16.94,0,,,1499.97,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),722,Queso majorero,milk,100,lacteos,majorero;queso majorero;queso majorero curado,"kcal = energy_kj / 4.184; Fallback without BEDCA: CIQUAL 2020; NA given as WKG, not per 100 g"
+queso_palmero,Queso palmero,lacteos,353,21.6,0,29.8,0,20.6,0,471,1.81,1460,false,CIQUAL 2020,12810,"Cheese, semi-dry, from goat's milk",milk,100,lacteos,palmero,Approximation: CIQUAL semi-dry goat cheese (palmero is usually sold young or semi-cured; often smoked)
+parmesano,Queso parmesano,lacteos,406,31.1,0,31,0,20.6,0,628,1.57,1690,false,CIQUAL 2020,12120,"Parmesan cheese, from cow's milk",milk,50,lacteos,parmesano rallado,
+nata,Nata líquida (30 %),lacteos,297,2.49,1.94,30.7,1.94,21.4,1.5,29,0.073,1220,false,CIQUAL 2020,19415,"Liquid cream 30% fat, UHT",milk,100,lacteos,nata para cocinar;nata para montar,
+mantequilla,Mantequilla,grasas,753,0.7,0.9,82.9,0.83,55.4,0,25,0.063,3100,false,CIQUAL 2020,16400,"Butter, 82% fat, unsalted",milk,30,lacteos,,
+bebida_soja,Bebida de soja,lacteos,37.1,3.31,0.7,2.07,0.2,0.26,0.6,24.3,0.061,155,false,CIQUAL 2020,18900,"Soy drink, plain, prepacked",soy,500,lacteos,leche de soja,
+bebida_avena,Bebida de avena,lacteos,42.6,0.23,7.8,1.1,5,0.2,0.25,26.4,0.066,179,false,CIQUAL 2020,18905,"Oat-based drink, plain, prepacked",gluten,500,lacteos,leche de avena,
+bebida_almendra,Bebida de almendra,lacteos,44.4,0.69,3.96,2.8,3.44,0.58,0.25,38.1,0.095,185,false,CIQUAL 2020,18110,"Almond-based drink, sweet, fortified with calcium, prepacked",tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
+huevo,Huevo,huevos,140,12.7,0.27,9.83,0.27,2.64,0,124,0.31,584,false,CIQUAL 2020,22000,"Egg, raw",eggs,200,huevos,huevos;huevo crudo,
+huevo_cocido,Huevo cocido,huevos,134,13.5,0.52,8.62,0.52,2.55,0,123,0.31,557,false,CIQUAL 2020,22010,"Egg, hard-boiled",eggs,200,huevos,huevo duro,
+clara_huevo,Clara de huevo,huevos,48.1,10.8,0.85,0.19,0.71,0,0,166,0.42,204,false,CIQUAL 2020,22001,"Egg white, raw",eggs,300,huevos,claras,
+tortilla_francesa,Tortilla francesa,huevos,147,9.5,1.98,11.2,0.8,3.6,0.55,173,0.43,612,false,CIQUAL 2020,22509,"Omelette, with herbs",eggs,250,preparados,tortilla;omelette,CIQUAL: omelette with herbs (approximation)
+tortilla_patatas,Tortilla de patatas,platos,165,5.56,11.7,9.9,1.22,1.55,2.7,425,1.06,686,false,CIQUAL 2020,22510,"Spanish-style tortilla with onions (omelette with potatoes and onions), prepacked",eggs,350,preparados,tortilla española,CIQUAL: Spanish-style tortilla with onions; prepacked
+pechuga_pollo_plancha,Pechuga de pollo a la plancha,carnes,141,30.1,0,2,0,0.58,0,56,0.14,598,false,CIQUAL 2020,36018,"Chicken, breast, without skin, cooked",,300,carniceria,pollo;pechuga de pollo;pollo a la plancha,
+pechuga_pollo_cruda,Pechuga de pollo cruda,carnes,110,23.4,0,1.5,0,0.44,0,43,0.11,464,false,CIQUAL 2020,36017,"Chicken, breast, without skin, raw",,300,carniceria,pechuga cruda,
+muslo_pollo_asado,Muslo de pollo asado,carnes,213,25.9,2,11.3,0,4.44,0,91,0.23,893,false,CIQUAL 2020,36004,"Chicken, leg, meat and skin, roasted/baked",,300,carniceria,muslo de pollo;pollo asado,
+pavo_pechuga,Pechuga de pavo a la plancha,carnes,124,28.5,0,1.09,,0.51,0,65.2,0.16,524,false,CIQUAL 2020,36306,"Turkey, escalope, sautéed/pan-fried, with salt",,300,carniceria,pavo;filete de pavo,
+ternera_filete,Filete de ternera a la plancha,carnes,128,27.6,0,1.95,,0.9,0,63.9,0.16,541,false,CIQUAL 2020,6200,"Beef, steak or beef steak, grilled",,300,carniceria,filete;bistec;ternera,
+ternera_picada,Carne picada de ternera cocinada,carnes,210,26.1,0,11.8,0,4.63,0,68,0.17,879,false,CIQUAL 2020,6253,"Beef, minced steak, 10% fat, cooked",,300,carniceria,carne picada;picada,CIQUAL: minced steak 10% fat
+hamburguesa_ternera,Hamburguesa de ternera cocinada,carnes,239,23.6,0,16.1,0,7.08,0,84.3,0.21,996,false,CIQUAL 2020,6255,"Beef, minced steak, 15% fat, cooked",,250,carniceria,hamburguesa;burger,CIQUAL: minced steak 15% fat (patty only)
+lomo_cerdo,Lomo de cerdo asado,carnes,295,26.2,0.05,21.2,0,,0,58,0.15,1230,false,CIQUAL 2020,28451,"Pork, loin, roasted/baked",,300,carniceria,lomo;cinta de lomo,CIQUAL value (295 kcal) seems high for lean loin: review
+solomillo_cerdo,Solomillo de cerdo,carnes,168,26.1,0,7.1,,2.58,0,50.4,0.13,707,false,CIQUAL 2020,28203,"Pork filet mignon, cooked",,300,carniceria,solomillo,
+cordero,Cordero asado,carnes,169,26.8,0,6.85,0,2.63,0,75.5,0.19,708,false,CIQUAL 2020,21503,"Lamb, leg, roasted/baked",,300,carniceria,pierna de cordero,
+conejo,Conejo,carnes,167,20.5,0.5,9.2,,3.42,0,63.2,0.16,697,false,CIQUAL 2020,34002,"Rabbit, meat, cooked",,300,carniceria,,
+jamon_serrano,Jamón serrano,carnes,192,26.3,0.3,9.5,0.3,3.47,0,2410,6.09,804,false,CIQUAL 2020,28802,"Dry-cured ham, fat and rind removed",,100,charcuteria,jamón;jamón curado,CIQUAL: dry-cured ham without fat
+jamon_cocido,Jamón cocido,carnes,135,20,0.79,5.8,0.62,2.36,0.1,797,1.93,569,false,CIQUAL 2020,28803,"Cooked ham, smoked",,150,charcuteria,jamón york;jamón dulce,
+chorizo,Chorizo,carnes,321.7,27,1.9,23.1,,9.6,0,1060,,1346,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),2264,Chorizo,,100,charcuteria,,kcal = energy_kj / 4.184; Fallback without BEDCA: approximation of salchichon
+salchichon,Salchichón,carnes,418,24.2,2.41,34.5,1.2,11.3,0.73,1900,4.75,1730,false,CIQUAL 2020,30300,Dry sausage,,100,charcuteria,salami;fuet,CIQUAL: dry sausage
+salchichas,Salchichas,carnes,271,13.7,1.24,23.4,1,9,0.25,790,2,1120,false,CIQUAL 2020,30134,Frankfurter sausage,,200,charcuteria,salchichas frankfurt,
+bacon,Beicon,carnes,118,23.1,0.7,2.6,0.1,1.02,0,1270,3.18,500,false,CIQUAL 2020,28727,"Bacon, back",,100,charcuteria,bacon;panceta ahumada,CIQUAL back bacon (118 kcal) seems low for streaky bacon: review
+fiambre_pavo,Fiambre de pavo,carnes,104,20.9,1.29,1.67,1.08,0.54,0.39,763,1.9,441,false,CIQUAL 2020,28964,"Turkey cooked ham, in slices",,150,charcuteria,pechuga de pavo en lonchas,
+morcilla,Morcilla,carnes,313,12.2,4.5,27.1,1.12,9.57,1.42,574,1.29,1300,false,CIQUAL 2020,8703,"Black pudding (blood sausage), refrigerated",,150,charcuteria,,CIQUAL: French boudin noir (approximation)
+merluza,Merluza (cruda),pescados,82,15.1,0,2.4,0,0.6,0,262,0.53,346,false,CIQUAL 2020,26048,"Hake, fillet, frozen, raw",fish,300,pescaderia,,CIQUAL: frozen hake fillet raw
+salmon,Salmón al horno,pescados,205,23,0,12.5,0,2.5,0,53.3,0.13,854,false,CIQUAL 2020,25996,"Salmon, cooked (average)",fish,300,pescaderia,salmón,
+salmon_crudo,Salmón crudo,pescados,194,20.5,0,12.4,0,2.15,0.125,45.4,0.16,807,false,CIQUAL 2020,26036,"Salmon, raw, farmed",fish,300,pescaderia,,
+atun_natural,Atún al natural (lata),pescados,111,26.8,0,0.4,0,0.086,0,251,0.74,471,false,CIQUAL 2020,26039,"Tuna, plain, canned, drained",fish,200,despensa,atún en lata,
+atun_aceite,Atún en aceite (lata),pescados,206,23.3,0.76,12.2,,1.34,0,373,0.93,861,false,CIQUAL 2020,26180,"Tuna, whole slice, in sunflower oil, canned, drained",fish,200,despensa,atún en aceite,CIQUAL: in sunflower oil drained
+sardinas_lata,Sardinas en aceite de oliva (lata),pescados,202,24.3,1.06,11.2,0,3.13,0,291,0.73,845,false,CIQUAL 2020,26040,"European pilchard or sardine, in olive oil, canned, drained",fish,200,despensa,sardinas en lata,
+sardinas,Sardinas a la plancha,pescados,194,25.1,0,10.4,0,2.9,0,140,0.35,812,false,CIQUAL 2020,26136,"European pilchard or sardine, grilled",fish,300,pescaderia,sardinas,
+bacalao,Bacalao,pescados,98.9,23.1,0,0.73,0,0.14,0,80.8,0.2,420,false,CIQUAL 2020,25997,"Cod, cooked (average)",fish,300,pescaderia,,
+dorada,Dorada al horno,pescados,148,23.6,0,5.9,0,1.3,0,71,0.18,620,false,CIQUAL 2020,27031,"Gilthead seabream, roasted/baked",fish,300,pescaderia,dorada,
+lubina,Lubina al horno,pescados,147,22.2,0,6.51,0,1.27,0,68.8,0.17,617,false,CIQUAL 2020,27030,"European bass, roasted/baked",fish,300,pescaderia,lubina;róbalo,
+caballa,Caballa al horno,pescados,228,21.5,0,15.8,0,4.44,0,83,0.21,949,false,CIQUAL 2020,26019,"Mackerel, roasted/baked",fish,300,pescaderia,caballa;caballa canaria,
+boquerones,Boquerones,pescados,129,18.6,0,6.07,0,1.64,0,73,0.18,541,false,CIQUAL 2020,26079,"Common anchovy, raw",fish,300,pescaderia,anchoas frescas,
+vieja,Vieja,pescados,83.2,12.1,4.9,1.6,,,0,205,,348.2,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),846,"Vieja, cruda",fish,300,pescaderia,vieja canaria,kcal = energy_kj / 4.184; Fallback without BEDCA: approximation of merluza
+cherne,Cherne,pescados,98.9,23.1,0,0.73,0,0.14,0,80.8,0.2,420,false,approximation of bacalao,,,fish,300,pescaderia,,Not in BEDCA or CIQUAL: values of cod as white fish (approximation)
+pulpo,Pulpo cocido,pescados,156,29.8,4.4,2.08,0,0.45,0,460,1.15,659,false,CIQUAL 2020,10079,"Octopus, common, cooked",molluscs,300,pescaderia,pulpo,
+calamar,Calamar,pescados,149,32.5,1.64,1.4,,0.24,0,744,1.86,632,false,CIQUAL 2020,10037,"Squid, boiled/cooked in water",molluscs,300,pescaderia,calamares,
+gambas,Gambas cocidas,pescados,89.9,18.3,1.47,1.2,,0.31,0,458,1.15,381,false,CIQUAL 2020,10006,"Shrimp, cooked",crustaceans,300,pescaderia,gambas;langostinos;camarones,
+mejillones,Mejillones cocidos,pescados,108,17.2,5.12,2.09,,0.37,0,322,0.8,457,false,CIQUAL 2020,10013,"Mussel, boiled/cooked in water",molluscs,300,pescaderia,mejillones,
+almejas,Almejas,pescados,99.2,16.2,5.33,1.48,0,0.14,0,625,1.56,420,false,CIQUAL 2020,10027,"Clam, boiled/cooked in water",molluscs,300,pescaderia,,
+sepia,Sepia,pescados,76.3,16.2,0.51,1.05,0,0.35,0,372,0.93,323,false,CIQUAL 2020,10016,"Cuttlefish, raw",molluscs,300,pescaderia,choco,
+surimi,Surimi,pescados,125,8.31,11.8,4.92,2.1,0.46,0.165,632,1.58,525,false,CIQUAL 2020,26046,"Surimi, on sticks, in slices or grated, crab flavour",fish;eggs;gluten;crustaceans,150,refrigerados,palitos de cangrejo,Allergens vary by brand
+aceite_oliva,Aceite de oliva virgen extra,grasas,900,0.25,0,99.9,0,15.2,0,2.5,0.0065,3700,false,CIQUAL 2020,17270,"Olive oil, extra virgin",,30,despensa,aceite;aceite de oliva;AOVE,
+aceite_girasol,Aceite de girasol,grasas,901,0.25,0,100,0,11.1,0,10,0.025,3700,false,CIQUAL 2020,17440,Sunflower oil,,30,despensa,,
+margarina,Margarina,grasas,726,0.39,0.3,80.4,0.3,25.1,0,174,0.43,2980,false,CIQUAL 2020,16615,"Vegetable fat (margarine type), 80% fat, unsalted",,30,lacteos,,
+mayonesa,Mayonesa,salsas,695.8,1.36,2.62,75.2,1.03,7.27,0.32,552,1.39,,true,CIQUAL 2020,11054,"Mayonnaise (70% fat and more), prepacked",eggs,50,despensa,mahonesa,
+alioli,Alioli,salsas,394.7,1.13,4.7,41,3.14,,0.42,736,1.85,,true,CIQUAL 2020,11168,"Aioli sauce (garlic and olive oil mayonnaise), prepacked",eggs,50,despensa,ajoaceite,
+almendras,Almendras,frutos_secos,599.9,18.8,9.51,51.3,4.2,4.11,12.5,2.5,0.0065,,true,CIQUAL 2020,15000,"Almond, (with peel)",tree_nuts,60,despensa,,
+nueces,Nueces,frutos_secos,699.8,13.3,6.88,67.3,3,6.45,6.7,2.5,0.065,,true,CIQUAL 2020,15005,"Walnut, dried, husked",tree_nuts,60,despensa,,
+avellanas,Avellanas,frutos_secos,621.5,14.4,7.16,56.9,4.9,4.75,11.6,2.5,0.0065,,true,CIQUAL 2020,15004,Hazelnut,tree_nuts,60,despensa,,
+cacahuetes,Cacahuetes,frutos_secos,609.5,22.8,14.8,49.1,5.9,8.4,8.6,8.6,0.022,,true,CIQUAL 2020,15001,Peanut,peanuts,60,despensa,maní;manises,
+anacardos,Anacardos,frutos_secos,618,17.4,21.3,48.1,6.64,8.24,8.4,6,0.015,2560,false,CIQUAL 2020,15054,"Cashew nut, grilled, unsalted",tree_nuts,60,despensa,,
+pistachos,Pistachos,frutos_secos,603.3,18.9,15.9,49.5,7.57,6.58,9.32,664,1.67,,true,CIQUAL 2020,15009,"Pistachio nut, grilled, salted",tree_nuts,60,despensa,,CIQUAL: roasted and salted
+pipas_girasol,Pipas de girasol,frutos_secos,637.9,21.3,10.1,55.5,2.62,6.23,6.4,5.5,0.014,,true,CIQUAL 2020,15011,Sunflower seed,,60,despensa,pipas,
+crema_cacahuete,Crema de cacahuete,frutos_secos,635.7,22.2,16.1,52.5,10.5,10.4,5,388,0.97,,true,CIQUAL 2020,15202,Peanut butter or peanut paste,peanuts,50,despensa,mantequilla de cacahuete,
+chia,Semillas de chía,frutos_secos,442,16.5,7.72,30.7,,3.33,34.4,16,0.04,,true,CIQUAL 2020,15047,"Seeds, chia, dried",,30,despensa,chía,
+sesamo,Sésamo,frutos_secos,586.9,17.6,9.85,49.7,0.3,7.09,14.9,2.31,0.05,,true,CIQUAL 2020,15010,Sesame seed,sesame,30,despensa,ajonjolí,
+cafe_solo,Café solo,bebidas,7.64,0.25,1.16,0.2,0,0.092,0.25,2.82,0.0071,32,false,CIQUAL 2020,18071,"Espresso coffee, not instant coffee, without sugar, ready-to-drink",,200,despensa,café;espresso;cortado sin leche,
+cafe_con_leche,Café con leche,bebidas,37.16,2.6,3.91,1.21,3.5,0.8,0.06,27.7,0.07,,false,recipe,cafe_solo:25;leche_semidesnatada:75,,milk,400,despensa,cortado;café con leche,Recipe: 1 part coffee + 3 parts semi-skimmed milk; to review
+te,Té,bebidas,0.063,0,0,0.007,0,0.002,0,1.65,0.0041,0.26,false,CIQUAL 2020,18020,"Tea, brewed, without sugar",,400,despensa,infusión,
+zumo_naranja,Zumo de naranja,bebidas,45.4,0.61,9.61,0.11,9.61,0.053,0.28,4.81,0.012,193,false,CIQUAL 2020,2070,"Orange juice, pure juice",,400,bebidas,zumo;jugo de naranja,
+refresco_cola,Refresco de cola,bebidas,41.8,0.093,10.2,0.062,10.2,0,0,6.71,0.017,178,false,CIQUAL 2020,18018,"Cola, with sugar",,500,bebidas,coca-cola;cola,
+refresco_cola_zero,Refresco de cola sin azúcar,bebidas,1.3,0.081,0.11,0.053,0.11,0,0.003,9.88,0.024,5.47,false,CIQUAL 2020,18060,"Cola, without sugar and with artificial sweetener(s)",,500,bebidas,coca-cola zero;cola light,
+cerveza,Cerveza,bebidas,37.4,0.39,2.7,0,0.98,0,0,1.88,0.0047,,true,CIQUAL 2020,5001,"Beer, regular (4-5° alcohol)",gluten,500,bebidas,caña;birra,
+vino_tinto,Vino tinto,bebidas,82.1,0.07,2.63,0,0.62,0,0,1.01,0.0025,341,false,CIQUAL 2020,5214,"Wine, red",sulphites,300,bebidas,vino,Energy check warning expected: alcohol not in the macro estimate
+agua,Agua,bebidas,0,0,0,0,0,0,0,2.4,0.0076,0,false,CIQUAL 2020,18066,"Water, municipal",,1000,bebidas,,
+azucar,Azúcar,dulces,399.2,0,99.8,0,99.8,0,0,2.17,0.0054,,true,CIQUAL 2020,31016,"Sugar, white",,30,despensa,azúcar blanco,
+miel,Miel,dulces,329,0.56,81.7,0,79.8,0,0,4.11,0.01,,true,CIQUAL 2020,31008,Honey,,30,despensa,miel de abeja,Bee honey only: miel de palma (palm sap syrup) is a different product and is not in CIQUAL
+mermelada,Mermelada,dulces,228,0.37,56.5,0.29,55.5,0.053,1.05,7.94,0.02,966,false,CIQUAL 2020,30999,"Jam or marmalade, sugar content not known, (average)",,40,despensa,confitura,
+chocolate_negro,Chocolate negro (más de 70 %),dulces,591,10.4,26.9,46.3,17.9,28.7,12.8,8,0.02,2450,false,CIQUAL 2020,31074,"Dark chocolate bar, more than 70% cocoa",milk,50,despensa,chocolate negro,May contain milk
+chocolate_leche,Chocolate con leche,dulces,537,7.5,55.6,30.8,53.1,18.7,2.9,78,0.2,2240,false,CIQUAL 2020,31004,Milk chocolate bar,milk,50,despensa,chocolate,
+galletas_maria,Galletas tipo María,dulces,448.6,6.77,70,15.1,23.6,6.81,2.81,334,0.84,,true,CIQUAL 2020,24001,"Biscuit (cookie), plain",gluten;milk,60,despensa,galletas;galletas maría,CIQUAL: plain biscuit (approximation)
+magdalena,Magdalena,dulces,463.9,5.6,52.6,25.5,27.4,15.7,0.8,275,0.69,,true,CIQUAL 2020,24630,"Madeleine cake, pure butter, prepacked",gluten;eggs;milk,120,panaderia,magdalenas,
+croissant,Cruasán,dulces,412,6.33,47.6,21.1,7.88,11.6,1.8,523,1.31,1720,false,CIQUAL 2020,7615,"Croissant, ordinary, from bakery",gluten;eggs;milk,120,panaderia,croissant;cruasán,
+bizcocho,Bizcocho,dulces,400.4,5.27,53.5,17.8,32,5.36,1.75,292,0.73,,true,CIQUAL 2020,23000,Cake (average),gluten;eggs;milk,150,panaderia,tarta;pastel,CIQUAL: cake average (approximation)
+helado,Helado,dulces,193.8,2.55,26.1,8.4,21.9,5.44,1.5,46,0.12,,true,CIQUAL 2020,39515,"Ice cream, in box",milk,200,congelados,,
+cacao_soluble,Cacao soluble azucarado,dulces,379,6.65,75.6,3.29,67.9,2.16,10.5,85,0.21,1600,false,CIQUAL 2020,18101,"Cocoa or chocolate powder, for beverages, with sugar",,30,despensa,cola cao;nesquik,
+flan,Flan,dulces,111,4.08,18.5,2.2,16,1.2,0.25,56,0.14,467,false,CIQUAL 2020,19674,"Flan with eggs, refrigerated",milk;eggs,150,lacteos,flan de huevo,
+pizza,Pizza margarita,platos,227,8.93,29.6,7.64,2.72,3.4,1.67,493,1.24,953,false,CIQUAL 2020,25404,"Pizza, cheese and tomato or Margherita pizza, prepacked",gluten;milk,500,preparados,pizza,
+lasana,Lasaña de carne,platos,134,6.29,13.5,5.72,2.84,2.55,1.91,385,0.97,562,false,CIQUAL 2020,25081,Lasagna or cannelloni with meat (bolognese sauce),gluten;milk;eggs;celery,500,preparados,lasaña;canelones,
+paella,Paella mixta,platos,171.9,12.37,17.44,5.74,,1.1,0.5,47.83,,719.15,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),2597,Paella,crustaceans;molluscs,500,preparados,paella;arroz con marisco,kcal = energy_kj / 4.184; Fallback without BEDCA: recipe
+gazpacho,Gazpacho,platos,32.8,0.65,3.38,1.62,2.32,0.27,1.04,293,0.75,137,false,CIQUAL 2020,25967,"Soup, gazpacho, cold, prepacked",,500,preparados,salmorejo,
+sopa_verduras,Sopa de verduras,platos,50.2,1.34,5.09,2.51,1.62,1.58,0.93,268,0.67,210,false,CIQUAL 2020,25962,"Soup, vegetables with cheese, prepacked, to be reheated",milk;celery,500,preparados,caldo de verduras,CIQUAL: vegetable soup with cheese
+ensalada_verde,Ensalada verde (sin aliñar),platos,13.5,1.01,1.5,0.1,0.83,0.028,1.3,18.3,0.046,,true,CIQUAL 2020,25604,"Green salad, raw, without seasoning",,400,fruteria,ensalada,
+sandwich_mixto,Sándwich mixto,platos,292,12.9,26.1,14.6,7.75,6.45,2,525,1.33,1220,false,CIQUAL 2020,25576,"Sandwich made with wholemeal loaf bread, ham and cheese, prepacked",gluten;milk,300,preparados,sándwich de jamón y queso;mixto,CIQUAL: wholemeal loaf with ham and cheese; prepacked (approximation)
+hamburguesa_completa,Hamburguesa completa (comida rápida),platos,246,13.3,28.3,8.44,5.95,2.82,1.8,492,1.23,1030,false,CIQUAL 2020,25413,"Hamburger, from fast foods restaurant",gluten;milk;sesame;mustard,350,preparados,hamburguesa con pan,
+salsa_tomate,Salsa de tomate,salsas,78.8,1.52,7.69,4.18,5.44,0.49,2.17,467,1.17,,true,CIQUAL 2020,11107,"Tomato sauce, with onions, prepacked",,150,despensa,tomate frito;salsa de tomate,CIQUAL: tomato sauce with onions (approximation of tomate frito)
+mojo_picon,Mojo picón,salsas,708.8,0.94,1.78,78.9,,10,0.16,2.2,,2965.54,false,BEDCA (educational use; AESAN authorisation requested 2026-10-12),2601,Mojo picon,sulphites,60,despensa,mojo rojo;mojo,kcal = energy_kj / 4.184; Fallback without BEDCA: recipe
+ketchup,Kétchup,salsas,99,1.27,21.4,0.19,20.8,0.069,1.15,1030,2.59,420,false,CIQUAL 2020,11008,"Ketchup, prepacked",,50,despensa,ketchup,
+salsa_soja,Salsa de soja,salsas,45.5,7.08,3.64,0.1,1.32,0.0085,0.86,7440,18.6,193,false,CIQUAL 2020,11104,"Soy sauce, prepacked",soy;gluten,30,despensa,soja,
+vinagre,Vinagre,salsas,22.6,0.04,0.62,0.1,0.04,0,0,13.1,0.033,97.4,false,CIQUAL 2020,11018,Vinegar,sulphites,30,despensa,,Energy check warning expected: acetic acid not in the macro estimate
+mostaza,Mostaza,salsas,152,6.92,4.33,11.2,1.66,0.76,0.5,1860,6.3,632,false,CIQUAL 2020,11013,Mustard,mustard,30,despensa,,
+sal,Sal,salsas,0,0,0,0,0,0,0,39100,97.8,0,false,CIQUAL 2020,11017,"Salt, white (sea, igneous or rock), no enrichment",,10,despensa,sal fina;sal marina,
+aceitunas,Aceitunas rellenas,snacks,156.3,2.09,0.61,15.2,0.2,2.63,4.33,1110,2.78,,true,CIQUAL 2020,13147,"Olive, green, stuffed (anchovy, sweet peppers, etc…)",fish,100,despensa,aceitunas;olivas,CIQUAL: green olives stuffed (anchovy etc.)
+barrita_cereales,Barrita de cereales,snacks,379,6.13,72.8,6.53,30.2,3.5,4.13,297,0.75,1600,false,CIQUAL 2020,31101,"Cereal bar with fruit, fortified with vitamins and minerals",gluten,60,despensa,barrita,Allergens vary by brand
+nachos,Nachos (totopos),snacks,495,6.56,59.5,24.7,2.62,9.98,4.19,565,1.42,2070,false,CIQUAL 2020,38105,Corn chips or tortilla chips,,100,despensa,totopos;tortilla chips,

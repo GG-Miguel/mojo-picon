@@ -1,0 +1,203 @@
+id,name,category,source,source_code,bedca_id,allergens,max_portion_g,section,synonyms,review_note
+pan_blanco,Pan blanco (barra),cereales,ciqual,7001,,gluten,200,panaderia,pan;barra de pan;baguette;pan de barra,
+pan_integral,Pan integral,cereales,ciqual,7110,,gluten,200,panaderia,pan integral de barra,
+pan_molde,Pan de molde,cereales,ciqual,7200,,gluten,200,panaderia,pan bimbo;pan de sándwich,
+pan_molde_integral,Pan de molde integral,cereales,ciqual,7111,,gluten,200,panaderia,pan bimbo integral,
+pan_centeno,Pan de centeno,cereales,ciqual,7125,,gluten,200,panaderia,,CIQUAL: rye and wheat bread
+pan_tostado,Pan tostado (biscotes),cereales,ciqual,7300,,gluten;eggs,100,panaderia,biscotes;tostadas de paquete,CIQUAL: rusk
+pan_tostado_casero,Tostada (pan tostado),cereales,ciqual,7004,,gluten,150,panaderia,tostada;tostadas;pan tostado casero,CIQUAL: toasted bread; home-made
+arroz_blanco_cocido,Arroz blanco cocido,cereales,ciqual,9104,,,400,despensa,arroz;arroz cocido;arroz hervido,
+arroz_blanco_crudo,Arroz blanco crudo,cereales,ciqual,9100,,,150,despensa,arroz crudo;arroz seco,
+arroz_integral_cocido,Arroz integral cocido,cereales,ciqual,9103,,,400,despensa,arroz integral,
+pasta_cocida,Pasta cocida,cereales,ciqual,9811,,gluten,400,despensa,macarrones;espaguetis;pasta;fideos,
+pasta_cruda,Pasta seca cruda,cereales,ciqual,9810,,gluten,150,despensa,pasta seca;macarrones crudos,
+pasta_integral_cocida,Pasta integral cocida,cereales,ciqual,9871,,gluten,400,despensa,macarrones integrales,
+cuscus_cocido,Cuscús cocido,cereales,ciqual,9683,,gluten,400,despensa,cuscus;couscous,
+quinoa_cocida,Quinoa cocida,cereales,ciqual,9341,,,400,despensa,quinua,
+copos_avena,Copos de avena,cereales,ciqual,9311,,gluten,100,despensa,avena;porridge,Oats may contain gluten
+corn_flakes,Cereales de desayuno (copos de maíz),cereales,ciqual,32005,,gluten,80,despensa,cereales;copos de maíz;corn flakes,Malt flavouring may contain gluten
+muesli,Muesli,cereales,ciqual,32004,,gluten;tree_nuts,100,despensa,,Allergens vary by brand
+harina_trigo,Harina de trigo,cereales,ciqual,9436,,gluten,150,despensa,harina,
+tortitas_arroz,Tortitas de arroz,cereales,ciqual,7352,,,60,despensa,tortitas de arroz inflado,CIQUAL: puffed rice textured bread (approximation)
+gofio,Gofio,cereales,ciqual,9415,2676,gluten,100,despensa,gofio canario;gofio de millo;gofio de trigo,Approximation: CIQUAL wholemeal wheat flour type 150; toasting lowers water so real gofio has slightly more kcal; BEDCA has Gofio (pending authorisation)
+patata_cocida,Patata hervida,tuberculos,ciqual,4003,,,500,fruteria,patata;papa;papas;patata cocida;papa sancochada,
+patata_cruda,Patata cruda,tuberculos,ciqual,4008,,,500,fruteria,papa cruda,
+patatas_fritas,Patatas fritas (de freidora),tuberculos,ciqual,4032,,,300,congelados,papas fritas;patatas fritas caseras,CIQUAL: frozen fries deep-fried
+patatas_chips,Patatas fritas de bolsa,snacks,ciqual,4004,,,100,despensa,chips;papas de bolsa;patatas chips,
+boniato_cocido,Boniato cocido,tuberculos,ciqual,4102,,,400,fruteria,batata;batata cocida;camote,
+papas_arrugadas,Papas arrugadas,tuberculos,recipe,patata_cocida:98;sal:2,,,500,fruteria,papas arrugás,Recipe: boiled potato + salt; salt share to review
+lentejas_cocidas,Lentejas cocidas,legumbres,ciqual,20587,,,400,despensa,lentejas,
+garbanzos_cocidos,Garbanzos cocidos,legumbres,ciqual,20507,,,400,despensa,garbanzos,
+alubias_blancas_cocidas,Alubias blancas cocidas,legumbres,ciqual,20293,,,400,despensa,judías blancas;habichuelas;alubias,CIQUAL: coco bean
+alubias_rojas_cocidas,Alubias rojas cocidas,legumbres,ciqual,20503,,,400,despensa,judías rojas;frijoles rojos,
+guisantes_cocidos,Guisantes cocidos,legumbres,ciqual,20037,,,300,congelados,arvejas;chícharos,
+hummus,Hummus,legumbres,ciqual,25621,,sesame,150,refrigerados,humus,
+tofu,Tofu,legumbres,ciqual,20904,,soy,300,refrigerados,,
+tomate,Tomate,verduras,ciqual,20047,,,400,fruteria,tomates,
+lechuga,Lechuga,verduras,ciqual,20031,,,300,fruteria,ensalada verde;lechuga romana;lechuga iceberg,
+cebolla,Cebolla,verduras,ciqual,20034,,,300,fruteria,cebollas,
+zanahoria,Zanahoria,verduras,ciqual,20009,,,300,fruteria,zanahorias,
+pimiento_rojo,Pimiento rojo,verduras,ciqual,20087,,,300,fruteria,,
+pimiento_verde,Pimiento verde,verduras,ciqual,20085,,,300,fruteria,,
+pepino,Pepino,verduras,ciqual,20019,,,300,fruteria,,
+calabacin,Calabacín,verduras,ciqual,20020,,,400,fruteria,zucchini,
+berenjena,Berenjena,verduras,ciqual,20053,,,400,fruteria,,
+brocoli_cocido,Brócoli cocido,verduras,ciqual,20302,,,400,fruteria,brócoli;brécol,
+espinacas_crudas,Espinacas crudas,verduras,ciqual,20059,,,300,fruteria,espinacas frescas,
+espinacas_cocidas,Espinacas cocidas,verduras,ciqual,20336,,,400,congelados,espinacas,
+judias_verdes_cocidas,Judías verdes cocidas,verduras,ciqual,20320,,,400,fruteria,judías verdes;habichuelas verdes;vainas,
+coliflor_cocida,Coliflor cocida,verduras,ciqual,20017,,,400,fruteria,coliflor,
+champinones,Champiñones,verduras,ciqual,20056,,,300,fruteria,setas;champiñón,
+ajo,Ajo,verduras,ciqual,11000,,,20,fruteria,ajos,
+calabaza,Calabaza cocida,verduras,ciqual,20292,,,400,fruteria,calabaza;bubango,
+alcachofa_cocida,Alcachofa cocida,verduras,ciqual,20000,,,300,fruteria,alcachofas,
+esparragos,Espárragos verdes cocidos,verduras,ciqual,20299,,,300,fruteria,espárragos trigueros,
+maiz_dulce,Maíz dulce (lata),verduras,ciqual,20066,,,200,despensa,maíz;millo;millo de lata,
+remolacha,Remolacha cocida,verduras,ciqual,20003,,,200,fruteria,,
+repollo,Repollo,verduras,ciqual,20116,,,300,fruteria,col;berza,
+rucula,Rúcula,verduras,ciqual,20217,,,100,fruteria,rúcula,
+puerro,Puerro,verduras,ciqual,20039,,,300,fruteria,puerros,
+apio,Apio,verduras,ciqual,20023,,celery,200,fruteria,,
+manzana,Manzana,frutas,ciqual,13039,,,300,fruteria,manzanas,
+platano,Plátano,frutas,ciqual,13005,,,300,fruteria,plátano de Canarias;banana,BEDCA has Plátano; CIQUAL banana used
+naranja,Naranja,frutas,ciqual,13034,,,400,fruteria,naranjas,
+mandarina,Mandarina,frutas,ciqual,13024,,,300,fruteria,mandarinas;clementina,
+pera,Pera,frutas,ciqual,13037,,,300,fruteria,peras,
+fresas,Fresas,frutas,ciqual,13014,,,300,fruteria,fresón;fresones,
+uvas,Uvas,frutas,ciqual,13044,,,300,fruteria,uva,
+melon,Melón,frutas,ciqual,13026,,,500,fruteria,,
+sandia,Sandía,frutas,ciqual,13036,,,600,fruteria,,
+pina,Piña,frutas,ciqual,13002,,,400,fruteria,ananás,
+kiwi,Kiwi,frutas,ciqual,13021,,,300,fruteria,kiwis,
+melocoton,Melocotón,frutas,ciqual,13043,,,300,fruteria,durazno,
+mango,Mango,frutas,ciqual,13025,,,400,fruteria,,
+papaya,Papaya,frutas,ciqual,13035,,,400,fruteria,papaya canaria,
+cerezas,Cerezas,frutas,ciqual,13008,,,300,fruteria,,
+arandanos,Arándanos,frutas,ciqual,13028,,,200,fruteria,,
+frambuesas,Frambuesas,frutas,ciqual,13015,,,200,fruteria,,
+limon,Limón,frutas,ciqual,13009,,,100,fruteria,,Energy check warning expected: organic acids (citric) not in the macro estimate
+higos,Higos,frutas,ciqual,13012,,,300,fruteria,higo;breva,
+ciruela,Ciruela,frutas,ciqual,13100,,,300,fruteria,ciruelas,
+datiles,Dátiles,frutas,ciqual,13011,,,100,despensa,dátil,
+pasas,Pasas,frutas,ciqual,13046,,sulphites,60,despensa,uvas pasas,
+aguacate,Aguacate,frutas,ciqual,13004,,,250,fruteria,palta,
+leche_entera,Leche entera,lacteos,ciqual,19023,,milk,500,lacteos,leche,
+leche_semidesnatada,Leche semidesnatada,lacteos,ciqual,19041,,milk,500,lacteos,leche semi,
+leche_desnatada,Leche desnatada,lacteos,ciqual,19050,,milk,500,lacteos,leche desnatada,
+yogur_natural,Yogur natural,lacteos,ciqual,19600,,milk,375,lacteos,yogur;yogurt,
+yogur_desnatado,Yogur natural desnatado,lacteos,ciqual,19544,,milk,375,lacteos,yogur 0%;yogur desnatado,
+yogur_griego,Yogur griego,lacteos,ciqual,19860,,milk,375,lacteos,,
+kefir,Kéfir,lacteos,ciqual,19865,,milk,500,lacteos,kefir,
+queso_fresco,Queso fresco (tipo Burgos),lacteos,ciqual,19641,,milk,250,lacteos,queso de Burgos;queso blanco,CIQUAL: drained soft fresh cheese ~6% fat (approximation)
+requeson,Requesón,lacteos,ciqual,19585,,milk,250,lacteos,ricotta,
+queso_curado,Queso curado (tipo manchego),lacteos,ciqual,12100,,milk,100,lacteos,queso manchego;queso viejo,CIQUAL: hard cheese average (approximation)
+queso_semicurado,Queso semicurado,lacteos,ciqual,12736,,milk,100,lacteos,queso gouda;queso tierno,CIQUAL: Gouda (approximation)
+mozzarella,Mozzarella,lacteos,ciqual,19590,,milk,200,lacteos,,
+queso_cabra,Queso de cabra,lacteos,ciqual,12801,,milk,100,lacteos,,
+queso_majorero,Queso majorero (curado),lacteos,ciqual,12815,722,milk,100,lacteos,majorero;queso majorero;queso majorero curado,Approximation: CIQUAL dry (cured) goat cheese; majorero is a cured goat cheese; BEDCA has Queso majorero (pending authorisation)
+queso_palmero,Queso palmero,lacteos,ciqual,12810,,milk,100,lacteos,palmero,Approximation: CIQUAL semi-dry goat cheese (palmero is usually sold young or semi-cured; often smoked)
+parmesano,Queso parmesano,lacteos,ciqual,12120,,milk,50,lacteos,parmesano rallado,
+nata,Nata líquida (30 %),lacteos,ciqual,19415,,milk,100,lacteos,nata para cocinar;nata para montar,
+mantequilla,Mantequilla,grasas,ciqual,16400,,milk,30,lacteos,,
+bebida_soja,Bebida de soja,lacteos,ciqual,18900,,soy,500,lacteos,leche de soja,
+bebida_avena,Bebida de avena,lacteos,ciqual,18905,,gluten,500,lacteos,leche de avena,
+bebida_almendra,Bebida de almendra,lacteos,ciqual,18110,,tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
+huevo,Huevo,huevos,ciqual,22000,,eggs,200,huevos,huevos;huevo crudo,
+huevo_cocido,Huevo cocido,huevos,ciqual,22010,,eggs,200,huevos,huevo duro,
+clara_huevo,Clara de huevo,huevos,ciqual,22001,,eggs,300,huevos,claras,
+tortilla_francesa,Tortilla francesa,huevos,ciqual,22509,,eggs,250,preparados,tortilla;omelette,CIQUAL: omelette with herbs (approximation)
+tortilla_patatas,Tortilla de patatas,platos,ciqual,22510,,eggs,350,preparados,tortilla española,CIQUAL: Spanish-style tortilla with onions; prepacked
+pechuga_pollo_plancha,Pechuga de pollo a la plancha,carnes,ciqual,36018,,,300,carniceria,pollo;pechuga de pollo;pollo a la plancha,
+pechuga_pollo_cruda,Pechuga de pollo cruda,carnes,ciqual,36017,,,300,carniceria,pechuga cruda,
+muslo_pollo_asado,Muslo de pollo asado,carnes,ciqual,36004,,,300,carniceria,muslo de pollo;pollo asado,
+pavo_pechuga,Pechuga de pavo a la plancha,carnes,ciqual,36306,,,300,carniceria,pavo;filete de pavo,
+ternera_filete,Filete de ternera a la plancha,carnes,ciqual,6200,,,300,carniceria,filete;bistec;ternera,
+ternera_picada,Carne picada de ternera cocinada,carnes,ciqual,6253,,,300,carniceria,carne picada;picada,CIQUAL: minced steak 10% fat
+hamburguesa_ternera,Hamburguesa de ternera cocinada,carnes,ciqual,6255,,,250,carniceria,hamburguesa;burger,CIQUAL: minced steak 15% fat (patty only)
+lomo_cerdo,Lomo de cerdo asado,carnes,ciqual,28451,,,300,carniceria,lomo;cinta de lomo,CIQUAL value (295 kcal) seems high for lean loin: review
+solomillo_cerdo,Solomillo de cerdo,carnes,ciqual,28203,,,300,carniceria,solomillo,
+cordero,Cordero asado,carnes,ciqual,21503,,,300,carniceria,pierna de cordero,
+conejo,Conejo,carnes,ciqual,34002,,,300,carniceria,,
+jamon_serrano,Jamón serrano,carnes,ciqual,28802,,,100,charcuteria,jamón;jamón curado,CIQUAL: dry-cured ham without fat
+jamon_cocido,Jamón cocido,carnes,ciqual,28803,,,150,charcuteria,jamón york;jamón dulce,
+chorizo,Chorizo,carnes,approx,salchichon,2264,,100,charcuteria,,Approximation: CIQUAL dry sausage; BEDCA has Chorizo (pending authorisation)
+salchichon,Salchichón,carnes,ciqual,30300,,,100,charcuteria,salami;fuet,CIQUAL: dry sausage
+salchichas,Salchichas,carnes,ciqual,30134,,,200,charcuteria,salchichas frankfurt,
+bacon,Beicon,carnes,ciqual,28727,,,100,charcuteria,bacon;panceta ahumada,CIQUAL back bacon (118 kcal) seems low for streaky bacon: review
+fiambre_pavo,Fiambre de pavo,carnes,ciqual,28964,,,150,charcuteria,pechuga de pavo en lonchas,
+morcilla,Morcilla,carnes,ciqual,8703,,,150,charcuteria,,CIQUAL: French boudin noir (approximation)
+merluza,Merluza (cruda),pescados,ciqual,26048,,fish,300,pescaderia,,CIQUAL: frozen hake fillet raw
+salmon,Salmón al horno,pescados,ciqual,25996,,fish,300,pescaderia,salmón,
+salmon_crudo,Salmón crudo,pescados,ciqual,26036,,fish,300,pescaderia,,
+atun_natural,Atún al natural (lata),pescados,ciqual,26039,,fish,200,despensa,atún en lata,
+atun_aceite,Atún en aceite (lata),pescados,ciqual,26180,,fish,200,despensa,atún en aceite,CIQUAL: in sunflower oil drained
+sardinas_lata,Sardinas en aceite de oliva (lata),pescados,ciqual,26040,,fish,200,despensa,sardinas en lata,
+sardinas,Sardinas a la plancha,pescados,ciqual,26136,,fish,300,pescaderia,sardinas,
+bacalao,Bacalao,pescados,ciqual,25997,,fish,300,pescaderia,,
+dorada,Dorada al horno,pescados,ciqual,27031,,fish,300,pescaderia,dorada,
+lubina,Lubina al horno,pescados,ciqual,27030,,fish,300,pescaderia,lubina;róbalo,
+caballa,Caballa al horno,pescados,ciqual,26019,,fish,300,pescaderia,caballa;caballa canaria,
+boquerones,Boquerones,pescados,ciqual,26079,,fish,300,pescaderia,anchoas frescas,
+vieja,Vieja,pescados,approx,merluza,846,fish,300,pescaderia,vieja canaria,Approximation: lean white fish raw (hake); BEDCA has Vieja cruda (pending authorisation)
+cherne,Cherne,pescados,approx,bacalao,,fish,300,pescaderia,,Not in BEDCA or CIQUAL: values of cod as white fish (approximation)
+pulpo,Pulpo cocido,pescados,ciqual,10079,,molluscs,300,pescaderia,pulpo,
+calamar,Calamar,pescados,ciqual,10037,,molluscs,300,pescaderia,calamares,
+gambas,Gambas cocidas,pescados,ciqual,10006,,crustaceans,300,pescaderia,gambas;langostinos;camarones,
+mejillones,Mejillones cocidos,pescados,ciqual,10013,,molluscs,300,pescaderia,mejillones,
+almejas,Almejas,pescados,ciqual,10027,,molluscs,300,pescaderia,,
+sepia,Sepia,pescados,ciqual,10016,,molluscs,300,pescaderia,choco,
+surimi,Surimi,pescados,ciqual,26046,,fish;eggs;gluten;crustaceans,150,refrigerados,palitos de cangrejo,Allergens vary by brand
+aceite_oliva,Aceite de oliva virgen extra,grasas,ciqual,17270,,,30,despensa,aceite;aceite de oliva;AOVE,
+aceite_girasol,Aceite de girasol,grasas,ciqual,17440,,,30,despensa,,
+margarina,Margarina,grasas,ciqual,16615,,,30,lacteos,,
+mayonesa,Mayonesa,salsas,ciqual,11054,,eggs,50,despensa,mahonesa,
+alioli,Alioli,salsas,ciqual,11168,,eggs,50,despensa,ajoaceite,
+almendras,Almendras,frutos_secos,ciqual,15000,,tree_nuts,60,despensa,,
+nueces,Nueces,frutos_secos,ciqual,15005,,tree_nuts,60,despensa,,
+avellanas,Avellanas,frutos_secos,ciqual,15004,,tree_nuts,60,despensa,,
+cacahuetes,Cacahuetes,frutos_secos,ciqual,15001,,peanuts,60,despensa,maní;manises,
+anacardos,Anacardos,frutos_secos,ciqual,15054,,tree_nuts,60,despensa,,
+pistachos,Pistachos,frutos_secos,ciqual,15009,,tree_nuts,60,despensa,,CIQUAL: roasted and salted
+pipas_girasol,Pipas de girasol,frutos_secos,ciqual,15011,,,60,despensa,pipas,
+crema_cacahuete,Crema de cacahuete,frutos_secos,ciqual,15202,,peanuts,50,despensa,mantequilla de cacahuete,
+chia,Semillas de chía,frutos_secos,ciqual,15047,,,30,despensa,chía,
+sesamo,Sésamo,frutos_secos,ciqual,15010,,sesame,30,despensa,ajonjolí,
+cafe_solo,Café solo,bebidas,ciqual,18071,,,200,despensa,café;espresso;cortado sin leche,
+cafe_con_leche,Café con leche,bebidas,recipe,cafe_solo:25;leche_semidesnatada:75,,milk,400,despensa,cortado;café con leche,Recipe: 1 part coffee + 3 parts semi-skimmed milk; to review
+te,Té,bebidas,ciqual,18020,,,400,despensa,infusión,
+zumo_naranja,Zumo de naranja,bebidas,ciqual,2070,,,400,bebidas,zumo;jugo de naranja,
+refresco_cola,Refresco de cola,bebidas,ciqual,18018,,,500,bebidas,coca-cola;cola,
+refresco_cola_zero,Refresco de cola sin azúcar,bebidas,ciqual,18060,,,500,bebidas,coca-cola zero;cola light,
+cerveza,Cerveza,bebidas,ciqual,5001,,gluten,500,bebidas,caña;birra,
+vino_tinto,Vino tinto,bebidas,ciqual,5214,,sulphites,300,bebidas,vino,Energy check warning expected: alcohol not in the macro estimate
+agua,Agua,bebidas,ciqual,18066,,,1000,bebidas,,
+azucar,Azúcar,dulces,ciqual,31016,,,30,despensa,azúcar blanco,
+miel,Miel,dulces,ciqual,31008,,,30,despensa,miel de abeja,Bee honey only: miel de palma (palm sap syrup) is a different product and is not in CIQUAL
+mermelada,Mermelada,dulces,ciqual,30999,,,40,despensa,confitura,
+chocolate_negro,Chocolate negro (más de 70 %),dulces,ciqual,31074,,milk,50,despensa,chocolate negro,May contain milk
+chocolate_leche,Chocolate con leche,dulces,ciqual,31004,,milk,50,despensa,chocolate,
+galletas_maria,Galletas tipo María,dulces,ciqual,24001,,gluten;milk,60,despensa,galletas;galletas maría,CIQUAL: plain biscuit (approximation)
+magdalena,Magdalena,dulces,ciqual,24630,,gluten;eggs;milk,120,panaderia,magdalenas,
+croissant,Cruasán,dulces,ciqual,7615,,gluten;eggs;milk,120,panaderia,croissant;cruasán,
+bizcocho,Bizcocho,dulces,ciqual,23000,,gluten;eggs;milk,150,panaderia,tarta;pastel,CIQUAL: cake average (approximation)
+helado,Helado,dulces,ciqual,39515,,milk,200,congelados,,
+cacao_soluble,Cacao soluble azucarado,dulces,ciqual,18101,,,30,despensa,cola cao;nesquik,
+flan,Flan,dulces,ciqual,19674,,milk;eggs,150,lacteos,flan de huevo,
+pizza,Pizza margarita,platos,ciqual,25404,,gluten;milk,500,preparados,pizza,
+lasana,Lasaña de carne,platos,ciqual,25081,,gluten;milk;eggs;celery,500,preparados,lasaña;canelones,
+paella,Paella mixta,platos,recipe,arroz_blanco_cocido:55;pechuga_pollo_plancha:12;gambas:8;calamar:5;mejillones:5;judias_verdes_cocidas:5;pimiento_rojo:4;tomate:3;aceite_oliva:3,2597,crustaceans;molluscs,500,preparados,paella;arroz con marisco,Recipe (proposal to review): mixed paella per 100 g of cooked dish
+gazpacho,Gazpacho,platos,ciqual,25967,,,500,preparados,salmorejo,
+sopa_verduras,Sopa de verduras,platos,ciqual,25962,,milk;celery,500,preparados,caldo de verduras,CIQUAL: vegetable soup with cheese
+ensalada_verde,Ensalada verde (sin aliñar),platos,ciqual,25604,,,400,fruteria,ensalada,
+sandwich_mixto,Sándwich mixto,platos,ciqual,25576,,gluten;milk,300,preparados,sándwich de jamón y queso;mixto,CIQUAL: wholemeal loaf with ham and cheese; prepacked (approximation)
+hamburguesa_completa,Hamburguesa completa (comida rápida),platos,ciqual,25413,,gluten;milk;sesame;mustard,350,preparados,hamburguesa con pan,
+salsa_tomate,Salsa de tomate,salsas,ciqual,11107,,,150,despensa,tomate frito;salsa de tomate,CIQUAL: tomato sauce with onions (approximation of tomate frito)
+mojo_picon,Mojo picón,salsas,recipe,aceite_oliva:45;pimiento_rojo:30;vinagre:15;ajo:8;sal:2,2601,sulphites,60,despensa,mojo rojo;mojo,Recipe (proposal to review): oil + red pepper + vinegar + garlic + salt; spices (cumin; paprika) not in the table
+ketchup,Kétchup,salsas,ciqual,11008,,,50,despensa,ketchup,
+salsa_soja,Salsa de soja,salsas,ciqual,11104,,soy;gluten,30,despensa,soja,
+vinagre,Vinagre,salsas,ciqual,11018,,sulphites,30,despensa,,Energy check warning expected: acetic acid not in the macro estimate
+mostaza,Mostaza,salsas,ciqual,11013,,mustard,30,despensa,,
+sal,Sal,salsas,ciqual,11017,,,10,despensa,sal fina;sal marina,
+aceitunas,Aceitunas rellenas,snacks,ciqual,13147,,fish,100,despensa,aceitunas;olivas,CIQUAL: green olives stuffed (anchovy etc.)
+barrita_cereales,Barrita de cereales,snacks,ciqual,31101,,gluten,60,despensa,barrita,Allergens vary by brand
+nachos,Nachos (totopos),snacks,ciqual,38105,,,100,despensa,totopos;tortilla chips,

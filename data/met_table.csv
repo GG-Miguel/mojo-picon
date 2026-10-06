@@ -1,0 +1,9 @@
+id,name,met,speed_kmh,source
+running_8kmh,Correr a 8 km/h,8.3,8.0,Compendium of Physical Activities 2011 (12020) - pending verification
+running_9.7kmh,Correr a 9.7 km/h,9.8,9.7,Compendium of Physical Activities 2011 (12030) - pending verification
+running_10.8kmh,Correr a 10.8 km/h,10.5,10.8,Compendium of Physical Activities 2011 (12040) - pending verification
+running_11.3kmh,Correr a 11.3 km/h,11.0,11.3,Compendium of Physical Activities 2011 (12050) - pending verification
+running_12kmh,Correr a 12 km/h,11.5,12.0,Compendium of Physical Activities 2011 (12060) - pending verification
+weights_moderate,Pesas o máquinas (esfuerzo moderado),3.5,,Compendium of Physical Activities 2011 (02054) - pending verification
+weights_vigorous,Pesas (esfuerzo intenso),6.0,,Compendium of Physical Activities 2011 (02050) - pending verification
+walking_5kmh,Caminar a 5 km/h,3.5,5.0,Compendium of Physical Activities 2011 (17190) - pending verification

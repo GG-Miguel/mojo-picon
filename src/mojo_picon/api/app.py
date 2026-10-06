@@ -1,0 +1,215 @@
+"""FastAPI app: the agent as a service; the web is one client among others (ADR-06).
+
+Every route takes the user from the verified Firebase token (ADR-14). POST /chat streams the
+agent's steps as Server-Sent Events while the turn runs.
+
+No `from __future__ import annotations` here: FastAPI resolves the route annotations at runtime,
+including the `User` dependency alias defined inside create_app.
+"""
+
+import logging
+import time
+import uuid
+from collections import defaultdict, deque
+from collections.abc import AsyncIterator, Mapping
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Annotated, Any
+
+from fastapi import Depends, FastAPI, Form, Header, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
+
+from mojo_picon.agents import AgentContext
+from mojo_picon.api.events import (
+    DIARY_TOOLS,
+    TOOL_LABELS,
+    DayUpdatedEvent,
+    ErrorEvent,
+    FinalEvent,
+    StepEvent,
+    TraceEvent,
+    sse,
+)
+from mojo_picon.auth import InvalidTokenError, TokenVerifier, UserContext, bearer_token
+from mojo_picon.domain import Food, Profile
+from mojo_picon.domain.diary import Session, SessionMessage
+from mojo_picon.guardrails.output import FEEDBACK_NAME
+from mojo_picon.observability import Tracer
+from mojo_picon.store.base import Store
+from mojo_picon.tools import diary
+from mojo_picon.tools.energy import MetActivity
+from mojo_picon.tools.food_search import FoodIndex
+
+log = logging.getLogger(__name__)
+SESSION_MESSAGES = 10  # recent messages kept between turns (summary of older ones: milestone 2)
+MAX_MESSAGE_CHARS = 2000
+RATE_LIMIT_PER_MINUTE = 30
+
+
+@dataclass
+class AppDeps:
+    verifier: TokenVerifier
+    store: Store
+    foods: Mapping[str, Food]
+    activities: Mapping[str, MetActivity]
+    graph: Any  # compiled LangGraph
+    tracer: Tracer
+    expert_brief: str = ""
+    brief_passages: Mapping[str, str] | None = None
+
+
+class RateLimiter:
+    """Requests per user per minute, in memory (one per instance; shared limit in milestone 2)."""
+
+    def __init__(self, per_minute: int):
+        self._per_minute = per_minute
+        self._hits: dict[str, deque[float]] = defaultdict(deque)
+
+    def check(self, key: str) -> None:
+        now = time.monotonic()
+        hits = self._hits[key]
+        while hits and now - hits[0] > 60:
+            hits.popleft()
+        if len(hits) >= self._per_minute:
+            raise HTTPException(status_code=429, detail="too many requests")
+        hits.append(now)
+
+
+def create_app(deps: AppDeps) -> FastAPI:
+    app = FastAPI(title="Mojo Picón API", version="0.1.0")
+    limiter = RateLimiter(RATE_LIMIT_PER_MINUTE)
+    index = FoodIndex(deps.foods)
+
+    async def current_user(authorization: Annotated[str | None, Header()] = None) -> UserContext:
+        try:
+            user = await deps.verifier.verify(bearer_token(authorization))
+        except InvalidTokenError as e:
+            raise HTTPException(status_code=401, detail="invalid or missing token") from e
+        limiter.check(user.uid)
+        profile = await deps.store.get_profile(user)
+        if profile and profile.timezone != user.timezone:
+            user = UserContext(uid=user.uid, roles=user.roles, timezone=profile.timezone)
+        return user
+
+    User = Annotated[UserContext, Depends(current_user)]
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/me/profile")
+    async def get_profile(user: User) -> Profile:
+        profile = await deps.store.get_profile(user)
+        if profile is None:
+            raise HTTPException(status_code=404, detail="no profile yet")
+        return profile
+
+    @app.put("/me/profile")
+    async def put_profile(user: User, profile: Profile) -> Profile:
+        return await diary.update_profile(user, deps.store, profile)
+
+    @app.get("/day")
+    async def get_day(user: User) -> dict:
+        try:
+            balance = await diary.get_day_balance(user, deps.store)
+        except diary.ProfileMissingError as e:
+            raise HTTPException(status_code=404, detail="no profile yet") from e
+        entries = await deps.store.list_entries(user, balance.day)
+        return {"balance": balance, "entries": [e.model_dump(mode="json") for e in entries]}
+
+    @app.post("/chat")
+    async def chat(
+        user: User,
+        message: Annotated[str, Form(max_length=MAX_MESSAGE_CHARS)],
+        session_id: Annotated[str | None, Form(pattern=r"^[A-Za-z0-9_-]{1,64}$")] = None,
+        photo: UploadFile | None = None,
+    ) -> StreamingResponse:
+        if photo is not None:
+            raise HTTPException(status_code=501, detail="photo analysis is not available yet")
+        session_id = session_id or uuid.uuid4().hex
+        profile = await deps.store.get_profile(user)
+        context = AgentContext(
+            user=user,
+            store=deps.store,
+            foods=deps.foods,
+            food_index=index,
+            activities=deps.activities,
+            profile=profile,
+            expert_brief=deps.expert_brief,
+            brief_passages=deps.brief_passages or {},
+        )
+        return StreamingResponse(
+            _run_turn(deps, context, session_id, message),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    return app
+
+
+async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text: str) -> AsyncIterator[str]:
+    user = context.user
+    session = await deps.store.get_session(user, session_id) or Session(id=session_id, updated_at=datetime.now(UTC))
+    history: list[BaseMessage] = [
+        HumanMessage(m.content) if m.role == "user" else AIMessage(m.content) for m in session.messages
+    ]
+    final_text = ""
+    diary_changed = False
+    derived = False
+    try:
+        async with deps.tracer.turn(user.uid, session_id, text) as trace:
+            config = {"callbacks": trace.callbacks}
+            graph_input = {"messages": [*history, HumanMessage(text)]}
+            async for update in deps.graph.astream(graph_input, context=context, config=config, stream_mode="updates"):
+                for node, change in update.items():
+                    if node == "input_guard" and (change or {}).get("guard_level") == "derivar":
+                        derived = True
+                    for event in _events_for(node, change or {}):
+                        yield sse(event)
+                    for m in (change or {}).get("messages", []):
+                        if isinstance(m, AIMessage) and not m.tool_calls:
+                            final_text = m.text
+                        if isinstance(m, ToolMessage) and m.name in DIARY_TOOLS and m.status != "error":
+                            diary_changed = True
+            if trace.url:
+                yield sse(TraceEvent(url=trace.url))
+    except Exception:
+        log.exception("turn failed")
+        yield sse(ErrorEvent(message="No he podido completar la respuesta. Inténtalo de nuevo."))
+        return
+
+    yield sse(FinalEvent(text=final_text, session_id=session_id))
+    if diary_changed:
+        yield sse(DayUpdatedEvent())
+    if derived:
+        # A risky question stays out of the history: the next turn's Coach must not answer it
+        # indirectly («¿y antes de correr?» after an insulin question).
+        return
+    messages = [*session.messages, SessionMessage(role="user", content=text)]
+    if final_text:
+        messages.append(SessionMessage(role="assistant", content=final_text))
+    await deps.store.save_session(
+        user, Session(id=session_id, messages=messages[-SESSION_MESSAGES:], updated_at=datetime.now(UTC))
+    )
+
+
+def _events_for(node: str, change: dict) -> list[StepEvent]:
+    events: list[StepEvent] = []
+    if node == "input_guard":
+        level = change.get("guard_level", "ok")
+        detail = {"ok": "sin señales de alarma", "aviso": "respuesta con aviso", "derivar": "derivación"}[level]
+        events.append(StepEvent(id="input_guard", label="Comprobación de seguridad", status="done", detail=detail))
+    for m in change.get("messages", []):
+        if isinstance(m, AIMessage) and m.tool_calls:
+            for call in m.tool_calls:
+                label = TOOL_LABELS.get(call["name"], call["name"])
+                events.append(StepEvent(id=call["id"], label=label, status="start"))
+        elif isinstance(m, ToolMessage):
+            status = "failed" if m.status == "error" else "done"
+            events.append(StepEvent(id=m.tool_call_id, label=TOOL_LABELS.get(m.name, m.name or ""), status=status))
+        elif isinstance(m, HumanMessage) and m.name == FEEDBACK_NAME:
+            events.append(
+                StepEvent(id=f"verify-{m.id}", label="Verificando cifras", status="failed", detail="corrigiendo")
+            )
+    return events

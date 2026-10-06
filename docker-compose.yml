@@ -1,0 +1,9 @@
+# Local development services. Firestore emulator for integration tests:
+#   docker compose up -d firestore
+#   FIRESTORE_EMULATOR_HOST=localhost:8080 uv run pytest -m integration
+services:
+  firestore:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud emulators firestore start --host-port=0.0.0.0:8080 --project=demo-mojo-picon
+    ports:
+      - "8080:8080"

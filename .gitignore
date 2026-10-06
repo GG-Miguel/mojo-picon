@@ -1,0 +1,36 @@
+# Secrets (never in the repository)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*credentials*.json
+*service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# Large datasets: downloaded by scripts, never committed
+data/raw/
+data/nutrition5k/
+*.pdf
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+*.swp

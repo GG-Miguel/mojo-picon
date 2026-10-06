@@ -1,0 +1,37 @@
+# Milestone 1: lint, tests and secret detection on every push and merge request.
+# Build and deploy to Cloud Run are added on milestone 1's deployment day (Infraestructura y CI-CD).
+stages: [lint, test]
+
+include:
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+variables:
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+  UV_LINK_MODE: copy
+
+default:
+  image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+  cache:
+    key:
+      files: [uv.lock]
+    paths: [.uv-cache]
+
+lint:
+  stage: lint
+  script:
+    - uv sync --frozen
+    - uv run ruff check .
+    - uv run ruff format --check .
+
+test:
+  stage: test
+  script:
+    - uv sync --frozen
+    - uv run pytest -m "not integration" --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+secret_detection:
+  stage: test
