@@ -1,7 +1,7 @@
 # lint and tests on every push and merge request; build and deploy to Cloud Run from main only.
 # Validate changes to this file in GitLab's Build → Pipeline editor before pushing (CONTRIBUTING).
 # secret-detection: in case the Secret Detection template uses its own stage (empty stages are ignored)
-stages: [lint, test, secret-detection, deploy]
+stages: [lint, test, secret-detection, deploy, release]
 
 include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -68,11 +68,29 @@ deploy:
     - gcloud builds submit --config deploy/cloudbuild.yaml
       --substitutions "_IMAGE=$IMAGE,_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY,_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN,_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID"
       --region "$GCP_REGION" --service-account "projects/$GCP_PROJECT_ID/serviceAccounts/$GCP_DEPLOY_SA"
+      --gcs-source-staging-dir "gs://$GCP_BUILD_BUCKET/source"
     - sed "s|\${IMAGE}|$IMAGE|" deploy/service.yaml > .ci_service.yaml
+    # Public access was granted once by scripts/bootstrap_gcp.sh; replace keeps it
     - gcloud run services replace .ci_service.yaml --region "$GCP_REGION"
-    # Public URL; access is controlled by the app (Firebase token on every route)
-    - gcloud run services add-iam-policy-binding mojo-picon --region "$GCP_REGION"
-      --member allUsers --role roles/run.invoker --quiet
     - gcloud run services describe mojo-picon --region "$GCP_REGION" --format 'value(status.url)'
   environment:
     name: production
+
+# A release tag (v0.1.0…) also tags its image, so the repository's cleanup policy keeps it and
+# any delivered version can be deployed again exactly (Directrices: Versiones y entregas).
+release-image:
+  stage: release
+  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d/ && $GCP_WIF_PROVIDER
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    IMAGE_REPO: $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/mojo-picon/app
+  script:
+    - echo "$GITLAB_OIDC_TOKEN" > .ci_oidc_token
+    - gcloud iam workload-identity-pools create-cred-config "$GCP_WIF_PROVIDER"
+      --service-account "$GCP_DEPLOY_SA" --credential-source-file .ci_oidc_token --output-file .ci_gcp_creds.json
+    - gcloud auth login --cred-file .ci_gcp_creds.json --quiet
+    - gcloud artifacts docker tags add "$IMAGE_REPO:$CI_COMMIT_SHORT_SHA" "$IMAGE_REPO:$CI_COMMIT_TAG"
