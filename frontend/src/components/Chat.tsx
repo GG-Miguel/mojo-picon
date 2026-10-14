@@ -154,7 +154,6 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
           ref={fileInput}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          capture="environment"
           onChange={pickPhoto}
           className="hidden"
         />
