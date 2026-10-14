@@ -25,6 +25,11 @@ Rules for working in this repository, for people and for the AI coding assistant
 - Requirements: green CI (lint, tests, secret detection; on `main`, also the evaluation), reviewed by the author if written by the assistant, specs and docs updated if behaviour changes.
 - Squash when merging work branches.
 
+## CI/CD changes
+
+- Validate every change to `.gitlab-ci.yml` in GitLab's **Build → Pipeline editor** before pushing: it checks the file, included templates too, without running anything. Valid YAML can still be an invalid pipeline.
+- Do not redefine jobs that come from GitLab templates (e.g. `secret_detection`) unless needed, and then with all their fields. The first pipeline failed with "yaml invalid" because of such a partial override.
+
 ## Secrets
 
 - Never in the repository: API keys, tokens, passwords, `.env`, service-account credentials.
