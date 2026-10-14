@@ -1,6 +1,7 @@
 # Milestone 1: lint, tests and secret detection on every push and merge request.
 # Build and deploy to Cloud Run are added on milestone 1's deployment day (Infraestructura y CI-CD).
-stages: [lint, test]
+# secret-detection: in case the Secret Detection template uses its own stage (empty stages are ignored)
+stages: [lint, test, secret-detection]
 
 include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -32,6 +33,3 @@ test:
     when: always
     reports:
       junit: report.xml
-
-secret_detection:
-  stage: test
