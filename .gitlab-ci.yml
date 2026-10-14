@@ -52,7 +52,7 @@ deploy:
   stage: deploy
   image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $GCP_WIF_PROVIDER
+    - if: $CI_COMMIT_BRANCH == "main" && $GCP_WIF_PROVIDER && $VITE_FIREBASE_API_KEY
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
@@ -65,7 +65,8 @@ deploy:
       --service-account "$GCP_DEPLOY_SA" --credential-source-file .ci_oidc_token --output-file .ci_gcp_creds.json
     - gcloud auth login --cred-file .ci_gcp_creds.json --quiet
     - gcloud config set project "$GCP_PROJECT_ID"
-    - gcloud builds submit --config deploy/cloudbuild.yaml --substitutions "_IMAGE=$IMAGE"
+    - gcloud builds submit --config deploy/cloudbuild.yaml
+      --substitutions "_IMAGE=$IMAGE,_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY,_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN,_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID"
       --region "$GCP_REGION" --service-account "projects/$GCP_PROJECT_ID/serviceAccounts/$GCP_DEPLOY_SA"
     - sed "s|\${IMAGE}|$IMAGE|" deploy/service.yaml > .ci_service.yaml
     - gcloud run services replace .ci_service.yaml --region "$GCP_REGION"
