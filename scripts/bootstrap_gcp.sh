@@ -3,8 +3,8 @@
 # Idempotent: every step checks or tolerates "already exists", so it can be run again safely.
 #
 # Least privilege (Module 4):
-#   - Cloud Run runs as mojo-run: Firestore, Vertex AI, Firebase Auth read, and only the two
-#     Langfuse secrets.
+#   - Cloud Run runs as mojo-run: Firestore, Vertex AI, Firebase Auth read, and only the
+#     Langfuse and Qdrant secrets.
 #   - GitLab CI deploys as gitlab-deploy through Workload Identity Federation (no keys), only
 #     from protected branches of GG-Miguel/mojo-picon. It can deploy new revisions (run.developer)
 #     but not change who can call the service; it writes only to this project's image repository
@@ -25,7 +25,7 @@ DEPLOY_SA="gitlab-deploy"
 POOL="gitlab"
 PROVIDER="gitlab-com"
 GITLAB_PROJECT="GG-Miguel/mojo-picon"
-SECRETS=(langfuse-public-key langfuse-secret-key)
+SECRETS=(langfuse-public-key langfuse-secret-key qdrant-api-key)
 PLACEHOLDER_IMAGE="us-docker.pkg.dev/cloudrun/container/hello" # Google's sample image
 
 run() { echo "+ $*"; "$@"; }
@@ -81,7 +81,7 @@ for role in roles/datastore.user roles/aiplatform.user roles/firebaseauth.viewer
     --role "$role" --condition None --quiet >/dev/null
 done
 
-# --- Langfuse secrets: created empty; the owner adds the values in the console -------------
+# --- Secrets (Langfuse, Qdrant): created empty; the owner adds the values in the console -------------
 for secret in "${SECRETS[@]}"; do
   exists gcloud secrets describe "$secret" --project "$PROJECT" ||
     run gcloud secrets create "$secret" --replication-policy user-managed --locations "$REGION" --project "$PROJECT"

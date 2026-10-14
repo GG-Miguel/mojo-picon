@@ -39,6 +39,7 @@ from mojo_picon.domain.diary import Session, SessionMessage
 from mojo_picon.guardrails.output import FEEDBACK_NAME
 from mojo_picon.llm import ModelProvider
 from mojo_picon.observability import Tracer
+from mojo_picon.rag.index import GuideSearch
 from mojo_picon.store.base import Store
 from mojo_picon.tools import diary
 from mojo_picon.tools.energy import MetActivity
@@ -63,6 +64,7 @@ class AppDeps:
     brief_passages: Mapping[str, str] | None = None
     frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
     models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
+    guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
 
 
 class RateLimiter:
@@ -151,6 +153,7 @@ def create_app(deps: AppDeps) -> FastAPI:
             profile=profile,
             expert_brief=deps.expert_brief,
             brief_passages=deps.brief_passages or {},
+            guides=deps.guides,
         )
         return StreamingResponse(
             _run_turn(deps, context, session_id, message, jpeg),

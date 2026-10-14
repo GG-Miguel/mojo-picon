@@ -72,6 +72,19 @@ class GeminiProvider:
         return self._cache[role]
 
 
+def gemini_embeddings(settings):
+    """gemini-embedding-2 on the same Vertex AI EU endpoint (RAG; ADR-04)."""
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    return GoogleGenerativeAIEmbeddings(
+        model=settings.embedding_model,
+        vertexai=True,
+        project=settings.gcp_project_id,
+        location=settings.vertex_location,
+        base_url=settings.vertex_endpoint,
+    )
+
+
 def ensure_not_blocked(message: AIMessage) -> AIMessage:
     """Raise SafetyBlockedError if Gemini's safety filters blocked this call (Guardrails spec)."""
     metadata = message.response_metadata or {}

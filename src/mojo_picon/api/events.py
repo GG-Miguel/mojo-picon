@@ -59,6 +59,7 @@ TOOL_LABELS = {
     "log_activity": "Registrando la actividad",
     "get_day_balance": "Calculando el balance del día",
     "per_kg_target": "Calculando la cantidad para tu peso",
+    "search_guides": "Consultando las guías",
     "plan_rest_of_day": "Planificando y verificando",
 }
 DIARY_TOOLS = {"log_meal", "log_activity"}

@@ -23,6 +23,9 @@ class Settings:
     vertex_location: str = "eu"
     vertex_endpoint: str = "https://aiplatform.eu.rep.googleapis.com"
     gemini_model: str = "gemini-3.8-flash"
+    embedding_model: str = "gemini-embedding-2"
+    qdrant_url: str = ""  # guideline index (RAG); empty: the Coach works with the expert brief only
+    qdrant_api_key: str = field(default="", repr=False)  # secret: Secret Manager / local .env
     store: str = "firestore"  # firestore | memory (development only)
     frontend_dir: str = ""  # compiled React app served by the API (set in the container image)
     langfuse_enabled: bool = False
@@ -44,6 +47,9 @@ class Settings:
             vertex_location=env.get("VERTEX_LOCATION", defaults.vertex_location),
             vertex_endpoint=env.get("VERTEX_ENDPOINT", defaults.vertex_endpoint),
             gemini_model=env.get("GEMINI_MODEL", defaults.gemini_model),
+            embedding_model=env.get("EMBEDDING_MODEL", defaults.embedding_model),
+            qdrant_url=env.get("QDRANT_URL", defaults.qdrant_url),
+            qdrant_api_key=env.get("QDRANT_API_KEY", defaults.qdrant_api_key),
             store=env.get("STORE", defaults.store),
             frontend_dir=env.get("FRONTEND_DIR", defaults.frontend_dir),
             langfuse_enabled=bool(env.get("LANGFUSE_PUBLIC_KEY") and env.get("LANGFUSE_SECRET_KEY")),
