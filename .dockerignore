@@ -1,0 +1,18 @@
+# Only what the image needs: no secrets, environments, caches, tests or raw data
+.git
+.gitlab
+.venv
+**/__pycache__
+.*_cache
+.env
+.env.*
+!.env.example
+*.key
+*credentials*.json
+frontend/node_modules
+frontend/dist
+frontend/.env
+frontend/.env.*
+data/raw
+tests
+docker-compose.yml

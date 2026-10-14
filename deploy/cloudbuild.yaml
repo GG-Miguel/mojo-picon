@@ -1,0 +1,7 @@
+# Image build on Cloud Build, run by GitLab CI as the deploy service account (no Docker-in-Docker).
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: [build, --tag, $_IMAGE, .]
+images: [$_IMAGE]
+options:
+  logging: CLOUD_LOGGING_ONLY # required when the build runs as a user-specified service account

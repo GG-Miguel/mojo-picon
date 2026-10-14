@@ -34,3 +34,4 @@ data/nutrition5k/
 .vscode/
 .DS_Store
 *.swp
+.ci_*

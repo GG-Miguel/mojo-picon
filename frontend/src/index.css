@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-picon: #c0262d; /* mojo picón: red */
+  --color-cilantro: #2f7d32; /* mojo verde */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

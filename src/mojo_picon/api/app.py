@@ -14,10 +14,12 @@ from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Form, Header, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 
 from mojo_picon.agents import AgentContext
@@ -57,6 +59,7 @@ class AppDeps:
     tracer: Tracer
     expert_brief: str = ""
     brief_passages: Mapping[str, str] | None = None
+    frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
 
 
 class RateLimiter:
@@ -116,7 +119,7 @@ def create_app(deps: AppDeps) -> FastAPI:
         except diary.ProfileMissingError as e:
             raise HTTPException(status_code=404, detail="no profile yet") from e
         entries = await deps.store.list_entries(user, balance.day)
-        return {"balance": balance, "entries": [e.model_dump(mode="json") for e in entries]}
+        return {"balance": balance, "entries": [_with_names(e, deps) for e in entries]}
 
     @app.post("/chat")
     async def chat(
@@ -145,7 +148,23 @@ def create_app(deps: AppDeps) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    if deps.frontend_dir is not None:
+        # The compiled React app, served by the same container (registered last: API routes win)
+        app.mount("/", StaticFiles(directory=deps.frontend_dir, html=True), name="frontend")
     return app
+
+
+def _with_names(entry, deps: AppDeps) -> dict:
+    """Diary entry for the web, with food and activity names next to their ids."""
+    data = entry.model_dump(mode="json")
+    if data["kind"] == "meal":
+        for item in data["items"]:
+            food = deps.foods.get(item["food_id"])
+            item["name"] = food.name if food else item["food_id"]
+    else:
+        activity = deps.activities.get(data["activity_id"])
+        data["name"] = activity.name if activity else data["activity_id"]
+    return data
 
 
 async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text: str) -> AsyncIterator[str]:
