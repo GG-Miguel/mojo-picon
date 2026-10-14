@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Added
+- Meal photos (UC-03): the vision extractor (Gemini, structured output) returns foods with gram ranges, confidence and questions; the photo is cleaned in memory (EXIF and GPS removed, resized) and never stored; only the result goes to the Coach, as data. Photo upload in the web chat.
+- `scripts/seed_demo_user.py`: demo profile and breakfast for the demo account.
 - Web app (React, Vite, TypeScript, Tailwind): chat with live agent steps, day panel, profile form, Firebase login, AI notice; served by the API from the same image.
 - `GET /day` entries carry food and activity names.
 - Dockerfile (multi-stage, non-root), Cloud Run service config, Cloud Build config, GCP bootstrap script with Workload Identity Federation, CI jobs for the frontend and the deploy from `main`.

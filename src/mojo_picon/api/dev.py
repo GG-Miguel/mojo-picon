@@ -37,13 +37,15 @@ class DevTokenVerifier:
 def build_dev_app(settings: Settings):
     require_development(settings, "The development API")
     foods = load_foods()
+    models = GeminiProvider.from_settings(settings)
     brief, passages = load_expert_brief()
     deps = AppDeps(
         verifier=DevTokenVerifier(settings.api_dev_tokens),
         store=dev_store(settings, set(settings.api_dev_tokens.values())),
         foods=foods,
         activities=load_met_table(),
-        graph=build_graph(GeminiProvider.from_settings(settings), foods),
+        graph=build_graph(models, foods),
+        models=models,
         tracer=tracer_from_settings(settings),
         expert_brief=brief,
         brief_passages=passages,

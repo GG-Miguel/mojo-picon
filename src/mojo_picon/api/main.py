@@ -22,13 +22,15 @@ from mojo_picon.tools.foods import load_foods
 
 def build_app(settings: Settings):
     foods = load_foods()
+    models = GeminiProvider.from_settings(settings)
     brief, passages = load_expert_brief()
     deps = AppDeps(
         verifier=FirebaseTokenVerifier(project_id=settings.gcp_project_id),
         store=FirestoreStore.connect(project_id=settings.gcp_project_id, database=settings.firestore_database),
         foods=foods,
         activities=load_met_table(),
-        graph=build_graph(GeminiProvider.from_settings(settings), foods),
+        graph=build_graph(models, foods),
+        models=models,
         tracer=tracer_from_settings(settings),
         expert_brief=brief,
         brief_passages=passages,

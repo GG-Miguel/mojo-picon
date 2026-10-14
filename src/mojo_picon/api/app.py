@@ -37,11 +37,13 @@ from mojo_picon.auth import InvalidTokenError, TokenVerifier, UserContext, beare
 from mojo_picon.domain import Food, Profile
 from mojo_picon.domain.diary import Session, SessionMessage
 from mojo_picon.guardrails.output import FEEDBACK_NAME
+from mojo_picon.llm import ModelProvider
 from mojo_picon.observability import Tracer
 from mojo_picon.store.base import Store
 from mojo_picon.tools import diary
 from mojo_picon.tools.energy import MetActivity
 from mojo_picon.tools.food_search import FoodIndex
+from mojo_picon.vision.extractor import MAX_BYTES, InvalidImageError, extract, prepare_image, summarise
 
 log = logging.getLogger(__name__)
 SESSION_MESSAGES = 10  # recent messages kept between turns (summary of older ones: milestone 2)
@@ -60,6 +62,7 @@ class AppDeps:
     expert_brief: str = ""
     brief_passages: Mapping[str, str] | None = None
     frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
+    models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
 
 
 class RateLimiter:
@@ -128,8 +131,15 @@ def create_app(deps: AppDeps) -> FastAPI:
         session_id: Annotated[str | None, Form(pattern=r"^[A-Za-z0-9_-]{1,64}$")] = None,
         photo: UploadFile | None = None,
     ) -> StreamingResponse:
+        jpeg = None
         if photo is not None:
-            raise HTTPException(status_code=501, detail="photo analysis is not available yet")
+            if deps.models is None:
+                raise HTTPException(status_code=501, detail="photo analysis is not available")
+            try:
+                # Cleaned in memory (EXIF and GPS removed) and never stored (Análisis de fotos)
+                jpeg = prepare_image(await photo.read(MAX_BYTES + 1))
+            except InvalidImageError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
         session_id = session_id or uuid.uuid4().hex
         profile = await deps.store.get_profile(user)
         context = AgentContext(
@@ -143,7 +153,7 @@ def create_app(deps: AppDeps) -> FastAPI:
             brief_passages=deps.brief_passages or {},
         )
         return StreamingResponse(
-            _run_turn(deps, context, session_id, message),
+            _run_turn(deps, context, session_id, message, jpeg),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
@@ -167,8 +177,23 @@ def _with_names(entry, deps: AppDeps) -> dict:
     return data
 
 
-async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text: str) -> AsyncIterator[str]:
+async def _run_turn(
+    deps: AppDeps, context: AgentContext, session_id: str, text: str, jpeg: bytes | None = None
+) -> AsyncIterator[str]:
     user = context.user
+    if jpeg is not None:
+        # The vision extractor runs before the graph; only its structured result goes on, as data.
+        yield sse(StepEvent(id="vision", label="Analizando la foto", status="start"))
+        try:
+            summary = summarise(await extract(deps.models, jpeg), context.food_index)
+        except Exception:
+            log.exception("vision failed")
+            yield sse(StepEvent(id="vision", label="Analizando la foto", status="failed"))
+            yield sse(ErrorEvent(message="No he podido analizar la foto. Descríbeme qué has comido."))
+        else:
+            yield sse(StepEvent(id="vision", label="Analizando la foto", status="done", detail=summary.label))
+            text = f"{text}\n\n{summary.text}"
+        jpeg = None  # drop the image as soon as it has been analysed
     session = await deps.store.get_session(user, session_id) or Session(id=session_id, updated_at=datetime.now(UTC))
     history: list[BaseMessage] = [
         HumanMessage(m.content) if m.role == "user" else AIMessage(m.content) for m in session.messages

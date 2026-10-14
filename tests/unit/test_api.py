@@ -147,7 +147,7 @@ async def test_unsafe_session_ids_are_rejected(session_id):
     assert response.status_code == 422
 
 
-async def test_photo_is_not_available_yet():
+async def test_photo_without_vision_model_is_rejected():
     client, _ = await make_client(FakeProvider())
     async with client:
         response = await client.post(

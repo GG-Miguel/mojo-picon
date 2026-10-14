@@ -36,10 +36,12 @@ export async function streamChat(
   message: string,
   sessionId: string | null,
   onEvent: (event: ChatEvent) => void,
+  photo: File | null = null,
 ): Promise<void> {
   const form = new FormData()
   form.append('message', message)
   if (sessionId) form.append('session_id', sessionId)
+  if (photo) form.append('photo', photo)
   const response = await fetch('/chat', {
     method: 'POST',
     body: form,
