@@ -183,8 +183,9 @@ def parse_number(text: str) -> float:
 
 def split_sentences(text: str) -> list[str]:
     text = re.sub(r"^\s*(?:[-*]|\d+[.)])\s+", "", text, flags=re.MULTILINE)  # list markers ("1. ", "- ")
-    # Split on . ! ? or newlines, but not on decimal points ("1.5") or thousands ("1.400").
-    parts = re.split(r"(?<=[.!?])(?!\d)\s+|\n+", text)
+    # Split on . ! ? or newlines, but not on decimal points ("1.5"), thousands ("1.400") or inside a
+    # citation tag ("[EFSA DRV 2017, p. 21]").
+    parts = re.split(r"(?<=[.!?])(?!\d)(?![^\[\]\n]*\])\s+|\n+", text)
     return [p for p in (s.strip() for s in parts) if p]
 
 

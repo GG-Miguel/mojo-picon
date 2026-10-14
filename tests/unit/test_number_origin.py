@@ -11,6 +11,7 @@ from mojo_picon.guardrails.number_origin import (
     extract_quantities,
     index_brief,
     parse_number,
+    split_sentences,
 )
 from mojo_picon.tools.energy import per_kg_target
 
@@ -174,3 +175,10 @@ def test_unsourced_figures_that_used_to_slip_through(answer):
 def test_counts_and_profile_facts_without_unit_are_still_fine():
     sources = TurnSources(profile={"age": 34})
     assert check_numbers("Has hecho 3 comidas y tienes 34 años.", sources) == []
+
+
+def test_a_citation_with_a_page_is_not_split_into_two_sentences():
+    passage = {"EFSA DRV 2017, p. 21": "Water: adequate intake 2.5 L/day for adult men."}
+    answer = "La EFSA da 2,5 L al día para hombres adultos [EFSA DRV 2017, p. 21]. Bebe a lo largo del día."
+    assert split_sentences(answer)[0].endswith("[EFSA DRV 2017, p. 21].")
+    assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passage)) == []
