@@ -196,3 +196,62 @@ async def test_without_an_index_the_tool_says_so(context):  # noqa: F811
 @pytest.mark.parametrize("query", ["", "   "])
 def test_empty_queries_have_no_sparse_terms(query):
     assert sparse.query_vector(query) == ([], [])
+
+
+# --- sources shown under the answer -------------------------------------------------------
+
+
+def test_only_the_cited_documents_are_listed_as_sources():
+    import json
+
+    from mojo_picon.api.app import _cited_sources, _passage_documents
+
+    result = json.dumps(
+        {
+            "pasajes": [
+                {"etiqueta": "EFSA DRV 2017, p. 21", "documento": "DRVs", "url": "https://efsa", "texto": "x"},
+                {"etiqueta": "EFSA DRV 2017, p. 23", "documento": "DRVs", "url": "https://efsa", "texto": "y"},
+                {"etiqueta": "ISSN cafeína 2021, §3", "documento": "Caffeine", "url": "https://issn", "texto": "z"},
+            ]
+        }
+    )
+    retrieved = _passage_documents(result)
+    [source] = _cited_sources("Bebe 2,5 L al día [EFSA DRV 2017, p. 21].", retrieved)
+    assert (source.title, source.url, source.tags) == ("DRVs", "https://efsa", ["EFSA DRV 2017, p. 21"])
+    [whole] = _cited_sources("Según la EFSA [EFSA DRV 2017].", retrieved)  # a document-level citation
+    assert whole.tags == ["EFSA DRV 2017, p. 21", "EFSA DRV 2017, p. 23"]
+    assert _cited_sources("Sin citas.", retrieved) == []
+    assert _passage_documents("no es JSON") == {}
+
+
+async def test_parallel_searches_stream_and_cite_through_the_api():
+    import httpx
+    from tests.unit.test_api import ANA, FakeVerifier, events
+
+    from mojo_picon.agents import build_graph as build
+    from mojo_picon.api.app import AppDeps, create_app
+    from mojo_picon.auth import UserContext
+    from mojo_picon.domain import Profile, Sex
+    from mojo_picon.observability import NullTracer
+    from mojo_picon.store import InMemoryStore
+    from mojo_picon.tools.energy import load_met_table
+
+    two_searches = AIMessage(
+        "",
+        tool_calls=[
+            {"name": "search_guides", "args": {"query": "caffeine"}, "id": "g1"},
+            {"name": "search_guides", "args": {"query": "water"}, "id": "g2"},
+        ],
+    )
+    models = FakeProvider(guardian=[OK], coach=[two_searches, AIMessage("Bebe 2,5 L al día [EFSA DRV 2017, p. 21].")])
+    store = InMemoryStore()
+    await store.save_profile(UserContext(uid="ana"), Profile(age=34, sex=Sex.MALE, weight_kg=70, height_cm=175))
+    deps = AppDeps(
+        verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),
+        graph=build(models, FOODS), tracer=NullTracer(), guides=FakeGuides(),
+    )  # fmt: skip
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(deps)), base_url="http://t") as client:
+        stream = events(await client.post("/chat", headers=ANA, data={"message": "¿Cafeína y agua?"}))
+    assert not [e for e in stream if e["type"] == "error"]
+    final = next(e for e in stream if e["type"] == "final")
+    assert final["sources"] == [{"title": "DRVs", "url": "u", "tags": ["EFSA DRV 2017, p. 21"]}]

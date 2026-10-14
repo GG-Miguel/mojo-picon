@@ -7,6 +7,7 @@ No `from __future__ import annotations` here: FastAPI resolves the route annotat
 including the `User` dependency alias defined inside create_app.
 """
 
+import json
 import logging
 import time
 import uuid
@@ -29,6 +30,7 @@ from mojo_picon.api.events import (
     DayUpdatedEvent,
     ErrorEvent,
     FinalEvent,
+    SourceRef,
     StepEvent,
     TraceEvent,
     sse,
@@ -36,7 +38,8 @@ from mojo_picon.api.events import (
 from mojo_picon.auth import InvalidTokenError, TokenVerifier, UserContext, bearer_token
 from mojo_picon.domain import Food, Profile
 from mojo_picon.domain.diary import Session, SessionMessage
-from mojo_picon.guardrails.output import FEEDBACK_NAME
+from mojo_picon.guardrails.number_origin import citations
+from mojo_picon.guardrails.output import FEEDBACK_NAME, RETRIEVAL_TOOL
 from mojo_picon.llm import ModelProvider
 from mojo_picon.observability import Tracer
 from mojo_picon.rag.index import GuideSearch
@@ -202,6 +205,7 @@ async def _run_turn(
         HumanMessage(m.content) if m.role == "user" else AIMessage(m.content) for m in session.messages
     ]
     final_text = ""
+    retrieved: dict[str, tuple[str, str]] = {}  # passage tag -> (document title, url)
     diary_changed = False
     derived = False
     try:
@@ -209,16 +213,18 @@ async def _run_turn(
             config = {"callbacks": trace.callbacks}
             graph_input = {"messages": [*history, HumanMessage(text)]}
             async for update in deps.graph.astream(graph_input, context=context, config=config, stream_mode="updates"):
-                for node, change in update.items():
-                    if node == "input_guard" and (change or {}).get("guard_level") == "derivar":
+                for node, change in _node_changes(update):
+                    if node == "input_guard" and change.get("guard_level") == "derivar":
                         derived = True
-                    for event in _events_for(node, change or {}):
+                    for event in _events_for(node, change):
                         yield sse(event)
-                    for m in (change or {}).get("messages", []):
+                    for m in change.get("messages", []):
                         if isinstance(m, AIMessage) and not m.tool_calls:
                             final_text = m.text
                         if isinstance(m, ToolMessage) and m.name in DIARY_TOOLS and m.status != "error":
                             diary_changed = True
+                        if isinstance(m, ToolMessage) and m.name == RETRIEVAL_TOOL and m.status != "error":
+                            retrieved.update(_passage_documents(m.text))
             if trace.url:
                 yield sse(TraceEvent(url=trace.url))
     except Exception:
@@ -226,7 +232,7 @@ async def _run_turn(
         yield sse(ErrorEvent(message="No he podido completar la respuesta. Inténtalo de nuevo."))
         return
 
-    yield sse(FinalEvent(text=final_text, session_id=session_id))
+    yield sse(FinalEvent(text=final_text, session_id=session_id, sources=_cited_sources(final_text, retrieved)))
     if diary_changed:
         yield sse(DayUpdatedEvent())
     if derived:
@@ -239,6 +245,37 @@ async def _run_turn(
     await deps.store.save_session(
         user, Session(id=session_id, messages=messages[-SESSION_MESSAGES:], updated_at=datetime.now(UTC))
     )
+
+
+def _node_changes(update: dict) -> list[tuple[str, dict]]:
+    """(node, change) pairs of a streamed update. A node's change is usually a dict, but the tool
+    node gives a list when several tools return a Command in the same step (parallel searches)."""
+    pairs: list[tuple[str, dict]] = []
+    for node, change in update.items():
+        for item in change if isinstance(change, list) else [change]:
+            if isinstance(item, dict):
+                pairs.append((node, item))
+    return pairs
+
+
+def _passage_documents(tool_result: str) -> dict[str, tuple[str, str]]:
+    try:
+        passages = json.loads(tool_result).get("pasajes", [])
+    except (ValueError, AttributeError):
+        return {}
+    return {p["etiqueta"]: (p.get("documento", ""), p.get("url", "")) for p in passages if "etiqueta" in p}
+
+
+def _cited_sources(answer: str, retrieved: dict[str, tuple[str, str]]) -> list[SourceRef]:
+    """Documents of the retrieved passages that the answer actually cites ("[EFSA DRV 2017]" cites
+    every passage of that document; tags are compared like the output guardian does)."""
+    cited = citations(answer)
+    documents: dict[tuple[str, str], list[str]] = {}
+    for tag, document in retrieved.items():
+        norm = " ".join(tag.split()).lower()
+        if any(norm == c or norm.startswith(c + ",") or norm.startswith(c + " ") for c in cited):
+            documents.setdefault(document, []).append(tag)
+    return [SourceRef(title=title, url=url, tags=tags) for (title, url), tags in documents.items()]
 
 
 def _events_for(node: str, change: dict) -> list[StepEvent]:

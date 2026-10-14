@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { streamChat } from '../lib/api'
-import type { StepEvent } from '../lib/types'
+import type { SourceRef, StepEvent } from '../lib/types'
 import { RichText } from './RichText'
 
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024 // same limit as the API
@@ -10,6 +10,7 @@ type Turn = {
   photo?: string // object URL of the photo, only for this page (never stored)
   steps: StepEvent[]
   answer?: string
+  sources?: SourceRef[]
   trace?: string
   error?: string
 }
@@ -59,7 +60,7 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
             })
           } else if (e.type === 'final') {
             sessionId.current = e.session_id
-            update((t) => ({ ...t, answer: e.text }))
+            update((t) => ({ ...t, answer: e.text, sources: e.sources }))
           } else if (e.type === 'trace') {
             update((t) => ({ ...t, trace: e.url }))
           } else if (e.type === 'day_updated') {
@@ -110,6 +111,7 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
             {turn.answer !== undefined && (
               <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-white px-4 py-3 shadow-sm">
                 <RichText text={turn.answer} />
+                {turn.sources && turn.sources.length > 0 && <Sources sources={turn.sources} />}
                 {turn.trace && (
                   <a
                     className="mt-2 block text-xs text-stone-400 underline"
@@ -181,6 +183,28 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
         </button>
       </form>
     </section>
+  )
+}
+
+function Sources({ sources }: { sources: SourceRef[] }) {
+  return (
+    <div className="mt-3 border-t border-stone-100 pt-2 text-xs text-stone-500">
+      <p className="font-medium">Fuentes</p>
+      <ul className="mt-1 space-y-1">
+        {sources.map((s) => (
+          <li key={s.url + s.title}>
+            {/^https:\/\//.test(s.url) ? (
+              <a className="underline" href={s.url} target="_blank" rel="noreferrer">
+                {s.title}
+              </a>
+            ) : (
+              s.title
+            )}
+            <span className="text-stone-400"> · {s.tags.join(' · ')}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
