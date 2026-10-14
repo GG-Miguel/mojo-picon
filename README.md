@@ -25,6 +25,8 @@ Early development (milestone 1, demo v0.1). Implemented so far:
 | `auth/` · `store/` | Firebase ID token verification → `UserContext`; data access scoped to the context's uid (Firestore and in-memory) |
 | `agents/` · `guardrails/` · `llm.py` | LangGraph turn graph: input guardian (rules + LLM classifier, fixed answers without LLM), Coach (ReAct, 12-step limit), Planner subgraph (propose → `verify_plan` → correct, max. 3), output guardian (numbers with origin, warning, forbidden advice); `get_model(role)` with Gemini on Vertex AI |
 | `api/` · `observability.py` | FastAPI: `POST /chat` (Server-Sent Events with the agent's steps), `GET /day`, `GET/PUT /me/profile`; Firebase token, rate limit, sessions; Langfuse traces when its keys are set |
+| `frontend/` | React + Vite + TypeScript + Tailwind: chat with the agent's steps (SSE), day panel, profile form, Firebase login |
+| `Dockerfile` · `deploy/` · `scripts/bootstrap_gcp.sh` | One image (API + built frontend) on Cloud Run `europe-west1`; Cloud Build and Workload Identity Federation from GitLab CI |
 | `mcp_server/` | MCP server (FastMCP, Streamable HTTP) over the same tools: only deterministic tools (ADR-21), personal tokens stored as hashes, user taken from the token |
 | `tools/foods.py` + `data/` | Curated food table (202 foods: CIQUAL, 6 from BEDCA, recipes and approximations), build script and validation |
 
@@ -38,6 +40,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run pre-commit install   # ruff + gitleaks before each commit
 API_DEV_TOKENS="dev-token-ana:ana" uv run uvicorn mojo_picon.api.dev:app --port 8080   # API with real Gemini, dev tokens, in-memory data
+(cd frontend && npm ci && VITE_DEV_TOKEN=dev-token-ana npx vite)   # web at http://localhost:5173 (proxies the API on :8080)
 MCP_DEV_TOKENS="dev-token-ana:ana" uv run python -m mojo_picon.mcp_server   # local MCP server at http://localhost:8000/mcp
 docker compose up -d firestore   # Firestore emulator for integration tests
 FIRESTORE_EMULATOR_HOST=localhost:8080 uv run pytest -m integration

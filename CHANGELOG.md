@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Added
+- Web app (React, Vite, TypeScript, Tailwind): chat with live agent steps, day panel, profile form, Firebase login, AI notice; served by the API from the same image.
+- `GET /day` entries carry food and activity names.
+- Dockerfile (multi-stage, non-root), Cloud Run service config, Cloud Build config, GCP bootstrap script with Workload Identity Federation, CI jobs for the frontend and the deploy from `main`.
 - Project scaffold: uv, ruff, pytest, pre-commit with gitleaks, merge request template.
 - Domain models: profile, food, nutrients, plan, macro targets.
 - Energy tools: BMR, TDEE, daily target, net training energy (MET), per-kg amounts.

@@ -6,6 +6,8 @@ Gemini through the Vertex AI EU endpoint, Langfuse if its keys are set.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from mojo_picon.agents import build_graph
 from mojo_picon.agents.knowledge import load_expert_brief
 from mojo_picon.api.app import AppDeps, create_app
@@ -30,6 +32,7 @@ def build_app(settings: Settings):
         tracer=tracer_from_settings(settings),
         expert_brief=brief,
         brief_passages=passages,
+        frontend_dir=Path(settings.frontend_dir) if settings.frontend_dir else None,
     )
     return create_app(deps)
 
