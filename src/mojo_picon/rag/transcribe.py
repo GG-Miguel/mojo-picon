@@ -12,8 +12,6 @@ import asyncio
 import io
 import re
 
-from pypdf import PdfReader, PdfWriter
-
 PROMPT = (
     "Transcribe this PDF page to Markdown. Keep headings, lists and tables (as Markdown tables). "
     "Do not summarise, translate, add or change anything; copy every number exactly. "
@@ -23,6 +21,8 @@ _NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
 
 
 def split_pages(pdf: bytes) -> list[bytes]:
+    from pypdf import PdfReader, PdfWriter  # ingestion only: the "data" dependency group
+
     reader = PdfReader(io.BytesIO(pdf))
     pages = []
     for page in reader.pages:
@@ -35,6 +35,8 @@ def split_pages(pdf: bytes) -> list[bytes]:
 
 
 def page_texts(pdf: bytes) -> list[str]:
+    from pypdf import PdfReader  # ingestion only: the "data" dependency group
+
     return [page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages]
 
 

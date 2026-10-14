@@ -1,8 +1,8 @@
 """Rebuild the guideline index in Qdrant from data/guides.json (RAG: Ingesta; idempotent).
 
     uv run python scripts/fetch_guides.py          # once: downloads the corpus
-    uv run python scripts/ingest_rag.py --dry-run  # parse, transcribe and chunk; writes the report
-    QDRANT_URL=... QDRANT_API_KEY=... uv run python scripts/ingest_rag.py
+    uv run --group data python scripts/ingest_rag.py --dry-run  # parse, transcribe, chunk; report
+    QDRANT_URL=... QDRANT_API_KEY=... uv run --group data python scripts/ingest_rag.py
 
 PDF pages are transcribed with Gemini once and cached next to the PDF (<id>.pages.json, git-ignored);
 --retranscribe forces it again. The report (data/guides_report.md) lists the chunks per document
