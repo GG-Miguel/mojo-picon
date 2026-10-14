@@ -34,6 +34,8 @@ Each decision has: context, decision, discarded alternatives, consequences and *
 - **Decision:** Gemini 3.8 Flash (Vertex AI, EU) for agents and vision; Claude Sonnet 5.5 as the **G-Eval** model (judge, ADR-13); in milestone 3, a cheaper model for the guardian and an open fallback model in LiteLLM.
 - **Why:** Gemini is multimodal, cheap and native to GCP (no keys to manage on Cloud Run). The judge belongs to **another model family** to reduce self-evaluation bias.
 - **Endpoint** (checked 2026-10-12): `gemini-3.8-flash` is not served on the `europe-west1`/`europe-west4` regional endpoints (Gemini 2.5 only), but it is on the **Vertex AI EU multi-region endpoint** (`aiplatform.eu.rep.googleapis.com`, location `eu`), which keeps data in the EU; that one is used. The `global` endpoint is discarded (no EU processing guarantee, Principle #8). Fallback: `gemini-2.5-flash` on `europe-west1`.
+- **Plan B in use when needed** (2026-10-14): that day the EU endpoint took 60–130 s per `gemini-3.8-flash` call, or did not answer, while `gemini-2.5-flash` on `europe-west1` answered in about 2 s (agent turns of 4–9 s, with retrieval and citations). The switch is configuration only (`VERTEX_LOCATION`, `VERTEX_ENDPOINT`, `GEMINI_MODEL`), with EU residency kept either way. Embeddings stay on the EU endpoint (`EMBEDDING_*`), because the index was built with `gemini-embedding-2`. Every Gemini call has a timeout and one retry.
+- **Plan B expires** (checked 2026-10-14): `gemini-2.5-flash` is **retired on 2026-10-20**, so it only covers the demo of 15 Oct. No Gemini 3.x model is served on a single European region: all of them are on the EU multi-region endpoint, which was also slow that day for `gemini-3.5-flash` (504 errors, turns of 30–45 s). After 20 Oct, the protection against a slow endpoint is a fallback to another provider through the AI gateway (LiteLLM, milestone 3), which should be brought forward.
 - **Evidence:** table of model per agent with quality, cost and latency; comparison of two vision models with 20 photos.
 
 ## ADR-05
@@ -57,6 +59,13 @@ Each decision has: context, decision, discarded alternatives, consequences and *
 - **Why:** the agent decides when to search and rewrites the query; hybrid search usually wins with technical terms.
 - **Scope** (2026-10-12): **supporting** retrieval; cross-cutting knowledge goes in the expert brief (ADR-23). Engine: Qdrant (ADR-22).
 - **Evidence:** recall@k of 3–4 configurations.
+- **Implementation** (2026-10-14):
+  - **Corpus** (`data/guides.json`, 9 documents, licence per document): WHO fact sheets on healthy diet and physical activity, WHO physical activity guidelines 2020, EFSA DRV summary report 2017, AESAN 2022, and four ISSN position stands (protein, nutrient timing, caffeine, sports nutrition review). Downloaded by `scripts/fetch_guides.py`, never committed.
+  - **Parsing that keeps tables:** PDF pages are transcribed to Markdown by Gemini (EU endpoint; public documents only). Each number of the transcription is checked against pypdf's text of the same page, and the differences are listed in `data/guides_report.md` for manual review. ISSN articles come from Europe PMC's JATS XML, and WHO fact sheets from their HTML article.
+  - **Chunks:** up to about 600 tokens, split at paragraphs, tables never split. Citation tag "<document tag>, <page or section>" (e.g. "EFSA DRV 2017, p. 21"), the same format as the expert brief.
+  - **Search:** dense `gemini-embedding-2` plus sparse BM25 (computed in Python, IDF in Qdrant), fused with RRF, top 4.
+  - **Agent:** the `search_guides` tool adds the passages to the turn's `sources`. A passage is a valid origin for a number only when it is **cited in the same sentence**; it never counts as a tool result.
+  - **No index configured:** the Coach works with the brief only.
 
 ## ADR-09
 **Firestore instead of Supabase/Postgres with RLS**

@@ -21,6 +21,9 @@ from mojo_picon.guardrails.responses import DEFAULT_REFERRAL, NO_RELIABLE_FIGURE
 from mojo_picon.tools.foods import normalize
 
 FEEDBACK_NAME = "output_guard"  # feedback messages to the Coach are HumanMessages with this name
+# Retrieved passages count only when cited (state["sources"]), never as tool results: otherwise any
+# number of a passage would pass without its citation (ADR-19).
+RETRIEVAL_TOOL = "search_guides"
 MAX_REGENERATIONS = 1
 _DRUGS = (
     r"(insulina|metformina|medicamentos?|medicacion|farmacos?|pastillas?|antibioticos?|anticoagulantes?"
@@ -58,7 +61,7 @@ async def output_guard(state: dict, runtime: Runtime) -> dict:
     turn = turn_messages(messages)
     profile = runtime.context.profile
     sources = TurnSources(
-        tool_results=[m.text for m in turn if isinstance(m, ToolMessage)],
+        tool_results=[m.text for m in turn if isinstance(m, ToolMessage) and m.name != RETRIEVAL_TOOL],
         profile=profile.model_dump(mode="json") if profile else {},
         user_message=turn[0].text if turn else "",
         passages={**runtime.context.brief_passages, **state.get("sources", {})},

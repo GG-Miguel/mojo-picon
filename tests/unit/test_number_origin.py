@@ -11,6 +11,7 @@ from mojo_picon.guardrails.number_origin import (
     extract_quantities,
     index_brief,
     parse_number,
+    split_sentences,
 )
 from mojo_picon.tools.energy import per_kg_target
 
@@ -174,3 +175,24 @@ def test_unsourced_figures_that_used_to_slip_through(answer):
 def test_counts_and_profile_facts_without_unit_are_still_fine():
     sources = TurnSources(profile={"age": 34})
     assert check_numbers("Has hecho 3 comidas y tienes 34 años.", sources) == []
+
+
+def test_a_citation_with_a_page_is_not_split_into_two_sentences():
+    passage = {"EFSA DRV 2017, p. 21": "Water: adequate intake 2.5 L/day for adult men."}
+    answer = "La EFSA da 2,5 L al día para hombres adultos [EFSA DRV 2017, p. 21]. Bebe a lo largo del día."
+    assert split_sentences(answer)[0].endswith("[EFSA DRV 2017, p. 21].")
+    assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passage)) == []
+
+
+def test_a_citation_with_several_places_or_documents_is_expanded():
+    from mojo_picon.guardrails.number_origin import citations
+
+    assert citations("Toma 3 mg/kg [ISSN cafeína 2021, §7.2, §10.4].") == [
+        "issn cafeína 2021, §7.2",
+        "issn cafeína 2021, §10.4",
+    ]
+    assert citations("Agua [EFSA DRV 2017, p. 21; AESAN 2022].") == ["efsa drv 2017, p. 21", "aesan 2022"]
+    assert citations("Proteína [ISSN 2017, §3].") == ["issn 2017, §3"]
+    passages = {"ISSN cafeína 2021, §10.4": "Caffeine 3–6 mg/kg improves performance."}
+    answer = "Entre 3 y 6 mg/kg mejora el rendimiento [ISSN cafeína 2021, §7.2, §10.4]."
+    assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passages)) == []

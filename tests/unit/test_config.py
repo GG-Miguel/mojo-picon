@@ -21,3 +21,10 @@ def test_dev_tokens_are_parsed(monkeypatch):
 def test_development_helpers_refuse_production():
     with pytest.raises(RuntimeError):
         require_development(Settings(environment="production"), "x")
+
+
+def test_thinking_settings_follow_the_model_family():
+    from mojo_picon.llm import thinking_config
+
+    assert thinking_config("gemini-3.8-flash", "low") == {"thinking_level": "low"}
+    assert thinking_config("gemini-2.5-flash", "low") == {"thinking_budget": 0}  # 2.5 rejects levels (400)

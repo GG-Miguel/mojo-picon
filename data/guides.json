@@ -1,0 +1,105 @@
+[
+  {
+    "id": "who_healthy_diet",
+    "tag": "OMS dieta 2026",
+    "title": "Alimentación saludable (nota descriptiva)",
+    "publisher": "World Health Organization",
+    "year": 2026,
+    "language": "es",
+    "format": "html",
+    "url": "https://www.who.int/es/news-room/fact-sheets/detail/healthy-diet",
+    "license": "© WHO. Non-commercial reproduction with attribution (WHO website terms)"
+  },
+  {
+    "id": "who_physical_activity",
+    "tag": "OMS actividad física 2024",
+    "title": "Actividad física (nota descriptiva)",
+    "publisher": "World Health Organization",
+    "year": 2024,
+    "language": "es",
+    "format": "html",
+    "url": "https://www.who.int/es/news-room/fact-sheets/detail/physical-activity",
+    "license": "© WHO. Non-commercial reproduction with attribution (WHO website terms)"
+  },
+  {
+    "id": "who_pa_guidelines_2020",
+    "tag": "OMS AF 2020",
+    "title": "WHO guidelines on physical activity and sedentary behaviour",
+    "publisher": "World Health Organization",
+    "year": 2020,
+    "language": "en",
+    "format": "pdf",
+    "url": "https://iris.who.int/server/api/core/bitstreams/faa83413-d89e-4be9-bb01-b24671aef7ca/content",
+    "license": "CC BY-NC-SA 3.0 IGO"
+  },
+  {
+    "id": "efsa_drv_2017",
+    "tag": "EFSA DRV 2017",
+    "title": "Dietary Reference Values for nutrients. Summary report",
+    "publisher": "European Food Safety Authority",
+    "year": 2017,
+    "language": "en",
+    "format": "pdf",
+    "url": "https://www.efsa.europa.eu/sites/default/files/2017_09_DRVs_summary_report.pdf",
+    "license": "© EFSA. Reproduction authorised provided the source is acknowledged"
+  },
+  {
+    "id": "aesan_2022",
+    "tag": "AESAN 2022",
+    "title": "Recomendaciones dietéticas saludables y sostenibles complementadas con recomendaciones de actividad física para la población española",
+    "publisher": "AESAN",
+    "year": 2022,
+    "language": "es",
+    "format": "pdf",
+    "url": "https://www.aesan.gob.es/AECOSAN/docs/documentos/nutricion/RECOMENDACIONES_DIETETICAS.pdf",
+    "license": "Spanish public sector information, reuse with attribution (Ley 37/2007)"
+  },
+  {
+    "id": "issn_protein_2017",
+    "tag": "ISSN proteína 2017",
+    "title": "International Society of Sports Nutrition Position Stand: protein and exercise",
+    "publisher": "Journal of the International Society of Sports Nutrition",
+    "year": 2017,
+    "language": "en",
+    "format": "jats",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5477153/fullTextXML",
+    "doi": "10.1186/s12970-017-0177-8",
+    "license": "CC BY 4.0"
+  },
+  {
+    "id": "issn_timing_2017",
+    "tag": "ISSN timing 2017",
+    "title": "International society of sports nutrition position stand: nutrient timing",
+    "publisher": "Journal of the International Society of Sports Nutrition",
+    "year": 2017,
+    "language": "en",
+    "format": "jats",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5596471/fullTextXML",
+    "doi": "10.1186/s12970-017-0189-4",
+    "license": "CC BY 4.0"
+  },
+  {
+    "id": "issn_review_2018",
+    "tag": "ISSN revisión 2018",
+    "title": "ISSN exercise & sports nutrition review update: research & recommendations",
+    "publisher": "Journal of the International Society of Sports Nutrition",
+    "year": 2018,
+    "language": "en",
+    "format": "jats",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6090881/fullTextXML",
+    "doi": "10.1186/s12970-018-0242-y",
+    "license": "CC BY 4.0"
+  },
+  {
+    "id": "issn_caffeine_2021",
+    "tag": "ISSN cafeína 2021",
+    "title": "International society of sports nutrition position stand: caffeine and exercise performance",
+    "publisher": "Journal of the International Society of Sports Nutrition",
+    "year": 2021,
+    "language": "en",
+    "format": "jats",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7777221/fullTextXML",
+    "doi": "10.1186/s12970-020-00383-4",
+    "license": "CC BY 4.0"
+  }
+]

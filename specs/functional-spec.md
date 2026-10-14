@@ -16,6 +16,7 @@ The user gives age, sex, weight, height, activity level, goal, allergies, intole
 ### UC-03 · Log a meal by photo
 The user uploads a photo of the dish.
 - **Acceptance:** the agent returns foods with quantity **ranges** and a confidence; it asks about what cannot be seen (oil, sauces); it **only saves after the user confirms**; **EXIF metadata is removed** and **the photo is not stored**; if there is no food, it says so.
+- **(Implementation note, 2026-10-14)** The vision extractor runs **before** the graph: JPEG, PNG or WebP up to 10 MB, re-encoded as JPEG (max 1024 px) without metadata. Its structured result is matched with `search_food` and appended to the user's message, marked as data and not instructions; the image itself never reaches the Coach, the session or the traces. If the analysis fails, the user is asked to describe the meal.
 
 ### UC-04 · Log activity
 «Esta tarde corro 10 km» / «He hecho una hora de pesas».

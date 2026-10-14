@@ -19,6 +19,7 @@ from mojo_picon.config import Settings
 from mojo_picon.devtools import dev_store, require_development
 from mojo_picon.llm import GeminiProvider
 from mojo_picon.observability import tracer_from_settings
+from mojo_picon.rag.index import guide_index_from_settings
 from mojo_picon.tools.energy import load_met_table
 from mojo_picon.tools.foods import load_foods
 
@@ -37,13 +38,16 @@ class DevTokenVerifier:
 def build_dev_app(settings: Settings):
     require_development(settings, "The development API")
     foods = load_foods()
+    models = GeminiProvider.from_settings(settings)
     brief, passages = load_expert_brief()
     deps = AppDeps(
         verifier=DevTokenVerifier(settings.api_dev_tokens),
         store=dev_store(settings, set(settings.api_dev_tokens.values())),
         foods=foods,
         activities=load_met_table(),
-        graph=build_graph(GeminiProvider.from_settings(settings), foods),
+        graph=build_graph(models, foods),
+        models=models,
+        guides=guide_index_from_settings(settings),
         tracer=tracer_from_settings(settings),
         expert_brief=brief,
         brief_passages=passages,

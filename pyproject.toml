@@ -14,13 +14,16 @@ dependencies = [
     "langchain-google-genai>=4.4.1",
     "langfuse>=4.17.0",
     "langgraph>=1.2.14",
+    "pillow>=12.3.0",
     "pydantic>=2.9",
     "python-multipart>=0.0.32",
+    "qdrant-client>=1.19.1",
     "uvicorn>=0.54.0",
 ]
 
 [dependency-groups]
 data = [
+    "pypdf>=6.20.1",
     "xlrd>=2.0.2",
 ]
 dev = [
