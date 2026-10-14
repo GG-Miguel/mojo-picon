@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -103,6 +104,7 @@ async def main() -> None:
     parser.add_argument("--retranscribe", action="store_true", help="transcribe the PDFs again")
     args = parser.parse_args()
     settings = Settings.from_env()
+    logging.getLogger("pypdf").setLevel(logging.ERROR)  # font warnings that do not affect the text
 
     rows = []
     for guide in load_manifest():

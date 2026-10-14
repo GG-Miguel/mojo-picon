@@ -23,6 +23,10 @@ class Role(StrEnum):
 # Low temperature where the output feeds code (planner, guardian, vision).
 TEMPERATURES = {Role.COACH: 0.4, Role.PLANNER: 0.2, Role.GUARDIAN: 0.0, Role.VISION: 0.0}
 MAX_OUTPUT_TOKENS = {Role.COACH: 2048, Role.PLANNER: 2048, Role.GUARDIAN: 256, Role.VISION: 1024}
+# Nothing without a limit (Principles): a slow endpoint fails the call instead of hanging the turn.
+# Seen on 2026-10-14: the EU endpoint took 60-130 s per call, or never answered.
+TIMEOUT_SECONDS = {Role.COACH: 45, Role.PLANNER: 60, Role.GUARDIAN: 20, Role.VISION: 45}
+MAX_RETRIES = 1
 
 
 class ModelProvider(Protocol):
@@ -68,6 +72,8 @@ class GeminiProvider:
                 base_url=self._endpoint,
                 temperature=TEMPERATURES[role],
                 max_output_tokens=MAX_OUTPUT_TOKENS[role],
+                timeout=TIMEOUT_SECONDS[role],
+                max_retries=MAX_RETRIES,
             )
         return self._cache[role]
 
@@ -82,6 +88,7 @@ def gemini_embeddings(settings):
         project=settings.gcp_project_id,
         location=settings.vertex_location,
         base_url=settings.vertex_endpoint,
+        request_options={"timeout": 20},
     )
 
 

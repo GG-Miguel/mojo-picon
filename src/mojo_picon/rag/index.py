@@ -4,6 +4,7 @@ fused by Qdrant with RRF (ADR-08, ADR-22). The index holds only public guideline
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -17,7 +18,8 @@ DENSE = "dense"
 SPARSE = "bm25"
 TOP_K = 4
 PREFETCH = 20  # candidates per search before fusion
-EMBED_BATCH = 50
+EMBED_BATCH = 50  # points per upsert
+EMBED_CONCURRENCY = 8  # gemini-embedding-2 on Vertex AI embeds one text per call
 
 
 class Embedder(Protocol):
@@ -37,6 +39,18 @@ class GuideHit:
 
 
 class GuideSearch(Protocol):
+    async def _embed_document(self, text: str) -> list[float]:
+        async with self._semaphore:
+            for attempt in range(4):
+                try:
+                    [vector] = await self._embedder.aembed_documents([text])
+                    return vector
+                except Exception:
+                    if attempt == 3:
+                        raise
+                    await asyncio.sleep(2**attempt)
+        raise AssertionError("unreachable")
+
     async def search(self, query: str, k: int = TOP_K) -> list[GuideHit]: ...
 
 
@@ -45,6 +59,7 @@ class GuideIndex:
         self._client = client
         self._embedder = embedder
         self._collection = collection
+        self._semaphore = asyncio.Semaphore(EMBED_CONCURRENCY)
 
     async def rebuild(self, chunks: list[Chunk], dimension: int) -> None:
         """Drop and create the collection, then index every chunk (idempotent ingestion)."""
@@ -57,7 +72,7 @@ class GuideIndex:
         )
         for start in range(0, len(chunks), EMBED_BATCH):
             batch = chunks[start : start + EMBED_BATCH]
-            dense = await self._embedder.aembed_documents([c.text for c in batch])
+            dense = await asyncio.gather(*(self._embed_document(c.text) for c in batch))
             points = []
             for chunk, vector in zip(batch, dense, strict=True):
                 indices, values = sparse.document_vector(chunk.text)
@@ -69,6 +84,18 @@ class GuideIndex:
                     )
                 )
             await self._client.upsert(self._collection, points=points)
+
+    async def _embed_document(self, text: str) -> list[float]:
+        async with self._semaphore:
+            for attempt in range(4):
+                try:
+                    [vector] = await self._embedder.aembed_documents([text])
+                    return vector
+                except Exception:
+                    if attempt == 3:
+                        raise
+                    await asyncio.sleep(2**attempt)
+        raise AssertionError("unreachable")
 
     async def search(self, query: str, k: int = TOP_K) -> list[GuideHit]:
         dense = await self._embedder.aembed_query(query)
