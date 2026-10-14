@@ -58,6 +58,12 @@ async def transcribe_pages(client, model: str, pages: list[bytes], concurrency: 
     """client: google.genai.Client (Vertex AI, EU endpoint)."""
     from google.genai import types
 
+    from mojo_picon.llm import thinking_config
+
+    # Copying a page needs little reasoning, and reasoning tokens are billed as output
+    config = types.GenerateContentConfig(
+        temperature=0, thinking_config=types.ThinkingConfig(**thinking_config(model, "low"))
+    )
     semaphore = asyncio.Semaphore(concurrency)
 
     async def one(page: bytes) -> str:
@@ -67,7 +73,7 @@ async def transcribe_pages(client, model: str, pages: list[bytes], concurrency: 
                     response = await client.aio.models.generate_content(
                         model=model,
                         contents=[types.Part.from_bytes(data=page, mime_type="application/pdf"), PROMPT],
-                        config=types.GenerateContentConfig(temperature=0),
+                        config=config,
                     )
                     return (response.text or "").strip()
                 except Exception:

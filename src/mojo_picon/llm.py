@@ -27,6 +27,17 @@ MAX_OUTPUT_TOKENS = {Role.COACH: 2048, Role.PLANNER: 2048, Role.GUARDIAN: 256, R
 # Seen on 2026-10-14: the EU endpoint took 60-130 s per call, or never answered.
 TIMEOUT_SECONDS = {Role.COACH: 45, Role.PLANNER: 60, Role.GUARDIAN: 20, Role.VISION: 45}
 MAX_RETRIES = 1
+# Reasoning tokens are billed as output (14 Oct: ~2/3 of the day's output tokens). Only where the task
+# needs little reasoning: the guardian classifies. Roles not listed keep the model's default.
+THINKING = {Role.GUARDIAN: "low"}
+
+
+def thinking_config(model: str, level: str) -> dict:
+    """Thinking settings for the model family: Gemini 3 takes a level; Gemini 2.5 rejects levels and
+    takes a token budget (0 turns thinking off on Flash)."""
+    if model.startswith("gemini-2"):
+        return {"thinking_budget": 0 if level == "low" else -1}  # -1: dynamic, the model decides
+    return {"thinking_level": level}
 
 
 class ModelProvider(Protocol):
@@ -74,6 +85,7 @@ class GeminiProvider:
                 max_output_tokens=MAX_OUTPUT_TOKENS[role],
                 timeout=TIMEOUT_SECONDS[role],
                 max_retries=MAX_RETRIES,
+                **({"thinking_config": thinking_config(self._model, THINKING[role])} if role in THINKING else {}),
             )
         return self._cache[role]
 
