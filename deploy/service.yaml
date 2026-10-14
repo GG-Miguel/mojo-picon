@@ -34,3 +34,16 @@ spec:
               value: mojopicon
             - name: GEMINI_MODEL
               value: gemini-3.8-flash
+            - name: LANGFUSE_HOST
+              value: https://cloud.langfuse.com # EU region
+            # Secrets from Secret Manager (values added by the owner; Cloud Run reads only these two)
+            - name: LANGFUSE_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-public-key
+                  key: latest
+            - name: LANGFUSE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secret-key
+                  key: latest
