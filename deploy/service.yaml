@@ -1,0 +1,36 @@
+# Cloud Run service, versioned (Infraestructura y CI-CD). Applied by CI with
+# `gcloud run services replace`; ${IMAGE} is filled in by the deploy job.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mojo-picon
+  labels:
+    cloud.googleapis.com/location: europe-west1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0" # set to 1 during the demo to avoid cold starts
+        autoscaling.knative.dev/maxScale: "2" # cost limit; the rate limit is per instance (milestone 1)
+        run.googleapis.com/cpu-throttling: "false" # SSE streams keep working while the turn runs
+    spec:
+      serviceAccountName: mojo-run@mojo-picon.iam.gserviceaccount.com
+      containerConcurrency: 20
+      timeoutSeconds: 300
+      containers:
+        - image: ${IMAGE}
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: ENVIRONMENT
+              value: production
+            - name: GCP_PROJECT_ID
+              value: mojo-picon
+            - name: FIRESTORE_DATABASE
+              value: mojopicon
+            - name: GEMINI_MODEL
+              value: gemini-3.8-flash

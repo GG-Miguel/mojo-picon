@@ -1,6 +1,7 @@
-# Milestone 1: lint, tests and secret detection on every push and merge request.
-# Build and deploy to Cloud Run are added on milestone 1's deployment day (Infraestructura y CI-CD).
-stages: [lint, test]
+# lint and tests on every push and merge request; build and deploy to Cloud Run from main only.
+# Validate changes to this file in GitLab's Build → Pipeline editor before pushing (CONTRIBUTING).
+# secret-detection: in case the Secret Detection template uses its own stage (empty stages are ignored)
+stages: [lint, test, secret-detection, deploy]
 
 include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -23,6 +24,20 @@ lint:
     - uv run ruff check .
     - uv run ruff format --check .
 
+frontend:
+  stage: lint
+  image: node:22-slim
+  cache:
+    key:
+      files: [frontend/package-lock.json]
+    paths: [frontend/.npm]
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+    - npx oxlint src
+    - npx prettier --check "src/**/*.{ts,tsx,css}"
+    - npm run build
+
 test:
   stage: test
   script:
@@ -33,5 +48,30 @@ test:
     reports:
       junit: report.xml
 
-secret_detection:
-  stage: test
+deploy:
+  stage: deploy
+  image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $GCP_WIF_PROVIDER
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    IMAGE: $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/mojo-picon/app:$CI_COMMIT_SHORT_SHA
+  script:
+    # Workload Identity Federation: GitLab's OIDC token -> short-lived GCP credentials (no keys)
+    - echo "$GITLAB_OIDC_TOKEN" > .ci_oidc_token
+    - gcloud iam workload-identity-pools create-cred-config "$GCP_WIF_PROVIDER"
+      --service-account "$GCP_DEPLOY_SA" --credential-source-file .ci_oidc_token --output-file .ci_gcp_creds.json
+    - gcloud auth login --cred-file .ci_gcp_creds.json --quiet
+    - gcloud config set project "$GCP_PROJECT_ID"
+    - gcloud builds submit --config deploy/cloudbuild.yaml --substitutions "_IMAGE=$IMAGE"
+      --region "$GCP_REGION" --service-account "projects/$GCP_PROJECT_ID/serviceAccounts/$GCP_DEPLOY_SA"
+    - sed "s|\${IMAGE}|$IMAGE|" deploy/service.yaml > .ci_service.yaml
+    - gcloud run services replace .ci_service.yaml --region "$GCP_REGION"
+    # Public URL; access is controlled by the app (Firebase token on every route)
+    - gcloud run services add-iam-policy-binding mojo-picon --region "$GCP_REGION"
+      --member allUsers --role roles/run.invoker --quiet
+    - gcloud run services describe mojo-picon --region "$GCP_REGION" --format 'value(status.url)'
+  environment:
+    name: production

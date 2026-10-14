@@ -183,3 +183,28 @@ async def test_derived_turns_are_not_kept_in_the_session():
         await client.post("/chat", headers=ANA, data={"message": "¿Y antes de correr?", "session_id": session_id})
     prompt = models.get(Role.COACH).received[0]
     assert all("insulina" not in m.text for m in prompt[1:])
+
+
+async def test_day_entries_carry_food_names():
+    models = FakeProvider(
+        guardian=[OK],
+        coach=[tool_call("log_meal", "c1", items=[{"food_id": "gofio", "grams": 30}]), AIMessage("Apuntado.")],
+    )
+    client, _ = await make_client(models)
+    async with client:
+        await client.post("/chat", headers=ANA, data={"message": "30 g de gofio"})
+        entry = (await client.get("/day", headers=ANA)).json()["entries"][0]
+    assert entry["items"][0] == {"food_id": "gofio", "grams": 30.0, "name": "Gofio"}
+
+
+async def test_frontend_is_served_without_shadowing_the_api(tmp_path):
+    (tmp_path / "index.html").write_text("<html>mojo</html>")
+    store = InMemoryStore()
+    await store.save_profile(UserContext(uid="ana"), PROFILE)
+    deps = AppDeps(
+        verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),
+        graph=build_graph(FakeProvider(), FOODS), tracer=NullTracer(), frontend_dir=tmp_path,
+    )  # fmt: skip
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(deps)), base_url="http://t") as client:
+        assert "mojo" in (await client.get("/")).text
+        assert (await client.get("/day")).status_code == 401  # the API still answers, not the SPA

@@ -9,6 +9,7 @@ creates a demo profile for each development user; STORE=firestore uses the real 
 from __future__ import annotations
 
 import hmac
+from pathlib import Path
 
 from mojo_picon.agents import build_graph
 from mojo_picon.agents.knowledge import load_expert_brief
@@ -46,6 +47,7 @@ def build_dev_app(settings: Settings):
         tracer=tracer_from_settings(settings),
         expert_brief=brief,
         brief_passages=passages,
+        frontend_dir=Path(settings.frontend_dir) if settings.frontend_dir else None,
     )
     return create_app(deps)
 
