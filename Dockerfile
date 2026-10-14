@@ -6,8 +6,10 @@ WORKDIR /web
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
-# Firebase web config is public by design; passed as build arguments (no dev token in images)
+# Firebase web config: public by design; build arguments from GitLab variables (no dev token in images)
 ARG VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN VITE_FIREBASE_PROJECT_ID=mojo-picon VITE_FIREBASE_APP_ID
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
+    VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
 RUN npm run build
 
 FROM python:3.12-slim AS app

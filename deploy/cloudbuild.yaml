@@ -1,7 +1,15 @@
 # Image build on Cloud Build, run by GitLab CI as the deploy service account (no Docker-in-Docker).
+# The Firebase web config (public by design) comes from GitLab variables as build arguments, so it
+# is not stored in the repository, where secret scanners would flag the AIza… key.
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: [build, --tag, $_IMAGE, .]
+    args:
+      - build
+      - --tag=$_IMAGE
+      - --build-arg=VITE_FIREBASE_API_KEY=$_FIREBASE_API_KEY
+      - --build-arg=VITE_FIREBASE_AUTH_DOMAIN=$_FIREBASE_AUTH_DOMAIN
+      - --build-arg=VITE_FIREBASE_APP_ID=$_FIREBASE_APP_ID
+      - .
 images: [$_IMAGE]
 options:
   logging: CLOUD_LOGGING_ONLY # required when the build runs as a user-specified service account
