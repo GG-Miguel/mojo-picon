@@ -32,6 +32,8 @@ spec:
               value: mojo-picon
             - name: FIRESTORE_DATABASE
               value: mojopicon
+            # Plan B if the EU endpoint is slow (EU residency kept; ADR-04): VERTEX_LOCATION=europe-west1,
+            # VERTEX_ENDPOINT=https://europe-west1-aiplatform.googleapis.com, GEMINI_MODEL=gemini-2.5-flash
             - name: GEMINI_MODEL
               value: gemini-3.8-flash
             - name: LANGFUSE_HOST

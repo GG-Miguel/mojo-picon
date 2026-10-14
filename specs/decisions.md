@@ -34,6 +34,7 @@ Each decision has: context, decision, discarded alternatives, consequences and *
 - **Decision:** Gemini 3.8 Flash (Vertex AI, EU) for agents and vision; Claude Sonnet 5.5 as the **G-Eval** model (judge, ADR-13); in milestone 3, a cheaper model for the guardian and an open fallback model in LiteLLM.
 - **Why:** Gemini is multimodal, cheap and native to GCP (no keys to manage on Cloud Run). The judge belongs to **another model family** to reduce self-evaluation bias.
 - **Endpoint** (checked 2026-10-12): `gemini-3.8-flash` is not served on the `europe-west1`/`europe-west4` regional endpoints (Gemini 2.5 only), but it is on the **Vertex AI EU multi-region endpoint** (`aiplatform.eu.rep.googleapis.com`, location `eu`), which keeps data in the EU; that one is used. The `global` endpoint is discarded (no EU processing guarantee, Principle #8). Fallback: `gemini-2.5-flash` on `europe-west1`.
+- **Plan B in use when needed** (2026-10-14): that day the EU endpoint took 60–130 s per `gemini-3.8-flash` call, or did not answer, while `gemini-2.5-flash` on `europe-west1` answered in about 2 s (agent turns of 4–9 s, with retrieval and citations). The switch is configuration only (`VERTEX_LOCATION`, `VERTEX_ENDPOINT`, `GEMINI_MODEL`), with EU residency kept either way. Embeddings stay on the EU endpoint (`EMBEDDING_*`), because the index was built with `gemini-embedding-2`. Every Gemini call has a timeout and one retry.
 - **Evidence:** table of model per agent with quality, cost and latency; comparison of two vision models with 20 photos.
 
 ## ADR-05

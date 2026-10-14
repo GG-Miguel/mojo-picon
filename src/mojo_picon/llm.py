@@ -79,15 +79,15 @@ class GeminiProvider:
 
 
 def gemini_embeddings(settings):
-    """gemini-embedding-2 on the same Vertex AI EU endpoint (RAG; ADR-04)."""
+    """gemini-embedding-2 on the Vertex AI EU endpoint (RAG; ADR-04), whatever the chat model's region."""
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
     return GoogleGenerativeAIEmbeddings(
         model=settings.embedding_model,
         vertexai=True,
         project=settings.gcp_project_id,
-        location=settings.vertex_location,
-        base_url=settings.vertex_endpoint,
+        location=settings.embedding_location,
+        base_url=settings.embedding_endpoint,
         request_options={"timeout": 20},
     )
 
