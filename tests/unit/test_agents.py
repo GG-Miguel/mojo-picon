@@ -316,3 +316,13 @@ def test_fast_rules_extreme_goals_and_caffeine(text, level):
     from mojo_picon.guardrails.rules import classify_by_rules
 
     assert classify_by_rules(text).level == level
+
+
+async def test_an_unreadable_proposal_is_one_failed_attempt_not_a_failed_plan():
+    # Seen with Gemini on 2026-10-16: the reasoning used up the output limit and the JSON was cut
+    from langchain_core.exceptions import OutputParserException
+
+    models = FakeProvider(planner=[OutputParserException("cut JSON"), DINNER])
+    planner = build_planner(models, FOODS)
+    result = await planner.ainvoke({"meals": ["cena"], "remaining": remaining_for(DINNER), "allergens": []})
+    assert result["passed"] and result["attempts"] == 2
