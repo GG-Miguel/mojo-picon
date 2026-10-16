@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 
 from mojo_picon.agents import AgentContext
+from mojo_picon.api.auth_proxy import auth_proxy
 from mojo_picon.api.events import (
     DIARY_TOOLS,
     TOOL_LABELS,
@@ -69,6 +70,7 @@ class AppDeps:
     models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
     guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
     production: bool = False  # no API docs and no trace links for users (security review 2026-10-16)
+    auth_proxy_host: str | None = None  # <project>.firebaseapp.com: sign-in served from our domain (Safari)
 
 
 class RateLimiter:
@@ -98,8 +100,9 @@ def create_app(deps: AppDeps) -> FastAPI:
         # A full Content-Security-Policy (with the Firebase login domains) comes in milestone 2
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-        response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+        # Same origin only: Firebase's sign-in iframe (/__/auth/iframe) is embedded by our own page
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
         return response
 
     limiter = RateLimiter(RATE_LIMIT_PER_MINUTE)
@@ -176,6 +179,9 @@ def create_app(deps: AppDeps) -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    if deps.auth_proxy_host:
+        app.include_router(auth_proxy(deps.auth_proxy_host))
 
     if deps.frontend_dir is not None:
         # The compiled React app, served by the same container (registered last: API routes win)

@@ -217,9 +217,9 @@ async def test_security_headers_and_no_docs_in_production():
         client, _ = await make_client(FakeProvider(), production=production)
         async with client:
             response = await client.get("/health")
-            assert response.headers["X-Frame-Options"] == "DENY"
+            assert response.headers["X-Frame-Options"] == "SAMEORIGIN"
             assert response.headers["X-Content-Type-Options"] == "nosniff"
-            assert response.headers["Content-Security-Policy"] == "frame-ancestors 'none'"
+            assert response.headers["Content-Security-Policy"] == "frame-ancestors 'self'"
             assert (await client.get("/openapi.json")).status_code == docs_status
             assert (await client.get("/docs")).status_code == docs_status
 
@@ -236,3 +236,31 @@ async def test_no_trace_links_for_users_in_production():
         async with client:
             stream = events(await client.post("/chat", headers=ANA, data={"message": "hola"}))
         assert any(e["type"] == "trace" for e in stream) is expected
+
+
+async def test_sign_in_helpers_are_proxied_from_our_domain_and_nothing_else():
+    from mojo_picon.api.auth_proxy import auth_proxy
+
+    seen = []
+
+    def upstream(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(
+            200, text="<html>handler</html>", headers={"content-type": "text/html", "set-cookie": "x=1"}
+        )
+
+    from fastapi import FastAPI
+
+    app = FastAPI()
+    app.include_router(
+        auth_proxy("mojo-picon.firebaseapp.com", httpx.AsyncClient(transport=httpx.MockTransport(upstream)))
+    )
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        ok = await client.get("/__/auth/handler", params={"apiKey": "k", "authType": "signInViaPopup"})
+        assert ok.status_code == 200 and ok.text == "<html>handler</html>"
+        assert "set-cookie" not in ok.headers  # only content headers are passed back
+        assert seen == ["https://mojo-picon.firebaseapp.com/__/auth/handler?apiKey=k&authType=signInViaPopup"]
+        assert (await client.get("/__/auth/..%2F..%2Fadmin")).status_code == 404  # no path escapes
+        assert (await client.get("/__/other/handler")).status_code == 404
+        assert (await client.post("/__/auth/handler")).status_code == 405  # GET only
+    assert len(seen) == 1
