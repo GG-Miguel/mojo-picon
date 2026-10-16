@@ -26,6 +26,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `config.py` (all settings from the environment) and `devtools.py` (development servers).
 
 ### Fixed
+- Profile form: number fields turned an empty field into 0 and rejected decimals ("0." and the Spanish comma "0,5"); they now keep the text as typed, accept comma or point, use the numeric keyboard on mobile and explain which value is out of range.
 - Sign-in failed in Safari on iOS ("missing initial state": ITP blocks the firebaseapp.com storage). The Firebase sign-in helpers (/__/auth/*) are now served from the app's own domain, which becomes the auth domain; frame headers allow the same origin only.
 - Security review (2026-10-16): photos are checked for pixel count before decoding (a 165 KB PNG used 887 MB of memory); JPEGs are decoded already reduced. Security headers (nosniff, Referrer-Policy, no framing); API docs off in production; trace links not sent to users in production; the guardian's delimiters cannot be closed from the message.
 - Planner: Gemini's reasoning used up the 2048-token output limit and half of the plans arrived cut; limits raised (reasoning counts inside them) and an unreadable proposal now counts as one failed attempt.
