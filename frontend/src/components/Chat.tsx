@@ -55,8 +55,8 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
         (e) => {
           if (e.type === 'step') {
             update((t) => {
-              const others = t.steps.filter((s) => s.id !== e.id)
-              return { ...t, steps: [...others, e] }
+              const known = t.steps.some((s) => s.id === e.id)
+              return { ...t, steps: known ? t.steps.map((s) => (s.id === e.id ? e : s)) : [...t.steps, e] }
             })
           } else if (e.type === 'final') {
             sessionId.current = e.session_id
@@ -127,7 +127,11 @@ export function Chat({ token, onDayUpdated }: { token: () => Promise<string>; on
             {turn.error && <p className="text-sm text-picon">{turn.error}</p>}
           </div>
         ))}
-        {busy && <p className="animate-pulse text-sm text-stone-400">Mojo está pensando…</p>}
+        {busy && (
+          <p className="flex items-center gap-2 text-sm text-stone-400">
+            <Spinner /> Mojo está pensando…
+          </p>
+        )}
         <div ref={bottom} />
       </div>
       {(photo || photoError) && (
@@ -207,18 +211,44 @@ function Sources({ sources }: { sources: SourceRef[] }) {
   )
 }
 
+/** One line per kind of step (four food searches are one «Consultando alimentos»): a spinner while
+ * any of them runs, then ✓, or ✗ if one failed. Lines keep the order in which they started. */
 function Steps({ steps }: { steps: StepEvent[] }) {
+  const lines: { label: string; running: boolean; failed: boolean; detail?: string }[] = []
+  for (const step of steps) {
+    let line = lines.find((l) => l.label === step.label)
+    if (!line) {
+      line = { label: step.label, running: false, failed: false }
+      lines.push(line)
+    }
+    line.running ||= step.status === 'start'
+    line.failed ||= step.status === 'failed'
+    if (step.detail) line.detail = step.detail
+  }
   return (
     <details className="max-w-[85%] text-sm text-stone-500" open>
-      <summary className="cursor-pointer select-none">▸ {steps.length} pasos del agente</summary>
+      <summary className="cursor-pointer select-none">▸ {lines.length} pasos del agente</summary>
       <ul className="mt-1 space-y-0.5 pl-4">
-        {steps.map((s) => (
-          <li key={s.id}>
-            {s.status === 'start' ? '⏳' : s.status === 'done' ? '✓' : '✗'} {s.label}
-            {s.detail && <span className="text-stone-400"> · {s.detail}</span>}
+        {lines.map((l) => (
+          <li key={l.label} className="flex items-center gap-1.5">
+            {l.running ? <Spinner /> : <span className="w-3 text-center">{l.failed ? '✗' : '✓'}</span>}
+            <span>
+              {l.label}
+              {l.detail && <span className="text-stone-400"> · {l.detail}</span>}
+            </span>
           </li>
         ))}
       </ul>
     </details>
+  )
+}
+
+function Spinner() {
+  return (
+    <span
+      role="status"
+      aria-label="en curso"
+      className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-stone-300 border-t-picon"
+    />
   )
 }

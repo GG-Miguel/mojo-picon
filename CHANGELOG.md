@@ -5,6 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Added
+- Chat: one line per kind of agent step (four food searches are one «Consultando alimentos») with a spinner while it runs; also a spinner for «Mojo está pensando…».
 - Food search: close variants are not asked. With an exact match, alternatives within 10 % kcal are dropped («salmón» → al horno, not «¿al horno o crudo?»); variants that change the numbers (pechuga or muslo, leche entera o desnatada) are still asked.
 - Profile can be edited at any time ("Perfil" in the header): the same form, prefilled, over the chat so the conversation is kept; the day's targets are recalculated on save.
 - Planner prompt: minimally processed foods (AESAN), no fried food, pastries, chocolate or juices unless asked; protein in every main meal. Measured with real Gemini: 0 such items in 6/6 plans (3 before in 3/3 after a 10 km run), all verified at the first attempt.
