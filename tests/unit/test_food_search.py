@@ -54,6 +54,24 @@ def test_generic_word_is_ambiguous_with_the_synonym_first():
     assert {"arroz_integral_cocido", "arroz_blanco_crudo"} <= set(ids(result))
 
 
+@pytest.mark.parametrize("query, food_id", [("salmón", "salmon"), ("patata", "patata_cocida")])
+def test_close_variants_are_not_asked(query, food_id):
+    # Al horno 205 vs crudo 194 kcal: a 5 % difference is not worth a question (CLOSE_VARIANT_KCAL)
+    result = INDEX.search(query)
+    assert result.status is SearchStatus.EXACT
+    assert ids(result) == [food_id]
+
+
+def test_naming_the_variant_still_picks_it():
+    assert ids(INDEX.search("salmón crudo")) == ["salmon_crudo"]
+
+
+@pytest.mark.parametrize("query", ["pollo", "leche", "atún"])
+def test_variants_that_change_the_numbers_are_still_asked(query):
+    # pechuga 141 vs muslo 213; entera 65 vs desnatada 33; en aceite 206 vs al natural 111
+    assert INDEX.search(query).status is SearchStatus.AMBIGUOUS
+
+
 def test_ambiguity_is_limited_to_the_same_category():
     # «pollo» -> breast or thigh, never a dish that only mentions chicken
     result = INDEX.search("pollo")

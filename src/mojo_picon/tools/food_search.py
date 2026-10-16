@@ -20,6 +20,9 @@ CONFIDENCE_EXACT = 1.0
 CONFIDENCE_CONTAINS = 0.7
 TYPO_PENALTY = 0.9  # a query fixed for typos is never an exact match
 UNKNOWN_WORDS_PENALTY = 0.9  # same when words not in the table are ignored («un plato de arroz»)
+# Close variants: with an exact match, alternatives within this kcal difference are not worth a
+# question («salmón»: al horno 205 vs crudo 194 kcal, 5 %). The same tolerance verify_plan gives kcal.
+CLOSE_VARIANT_KCAL = 0.10
 STOPWORDS = {"de", "del", "la", "el", "los", "las", "con", "y", "a", "al", "en", "un", "una", "unos", "unas"}
 
 
@@ -85,7 +88,19 @@ class FoodIndex:
             if known and known != key:
                 candidates = self._candidates(known, penalty=UNKNOWN_WORDS_PENALTY)
         candidates = sorted(candidates, key=lambda c: (-c.confidence, len(c.name)))[:MAX_CANDIDATES]
+        candidates = self._without_close_variants(candidates)
         return SearchResult(query, _status(candidates), candidates)
+
+    def _without_close_variants(self, candidates: list[Candidate]) -> list[Candidate]:
+        """Keep only the exact match when every alternative has almost the same kcal: asking
+        «¿al horno o crudo?» for 5 % is noise. Pechuga (141) vs muslo (213) is still asked."""
+        if len(candidates) < 2 or candidates[0].confidence < CONFIDENCE_EXACT:
+            return candidates
+        kcal = self.foods[candidates[0].food_id].nutrients_for(100).kcal
+        others = (self.foods[c.food_id].nutrients_for(100).kcal for c in candidates[1:])
+        if all(abs(k - kcal) <= CLOSE_VARIANT_KCAL * max(k, kcal, 1) for k in others):
+            return candidates[:1]
+        return candidates
 
     def _candidates(self, key: str, penalty: float) -> list[Candidate]:
         found: dict[str, Candidate] = {}

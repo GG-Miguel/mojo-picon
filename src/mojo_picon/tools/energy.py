@@ -128,6 +128,31 @@ def daily_balance(target: MacroTargets, consumed: Nutrients) -> MacroTargets:
     )
 
 
+MACRO_KCAL_PER_G = {f"{macro}_g": kcal for macro, kcal in KCAL_PER_G.items()}
+MACRO_NAMES = {"protein_g": "la proteína", "carbs_g": "los hidratos", "fat_g": "la grasa"}
+
+
+def planning_targets(remaining: MacroTargets) -> tuple[MacroTargets, list[str]]:
+    """What a plan for the rest of the day can aim at, and notes for the user.
+
+    What remains can be inconsistent once a macro is exceeded: after going over on fat, the other
+    remainders can add up to more kcal than remain (seen on 2026-10-16: 251 g of carbohydrate, about
+    1004 kcal, with 886 kcal left), and no plan can pass. An exceeded macro becomes 0 (the plan is low
+    in it) and the others are rescaled so that their energy equals the kcal that remain.
+    """
+    if remaining.kcal <= 0:
+        return remaining, []
+    macros = {m: max(getattr(remaining, m), 0.0) for m in MACRO_KCAL_PER_G}
+    notes = [f"ya has superado {MACRO_NAMES[m]} del día" for m in MACRO_KCAL_PER_G if getattr(remaining, m) <= 0]
+    energy = sum(macros[m] * MACRO_KCAL_PER_G[m] for m in MACRO_KCAL_PER_G)
+    if energy <= 0:
+        return MacroTargets(kcal=remaining.kcal, **macros), notes
+    factor = remaining.kcal / energy
+    if abs(factor - 1) > 0.05:  # only when the remainders really disagree with the kcal left
+        macros = {m: v * factor for m, v in macros.items()}
+    return _rounded(MacroTargets(kcal=remaining.kcal, **macros)), notes
+
+
 def load_met_table(path: Path = DEFAULT_MET_TABLE) -> dict[str, MetActivity]:
     with path.open(encoding="utf-8") as f:
         return {
