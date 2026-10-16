@@ -6,9 +6,11 @@ The LLM only chooses foods and grams; every number is checked by verify_plan (AD
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import TypedDict
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 
@@ -17,6 +19,7 @@ from mojo_picon.llm import ModelProvider, Role
 from mojo_picon.prompts import load_prompt
 from mojo_picon.tools.verify_plan import verify_plan
 
+log = logging.getLogger(__name__)
 MAX_PLANNER_ATTEMPTS = 3
 
 
@@ -60,7 +63,11 @@ def build_planner(models: ModelProvider, foods: Mapping[str, Food]):
                     + "\n- ".join(state["issues"])
                 )
             )
-        plan = await models.get(Role.PLANNER).with_structured_output(Plan).ainvoke(messages)
+        try:
+            plan = await models.get(Role.PLANNER).with_structured_output(Plan).ainvoke(messages)
+        except OutputParserException:  # unreadable or cut output: one failed attempt, not a failed plan
+            log.warning("planner proposal could not be parsed", exc_info=True)
+            plan = None
         return {"plan": plan if isinstance(plan, Plan) else None, "attempts": state.get("attempts", 0) + 1}
 
     def verify(state: PlannerState) -> dict:
