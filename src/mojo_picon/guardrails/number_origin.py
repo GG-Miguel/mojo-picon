@@ -183,15 +183,32 @@ def parse_number(text: str) -> float:
 
 def split_sentences(text: str) -> list[str]:
     text = re.sub(r"^\s*(?:[-*]|\d+[.)])\s+", "", text, flags=re.MULTILINE)  # list markers ("1. ", "- ")
-    # Split on . ! ? or newlines, but not on decimal points ("1.5") or thousands ("1.400").
-    parts = re.split(r"(?<=[.!?])(?!\d)\s+|\n+", text)
+    # Split on . ! ? or newlines, but not on decimal points ("1.5"), thousands ("1.400") or inside a
+    # citation tag ("[EFSA DRV 2017, p. 21]").
+    parts = re.split(r"(?<=[.!?])(?!\d)(?![^\[\]\n]*\])\s+|\n+", text)
     return [p for p in (s.strip() for s in parts) if p]
 
 
 def citations(sentence: str) -> list[str]:
-    """Citation tags of a sentence (not Markdown links; too short tags are ignored)."""
-    tags = (_normalize_tag(t) for t in _CITATION_RE.findall(_LINK_RE.sub(" ", sentence)))
+    """Citation tags of a sentence (not Markdown links; too short tags are ignored).
+
+    A citation may join several places of a document or several documents, as models write them:
+    "[ISSN cafeína 2021, §7.2, §10.4]" -> "issn cafeína 2021, §7.2" and "issn cafeína 2021, §10.4";
+    "[EFSA DRV 2017, p. 21; AESAN 2022]" -> both tags."""
+    raw = _CITATION_RE.findall(_LINK_RE.sub(" ", sentence))
+    tags = (_normalize_tag(t) for citation in raw for t in _expand_citation(citation))
     return [t for t in tags if len(t) >= MIN_TAG_CHARS]
+
+
+def _expand_citation(citation: str) -> list[str]:
+    tags: list[str] = []
+    for part in citation.split(";"):
+        pieces = [p.strip() for p in part.split(",") if p.strip()]
+        if len(pieces) > 2:
+            tags.extend(f"{pieces[0]}, {place}" for place in pieces[1:])
+        elif pieces:
+            tags.append(", ".join(pieces))
+    return tags
 
 
 def _parse_words(words: str) -> float:

@@ -7,6 +7,7 @@ No `from __future__ import annotations` here: FastAPI resolves the route annotat
 including the `User` dependency alias defined inside create_app.
 """
 
+import json
 import logging
 import time
 import uuid
@@ -29,6 +30,7 @@ from mojo_picon.api.events import (
     DayUpdatedEvent,
     ErrorEvent,
     FinalEvent,
+    SourceRef,
     StepEvent,
     TraceEvent,
     sse,
@@ -36,12 +38,16 @@ from mojo_picon.api.events import (
 from mojo_picon.auth import InvalidTokenError, TokenVerifier, UserContext, bearer_token
 from mojo_picon.domain import Food, Profile
 from mojo_picon.domain.diary import Session, SessionMessage
-from mojo_picon.guardrails.output import FEEDBACK_NAME
+from mojo_picon.guardrails.number_origin import citations
+from mojo_picon.guardrails.output import FEEDBACK_NAME, RETRIEVAL_TOOL
+from mojo_picon.llm import ModelProvider
 from mojo_picon.observability import Tracer
+from mojo_picon.rag.index import GuideSearch
 from mojo_picon.store.base import Store
 from mojo_picon.tools import diary
 from mojo_picon.tools.energy import MetActivity
 from mojo_picon.tools.food_search import FoodIndex
+from mojo_picon.vision.extractor import MAX_BYTES, InvalidImageError, extract, prepare_image, summarise
 
 log = logging.getLogger(__name__)
 SESSION_MESSAGES = 10  # recent messages kept between turns (summary of older ones: milestone 2)
@@ -60,6 +66,8 @@ class AppDeps:
     expert_brief: str = ""
     brief_passages: Mapping[str, str] | None = None
     frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
+    models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
+    guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
 
 
 class RateLimiter:
@@ -128,8 +136,15 @@ def create_app(deps: AppDeps) -> FastAPI:
         session_id: Annotated[str | None, Form(pattern=r"^[A-Za-z0-9_-]{1,64}$")] = None,
         photo: UploadFile | None = None,
     ) -> StreamingResponse:
+        jpeg = None
         if photo is not None:
-            raise HTTPException(status_code=501, detail="photo analysis is not available yet")
+            if deps.models is None:
+                raise HTTPException(status_code=501, detail="photo analysis is not available")
+            try:
+                # Cleaned in memory (EXIF and GPS removed) and never stored (Análisis de fotos)
+                jpeg = prepare_image(await photo.read(MAX_BYTES + 1))
+            except InvalidImageError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
         session_id = session_id or uuid.uuid4().hex
         profile = await deps.store.get_profile(user)
         context = AgentContext(
@@ -141,9 +156,10 @@ def create_app(deps: AppDeps) -> FastAPI:
             profile=profile,
             expert_brief=deps.expert_brief,
             brief_passages=deps.brief_passages or {},
+            guides=deps.guides,
         )
         return StreamingResponse(
-            _run_turn(deps, context, session_id, message),
+            _run_turn(deps, context, session_id, message, jpeg),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
@@ -167,13 +183,29 @@ def _with_names(entry, deps: AppDeps) -> dict:
     return data
 
 
-async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text: str) -> AsyncIterator[str]:
+async def _run_turn(
+    deps: AppDeps, context: AgentContext, session_id: str, text: str, jpeg: bytes | None = None
+) -> AsyncIterator[str]:
     user = context.user
+    if jpeg is not None:
+        # The vision extractor runs before the graph; only its structured result goes on, as data.
+        yield sse(StepEvent(id="vision", label="Analizando la foto", status="start"))
+        try:
+            summary = summarise(await extract(deps.models, jpeg), context.food_index)
+        except Exception:
+            log.exception("vision failed")
+            yield sse(StepEvent(id="vision", label="Analizando la foto", status="failed"))
+            yield sse(ErrorEvent(message="No he podido analizar la foto. Descríbeme qué has comido."))
+        else:
+            yield sse(StepEvent(id="vision", label="Analizando la foto", status="done", detail=summary.label))
+            text = f"{text}\n\n{summary.text}"
+        jpeg = None  # drop the image as soon as it has been analysed
     session = await deps.store.get_session(user, session_id) or Session(id=session_id, updated_at=datetime.now(UTC))
     history: list[BaseMessage] = [
         HumanMessage(m.content) if m.role == "user" else AIMessage(m.content) for m in session.messages
     ]
     final_text = ""
+    retrieved: dict[str, tuple[str, str]] = {}  # passage tag -> (document title, url)
     diary_changed = False
     derived = False
     try:
@@ -181,16 +213,18 @@ async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text:
             config = {"callbacks": trace.callbacks}
             graph_input = {"messages": [*history, HumanMessage(text)]}
             async for update in deps.graph.astream(graph_input, context=context, config=config, stream_mode="updates"):
-                for node, change in update.items():
-                    if node == "input_guard" and (change or {}).get("guard_level") == "derivar":
+                for node, change in _node_changes(update):
+                    if node == "input_guard" and change.get("guard_level") == "derivar":
                         derived = True
-                    for event in _events_for(node, change or {}):
+                    for event in _events_for(node, change):
                         yield sse(event)
-                    for m in (change or {}).get("messages", []):
+                    for m in change.get("messages", []):
                         if isinstance(m, AIMessage) and not m.tool_calls:
                             final_text = m.text
                         if isinstance(m, ToolMessage) and m.name in DIARY_TOOLS and m.status != "error":
                             diary_changed = True
+                        if isinstance(m, ToolMessage) and m.name == RETRIEVAL_TOOL and m.status != "error":
+                            retrieved.update(_passage_documents(m.text))
             if trace.url:
                 yield sse(TraceEvent(url=trace.url))
     except Exception:
@@ -198,7 +232,7 @@ async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text:
         yield sse(ErrorEvent(message="No he podido completar la respuesta. Inténtalo de nuevo."))
         return
 
-    yield sse(FinalEvent(text=final_text, session_id=session_id))
+    yield sse(FinalEvent(text=final_text, session_id=session_id, sources=_cited_sources(final_text, retrieved)))
     if diary_changed:
         yield sse(DayUpdatedEvent())
     if derived:
@@ -211,6 +245,37 @@ async def _run_turn(deps: AppDeps, context: AgentContext, session_id: str, text:
     await deps.store.save_session(
         user, Session(id=session_id, messages=messages[-SESSION_MESSAGES:], updated_at=datetime.now(UTC))
     )
+
+
+def _node_changes(update: dict) -> list[tuple[str, dict]]:
+    """(node, change) pairs of a streamed update. A node's change is usually a dict, but the tool
+    node gives a list when several tools return a Command in the same step (parallel searches)."""
+    pairs: list[tuple[str, dict]] = []
+    for node, change in update.items():
+        for item in change if isinstance(change, list) else [change]:
+            if isinstance(item, dict):
+                pairs.append((node, item))
+    return pairs
+
+
+def _passage_documents(tool_result: str) -> dict[str, tuple[str, str]]:
+    try:
+        passages = json.loads(tool_result).get("pasajes", [])
+    except (ValueError, AttributeError):
+        return {}
+    return {p["etiqueta"]: (p.get("documento", ""), p.get("url", "")) for p in passages if "etiqueta" in p}
+
+
+def _cited_sources(answer: str, retrieved: dict[str, tuple[str, str]]) -> list[SourceRef]:
+    """Documents of the retrieved passages that the answer actually cites ("[EFSA DRV 2017]" cites
+    every passage of that document; tags are compared like the output guardian does)."""
+    cited = citations(answer)
+    documents: dict[tuple[str, str], list[str]] = {}
+    for tag, document in retrieved.items():
+        norm = " ".join(tag.split()).lower()
+        if any(norm == c or norm.startswith(c + ",") or norm.startswith(c + " ") for c in cited):
+            documents.setdefault(document, []).append(tag)
+    return [SourceRef(title=title, url=url, tags=tags) for (title, url), tags in documents.items()]
 
 
 def _events_for(node: str, change: dict) -> list[StepEvent]:

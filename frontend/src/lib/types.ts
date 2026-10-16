@@ -7,7 +7,8 @@ export type StepEvent = {
   status: 'start' | 'done' | 'failed'
   detail: string
 }
-export type FinalEvent = { type: 'final'; text: string; session_id: string }
+export type SourceRef = { title: string; url: string; tags: string[] }
+export type FinalEvent = { type: 'final'; text: string; session_id: string; sources?: SourceRef[] }
 export type ChatEvent =
   | StepEvent
   | FinalEvent

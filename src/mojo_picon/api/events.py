@@ -23,10 +23,19 @@ class AskEvent(BaseModel):
     text: str
 
 
+class SourceRef(BaseModel):
+    """A guideline document cited in the answer, with the tags used (shown under the answer)."""
+
+    title: str
+    url: str
+    tags: list[str]
+
+
 class FinalEvent(BaseModel):
     type: Literal["final"] = "final"
     text: str
     session_id: str
+    sources: list[SourceRef] = []
 
 
 class DayUpdatedEvent(BaseModel):
@@ -59,6 +68,7 @@ TOOL_LABELS = {
     "log_activity": "Registrando la actividad",
     "get_day_balance": "Calculando el balance del día",
     "per_kg_target": "Calculando la cantidad para tu peso",
+    "search_guides": "Consultando las guías",
     "plan_rest_of_day": "Planificando y verificando",
 }
 DIARY_TOOLS = {"log_meal", "log_activity"}

@@ -23,6 +23,21 @@ class Role(StrEnum):
 # Low temperature where the output feeds code (planner, guardian, vision).
 TEMPERATURES = {Role.COACH: 0.4, Role.PLANNER: 0.2, Role.GUARDIAN: 0.0, Role.VISION: 0.0}
 MAX_OUTPUT_TOKENS = {Role.COACH: 2048, Role.PLANNER: 2048, Role.GUARDIAN: 256, Role.VISION: 1024}
+# Nothing without a limit (Principles): a slow endpoint fails the call instead of hanging the turn.
+# Seen on 2026-10-14: the EU endpoint took 60-130 s per call, or never answered.
+TIMEOUT_SECONDS = {Role.COACH: 45, Role.PLANNER: 60, Role.GUARDIAN: 20, Role.VISION: 45}
+MAX_RETRIES = 1
+# Reasoning tokens are billed as output (14 Oct: ~2/3 of the day's output tokens). Only where the task
+# needs little reasoning: the guardian classifies. Roles not listed keep the model's default.
+THINKING = {Role.GUARDIAN: "low"}
+
+
+def thinking_config(model: str, level: str) -> dict:
+    """Thinking settings for the model family: Gemini 3 takes a level; Gemini 2.5 rejects levels and
+    takes a token budget (0 turns thinking off on Flash)."""
+    if model.startswith("gemini-2"):
+        return {"thinking_budget": 0 if level == "low" else -1}  # -1: dynamic, the model decides
+    return {"thinking_level": level}
 
 
 class ModelProvider(Protocol):
@@ -68,8 +83,25 @@ class GeminiProvider:
                 base_url=self._endpoint,
                 temperature=TEMPERATURES[role],
                 max_output_tokens=MAX_OUTPUT_TOKENS[role],
+                timeout=TIMEOUT_SECONDS[role],
+                max_retries=MAX_RETRIES,
+                **({"thinking_config": thinking_config(self._model, THINKING[role])} if role in THINKING else {}),
             )
         return self._cache[role]
+
+
+def gemini_embeddings(settings):
+    """gemini-embedding-2 on the Vertex AI EU endpoint (RAG; ADR-04), whatever the chat model's region."""
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    return GoogleGenerativeAIEmbeddings(
+        model=settings.embedding_model,
+        vertexai=True,
+        project=settings.gcp_project_id,
+        location=settings.embedding_location,
+        base_url=settings.embedding_endpoint,
+        request_options={"timeout": 20},
+    )
 
 
 def ensure_not_blocked(message: AIMessage) -> AIMessage:
