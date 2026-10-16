@@ -26,6 +26,7 @@ from mojo_picon.guardrails.output import output_guard, route_after_output_guard
 from mojo_picon.guardrails.responses import fixed_response
 from mojo_picon.llm import ModelProvider
 from mojo_picon.tools import diary
+from mojo_picon.tools.energy import planning_targets
 
 log = logging.getLogger(__name__)
 
@@ -66,11 +67,12 @@ async def _plan(planner, ctx: AgentContext, args: dict) -> str:
 
 async def _run_planner(planner, ctx: AgentContext, args: dict) -> str:
     balance = await diary.get_day_balance(ctx.user, ctx.store)
+    targets, notes = planning_targets(balance.remaining)
     result = await planner.ainvoke(
         {
             "meals": args.get("meals") or ["cena"],
             "preferences": args.get("preferences", ""),
-            "remaining": balance.remaining,
+            "remaining": targets,
             "allergens": sorted(ctx.profile.allergens) if ctx.profile else [],
         }
     )
@@ -94,6 +96,8 @@ async def _run_planner(planner, ctx: AgentContext, args: dict) -> str:
             "plan": meals,
             "total_plan": totals,
             "quedaba": balance.remaining.model_dump(),
+            "objetivo_del_plan": targets.model_dump(),
+            "avisos": notes,
         },
         ensure_ascii=False,
     )
