@@ -4,12 +4,13 @@ import { DayPanel } from './components/DayPanel'
 import { ProfileForm } from './components/ProfileForm'
 import { ApiError, getDay, getProfile, putProfile } from './lib/api'
 import { authConfigured, devMode, signIn, signOut, watchSession, type Session } from './lib/auth'
-import type { Day } from './lib/types'
+import type { Day, Profile } from './lib/types'
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined)
   const [day, setDay] = useState<Day | null>(null)
+  const [editing, setEditing] = useState<Profile | null>(null) // open profile editor (chat stays mounted)
 
   useEffect(() => watchSession(setSession), [])
 
@@ -52,7 +53,15 @@ export default function App() {
           Mojo <span className="font-normal text-cilantro">Picón</span>
         </h1>
         <div className="flex items-center gap-3 text-sm text-stone-500">
-          <span>{session.name}</span>
+          {hasProfile && (
+            <button
+              onClick={async () => setEditing(await getProfile(await session.token()))}
+              className="underline"
+            >
+              Perfil
+            </button>
+          )}
+          <span className="max-sm:hidden">{session.name}</span>
           {!devMode && (
             <button onClick={signOut} className="underline">
               Salir
@@ -75,6 +84,21 @@ export default function App() {
             <DayPanel day={day} />
           </div>
         </main>
+      )}
+      {editing && (
+        <div className="fixed inset-0 z-10 overflow-y-auto bg-stone-900/40 p-4">
+          <div className="mx-auto max-w-md rounded-2xl bg-white shadow-lg">
+            <ProfileForm
+              initial={editing}
+              onCancel={() => setEditing(null)}
+              onSave={async (profile) => {
+                await putProfile(await session.token(), profile)
+                setEditing(null)
+                await refreshDay() // new targets for the day
+              }}
+            />
+          </div>
+        </div>
       )}
       <footer className="border-t border-stone-200 bg-white px-4 py-1">
         <AiNotice />

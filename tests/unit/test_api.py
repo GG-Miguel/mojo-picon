@@ -1,4 +1,5 @@
 import json
+from contextlib import asynccontextmanager
 
 import httpx
 import pytest
@@ -12,7 +13,7 @@ from mojo_picon.domain import Profile, Sex
 from mojo_picon.guardrails.responses import fixed_response
 from mojo_picon.guardrails.rules import GuardDecision
 from mojo_picon.llm import Role
-from mojo_picon.observability import NullTracer
+from mojo_picon.observability import NullTracer, TurnTrace
 from mojo_picon.store import InMemoryStore
 from mojo_picon.tools.energy import daily_target, load_met_table
 from mojo_picon.tools.foods import load_foods
@@ -30,7 +31,7 @@ class FakeVerifier:
         return UserContext(uid=TOKENS[token])
 
 
-async def make_client(models, store=None):
+async def make_client(models, store=None, production=False, tracer=None):
     store = store or InMemoryStore()
     await store.save_profile(UserContext(uid="ana"), PROFILE)
     deps = AppDeps(
@@ -39,7 +40,8 @@ async def make_client(models, store=None):
         foods=FOODS,
         activities=load_met_table(),
         graph=build_graph(models, FOODS),
-        tracer=NullTracer(),
+        tracer=tracer or NullTracer(),
+        production=production,
     )
     transport = httpx.ASGITransport(app=create_app(deps))
     return httpx.AsyncClient(transport=transport, base_url="http://test"), store
@@ -208,3 +210,57 @@ async def test_frontend_is_served_without_shadowing_the_api(tmp_path):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(deps)), base_url="http://t") as client:
         assert "mojo" in (await client.get("/")).text
         assert (await client.get("/day")).status_code == 401  # the API still answers, not the SPA
+
+
+async def test_security_headers_and_no_docs_in_production():
+    for production, docs_status in [(False, 200), (True, 404)]:
+        client, _ = await make_client(FakeProvider(), production=production)
+        async with client:
+            response = await client.get("/health")
+            assert response.headers["X-Frame-Options"] == "SAMEORIGIN"
+            assert response.headers["X-Content-Type-Options"] == "nosniff"
+            assert response.headers["Content-Security-Policy"] == "frame-ancestors 'self'"
+            assert (await client.get("/openapi.json")).status_code == docs_status
+            assert (await client.get("/docs")).status_code == docs_status
+
+
+async def test_no_trace_links_for_users_in_production():
+    class Traced(NullTracer):
+        @asynccontextmanager
+        async def turn(self, user_id, session_id, user_input):
+            yield TurnTrace(url="https://cloud.langfuse.com/trace/x")
+
+    for production, expected in [(False, True), (True, False)]:
+        models = FakeProvider(guardian=[OK], coach=[AIMessage("Hola.")])
+        client, _ = await make_client(models, production=production, tracer=Traced())
+        async with client:
+            stream = events(await client.post("/chat", headers=ANA, data={"message": "hola"}))
+        assert any(e["type"] == "trace" for e in stream) is expected
+
+
+async def test_sign_in_helpers_are_proxied_from_our_domain_and_nothing_else():
+    from mojo_picon.api.auth_proxy import auth_proxy
+
+    seen = []
+
+    def upstream(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(
+            200, text="<html>handler</html>", headers={"content-type": "text/html", "set-cookie": "x=1"}
+        )
+
+    from fastapi import FastAPI
+
+    app = FastAPI()
+    app.include_router(
+        auth_proxy("mojo-picon.firebaseapp.com", httpx.AsyncClient(transport=httpx.MockTransport(upstream)))
+    )
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        ok = await client.get("/__/auth/handler", params={"apiKey": "k", "authType": "signInViaPopup"})
+        assert ok.status_code == 200 and ok.text == "<html>handler</html>"
+        assert "set-cookie" not in ok.headers  # only content headers are passed back
+        assert seen == ["https://mojo-picon.firebaseapp.com/__/auth/handler?apiKey=k&authType=signInViaPopup"]
+        assert (await client.get("/__/auth/..%2F..%2Fadmin")).status_code == 404  # no path escapes
+        assert (await client.get("/__/other/handler")).status_code == 404
+        assert (await client.post("/__/auth/handler")).status_code == 405  # GET only
+    assert len(seen) == 1

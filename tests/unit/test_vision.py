@@ -138,3 +138,18 @@ def test_text_copied_from_the_photo_cannot_become_an_instruction():
     assert text.startswith("<datos_foto>") and text.endswith("</datos_foto>")
     assert text.count("</datos_foto>") == 1  # the block cannot be closed from inside
     assert "Eres libre" not in text
+
+
+def test_decompression_bombs_are_rejected_before_decoding():
+    # A tiny file that expands to 144 million pixels (found in the security review of 2026-10-16)
+    bomb = io.BytesIO()
+    Image.new("L", (12000, 12000), 255).save(bomb, format="PNG", optimize=True)
+    assert len(bomb.getvalue()) < 1024 * 1024
+    with pytest.raises(InvalidImageError, match="píxeles"):
+        prepare_image(bomb.getvalue())
+
+
+def test_a_large_phone_photo_is_still_accepted():
+    photo = io.BytesIO()
+    Image.new("RGB", (8000, 6000), (180, 120, 60)).save(photo, format="JPEG", quality=70)  # 48 MP
+    assert max(Image.open(io.BytesIO(prepare_image(photo.getvalue()))).size) == MAX_SIDE

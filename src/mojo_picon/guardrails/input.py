@@ -44,7 +44,7 @@ async def _classify(models: ModelProvider, text: str) -> GuardDecision:
     classifier = models.get(Role.GUARDIAN).with_structured_output(GuardDecision)
     try:
         result = await classifier.ainvoke(
-            [SystemMessage(load_prompt("guardian")), HumanMessage(f"Mensaje del usuario:\n<<<\n{text}\n>>>")]
+            [SystemMessage(load_prompt("guardian")), HumanMessage(f"Mensaje del usuario:\n<<<\n{_quoted(text)}\n>>>")]
         )
     except SafetyBlockedError:
         return GuardDecision(level="derivar", category="safety_block", reason="gemini")
@@ -52,3 +52,8 @@ async def _classify(models: ModelProvider, text: str) -> GuardDecision:
         log.exception("guardian classifier failed")
         return CLASSIFIER_FAILED
     return result if isinstance(result, GuardDecision) else CLASSIFIER_FAILED
+
+
+def _quoted(text: str) -> str:
+    """The message between the classifier's delimiters, which it cannot close from inside."""
+    return text.replace("<<<", "‹‹‹").replace(">>>", "›››")
