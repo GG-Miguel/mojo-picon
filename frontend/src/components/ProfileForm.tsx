@@ -18,43 +18,102 @@ const ALLERGENS: [string, string][] = [
   ['lupin', 'Altramuz'],
 ]
 
-export function ProfileForm({ onSave }: { onSave: (profile: Profile) => Promise<void> }) {
-  const [p, setP] = useState<Profile>({
-    age: 30,
-    sex: 'female',
-    weight_kg: 65,
-    height_cm: 168,
-    activity_level: 'light',
-    goal: 'maintain',
-    weekly_rate_kg: 0.5,
-    allergens: [],
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Atlantic/Canary',
+type NumberField = 'age' | 'weight_kg' | 'height_cm' | 'weekly_rate_kg'
+
+// The same limits as the API (domain/profile.py)
+const RANGES: Record<NumberField, { min: number; max: number; decimals: boolean; message: string }> = {
+  age: { min: 18, max: 100, decimals: false, message: 'La edad debe estar entre 18 y 100 años.' },
+  weight_kg: { min: 30.1, max: 299.9, decimals: true, message: 'El peso debe estar entre 30 y 300 kg.' },
+  height_cm: { min: 120.1, max: 249.9, decimals: true, message: 'La altura debe estar entre 120 y 250 cm.' },
+  weekly_rate_kg: {
+    min: 0,
+    max: 1,
+    decimals: true,
+    message: 'El ritmo debe estar entre 0 y 1 kg por semana (p. ej. 0,5).',
+  },
+}
+
+/** "0,5" or "0.5" -> 0.5; null if it is not a number in range (or has decimals where none fit). */
+function parse(key: NumberField, raw: string): number | null {
+  const clean = raw.trim().replace(',', '.')
+  if (!/^\d+(\.\d+)?$/.test(clean)) return null
+  const value = Number(clean)
+  const { min, max, decimals } = RANGES[key]
+  if (!decimals && !Number.isInteger(value)) return null
+  return value >= min && value <= max ? value : null
+}
+
+export function ProfileForm({
+  initial,
+  onSave,
+  onCancel,
+}: {
+  initial?: Profile
+  onSave: (profile: Profile) => Promise<void>
+  onCancel?: () => void
+}) {
+  const [p, setP] = useState<Profile>(
+    initial ?? {
+      age: 30,
+      sex: 'female',
+      weight_kg: 65,
+      height_cm: 168,
+      activity_level: 'light',
+      goal: 'maintain',
+      weekly_rate_kg: 0.5,
+      allergens: [],
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Atlantic/Canary',
+    },
+  )
+  // Number fields keep the text as typed: converting on every key turned an empty field into "0",
+  // dropped the "." of "0." and rejected the Spanish decimal comma ("0,5"). Parsed on submit.
+  const [text, setText] = useState<Record<NumberField, string>>({
+    age: String(p.age),
+    weight_kg: String(p.weight_kg),
+    height_cm: String(p.height_cm),
+    weekly_rate_kg: String(p.weekly_rate_kg).replace('.', ','),
   })
   const [error, setError] = useState('')
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) =>
     setP((old) => ({ ...old, [key]: value }))
-  const num = (key: 'age' | 'weight_kg' | 'height_cm' | 'weekly_rate_kg') => (
+  const num = (key: NumberField) => (
     <input
-      type="number"
-      step="any"
-      value={p[key]}
-      onChange={(e) => set(key, Number(e.target.value))}
-      className="w-full rounded border border-stone-300 px-2 py-1"
+      type="text"
+      inputMode={RANGES[key].decimals ? 'decimal' : 'numeric'}
+      autoComplete="off"
+      value={text[key]}
+      onChange={(e) => setText((old) => ({ ...old, [key]: e.target.value }))}
+      aria-invalid={parse(key, text[key]) === null}
+      className="w-full rounded border border-stone-300 px-2 py-1 aria-[invalid=true]:border-picon"
     />
   )
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
+    const values = {} as Record<NumberField, number>
+    for (const key of Object.keys(RANGES) as NumberField[]) {
+      if (key === 'weekly_rate_kg' && p.goal === 'maintain') {
+        values[key] = 0
+        continue
+      }
+      const value = parse(key, text[key])
+      if (value === null) {
+        setError(RANGES[key].message)
+        return
+      }
+      values[key] = value
+    }
+    setError('')
     try {
-      await onSave(p)
+      await onSave({ ...p, ...values })
     } catch {
-      setError('Revisa los datos: edad entre 18 y 100 y un ritmo de como mucho 1 kg por semana.')
+      setError('No he podido guardar el perfil. Revisa los datos e inténtalo de nuevo.')
     }
   }
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-md space-y-3 p-6">
-      <h2 className="text-xl font-semibold">Cuéntame un poco de ti</h2>
+      <h2 className="text-xl font-semibold">{initial ? 'Tu perfil' : 'Cuéntame un poco de ti'}</h2>
       <p className="text-sm text-stone-500">Con estos datos el código calcula tu gasto y tus objetivos.</p>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <label>Edad {num('age')}</label>
@@ -119,7 +178,18 @@ export function ProfileForm({ onSave }: { onSave: (profile: Profile) => Promise<
         </div>
       </fieldset>
       {error && <p className="text-sm text-picon">{error}</p>}
-      <button className="w-full rounded-full bg-picon py-2 font-medium text-white">Guardar</button>
+      <div className="flex gap-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-full border border-stone-300 py-2 font-medium text-stone-600"
+          >
+            Cancelar
+          </button>
+        )}
+        <button className="flex-1 rounded-full bg-picon py-2 font-medium text-white">Guardar</button>
+      </div>
     </form>
   )
 }

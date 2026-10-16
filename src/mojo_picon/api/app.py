@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 
 from mojo_picon.agents import AgentContext
+from mojo_picon.api.auth_proxy import auth_proxy
 from mojo_picon.api.events import (
     DIARY_TOOLS,
     TOOL_LABELS,
@@ -68,6 +69,8 @@ class AppDeps:
     frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
     models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
     guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
+    production: bool = False  # no API docs and no trace links for users (security review 2026-10-16)
+    auth_proxy_host: str | None = None  # <project>.firebaseapp.com: sign-in served from our domain (Safari)
 
 
 class RateLimiter:
@@ -88,7 +91,20 @@ class RateLimiter:
 
 
 def create_app(deps: AppDeps) -> FastAPI:
-    app = FastAPI(title="Mojo Picón API", version="0.1.0")
+    docs = {} if not deps.production else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    app = FastAPI(title="Mojo Picón API", version="0.1.0", **docs)
+
+    @app.middleware("http")
+    async def security_headers(request, call_next):
+        response = await call_next(request)
+        # A full Content-Security-Policy (with the Firebase login domains) comes in milestone 2
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        # Same origin only: Firebase's sign-in iframe (/__/auth/iframe) is embedded by our own page
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
+        return response
+
     limiter = RateLimiter(RATE_LIMIT_PER_MINUTE)
     index = FoodIndex(deps.foods)
 
@@ -164,6 +180,9 @@ def create_app(deps: AppDeps) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    if deps.auth_proxy_host:
+        app.include_router(auth_proxy(deps.auth_proxy_host))
+
     if deps.frontend_dir is not None:
         # The compiled React app, served by the same container (registered last: API routes win)
         app.mount("/", StaticFiles(directory=deps.frontend_dir, html=True), name="frontend")
@@ -225,7 +244,7 @@ async def _run_turn(
                             diary_changed = True
                         if isinstance(m, ToolMessage) and m.name == RETRIEVAL_TOOL and m.status != "error":
                             retrieved.update(_passage_documents(m.text))
-            if trace.url:
+            if trace.url and not deps.production:  # trace links are for the developer, not for users
                 yield sse(TraceEvent(url=trace.url))
     except Exception:
         log.exception("turn failed")
