@@ -98,3 +98,26 @@ def test_per_kg_target():
 def test_per_kg_target_rejects_invalid_input(args):
     with pytest.raises(ValueError):
         per_kg_target(*args)
+
+
+def test_planning_targets_are_always_reachable_after_exceeding_a_macro():
+    from mojo_picon.domain import MacroTargets
+    from mojo_picon.tools.energy import planning_targets
+
+    # Seen on 2026-10-16: fat already exceeded, 251 g of carbs (~1004 kcal) with 886 kcal left
+    remaining = MacroTargets(kcal=886, protein_g=30, carbs_g=251, fat_g=-6)
+    targets, notes = planning_targets(remaining)
+    assert targets.fat_g == 0 and notes == ["ya has superado la grasa del día"]
+    energy = targets.protein_g * 4 + targets.carbs_g * 4 + targets.fat_g * 9
+    assert abs(energy - 886) <= 886 * 0.02  # the macros now add up to the kcal that remain
+    assert targets.carbs_g < 251 and targets.protein_g < 30
+
+
+def test_planning_targets_leave_consistent_remainders_alone():
+    from mojo_picon.domain import MacroTargets
+    from mojo_picon.tools.energy import planning_targets
+
+    remaining = MacroTargets(kcal=900, protein_g=50, carbs_g=110, fat_g=28)  # 892 kcal from macros
+    assert planning_targets(remaining) == (remaining, [])
+    nothing_left = MacroTargets(kcal=-50, protein_g=-5, carbs_g=10, fat_g=-2)
+    assert planning_targets(nothing_left) == (nothing_left, [])  # verify_plan says nothing remains
