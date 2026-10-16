@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Added
+- Planner prompt: minimally processed foods (AESAN), no fried food, pastries, chocolate or juices unless asked; protein in every main meal. Measured with real Gemini: 0 such items in 6/6 plans (3 before in 3/3 after a 10 km run), all verified at the first attempt.
+- Photo analysis hardened against text written in the photo (OWASP LLM01): food names and questions are length-limited, and the summary reaches the Coach between `<datos_foto>` tags that cannot be closed from inside.
 - Guideline retrieval (RAG): corpus manifest and download script; PDF transcription with Gemini (tables kept, numbers checked against the PDF text); hybrid index in Qdrant Cloud (gemini-embedding-2 + BM25, RRF); `search_guides` tool for the Coach, whose passages count as number origin only when cited; `scripts/ingest_rag.py` with a report.
 - Meal photos (UC-03): the vision extractor (Gemini, structured output) returns foods with gram ranges, confidence and questions; the photo is cleaned in memory (EXIF and GPS removed, resized) and never stored; only the result goes to the Coach, as data. Photo upload in the web chat.
 - `scripts/seed_demo_user.py`: demo profile and breakfast for the demo account.
@@ -24,6 +26,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `config.py` (all settings from the environment) and `devtools.py` (development servers).
 
 ### Fixed
+- Planner: Gemini's reasoning used up the 2048-token output limit and half of the plans arrived cut; limits raised (reasoning counts inside them) and an unreadable proposal now counts as one failed attempt.
 - Number origin: a citation with a page ("[EFSA DRV 2017, p. 21]") was split into two sentences.
 - Numbers with origin: digits inside strings of tool results (e.g. random entry ids) were accepted as the origin of a figure; JSON lists were dropped as if they were citations.
 - Logging tools return the balance read after writing (Gemini can call `log_meal` and `get_day_balance` in parallel).

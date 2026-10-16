@@ -7,5 +7,6 @@ Requisitos:
 - Nunca incluyas alimentos con los alérgenos del usuario.
 - Cantidades realistas para una persona (no más de la ración máxima indicada en el catálogo).
 - Comidas sencillas y habituales en España, coherentes con las preferencias del usuario.
+- **Alimentos poco procesados**, como recomienda la AESAN: para los hidratos usa pan integral, arroz, pasta, patata cocida o asada, legumbres, avena y fruta entera. Evita fritos, bollería, galletas, chocolate, refrescos y zumos salvo que el usuario los pida. Cada comida principal lleva una ración de proteína.
 
 No calcules nutrientes tú: elige alimentos y gramos. Si recibes errores del verificador (por ejemplo «proteína −18 %»), corrige la propuesta para resolverlos.

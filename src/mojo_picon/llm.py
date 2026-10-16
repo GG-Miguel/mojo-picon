@@ -22,7 +22,10 @@ class Role(StrEnum):
 
 # Low temperature where the output feeds code (planner, guardian, vision).
 TEMPERATURES = {Role.COACH: 0.4, Role.PLANNER: 0.2, Role.GUARDIAN: 0.0, Role.VISION: 0.0}
-MAX_OUTPUT_TOKENS = {Role.COACH: 2048, Role.PLANNER: 2048, Role.GUARDIAN: 256, Role.VISION: 1024}
+# Gemini counts its reasoning tokens inside this limit: on 2026-10-16 the planner used 1400-1960
+# of 2048 tokens reasoning and half of its plans arrived cut (MAX_TOKENS). The limit only stops
+# a runaway answer; tokens are billed as used either way.
+MAX_OUTPUT_TOKENS = {Role.COACH: 4096, Role.PLANNER: 8192, Role.GUARDIAN: 1024, Role.VISION: 4096}
 # Nothing without a limit (Principles): a slow endpoint fails the call instead of hanging the turn.
 # Seen on 2026-10-14: the EU endpoint took 60-130 s per call, or never answered.
 TIMEOUT_SECONDS = {Role.COACH: 45, Role.PLANNER: 60, Role.GUARDIAN: 20, Role.VISION: 45}
