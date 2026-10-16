@@ -78,6 +78,7 @@ Checked in BEDCA on 2026-10-10:
 - **Plurals:** singular and plural forms of the table's words are mapped to each other («tomates», «nuez» → «nueces», «pechugas»).
 - **Typos:** edit distance 1 for words of 4–7 letters, 2 for longer ones («platno» → plátano). Short words are not corrected, so «plato» is not read as «plátano».
 - **Filler words** that are neither in the table nor a typo of a table word are dropped («un plato de arroz» → arroz). Mixed dishes not in the table («arroz con pollo») return `not_found`: the agent searches each food separately.
+- **Close variants are not asked** (2026-10-16): with an exact match, if every alternative differs by **10 % or less in kcal per 100 g** (the tolerance `verify_plan` gives kcal), only the exact match is returned as `exact`. «salmón» → salmón al horno (205 vs crudo 194 kcal) without a question; «pollo» (pechuga 141 vs muslo 213) and «leche» (entera 65 vs desnatada 33) are still asked. Naming the variant («salmón crudo») always picks it.
 
 ## Limitations to document
 - CIQUAL describes foods as sold in France; some Spanish products are approximations.
