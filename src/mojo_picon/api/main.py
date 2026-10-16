@@ -38,6 +38,7 @@ def build_app(settings: Settings):
         expert_brief=brief,
         brief_passages=passages,
         frontend_dir=Path(settings.frontend_dir) if settings.frontend_dir else None,
+        production=settings.is_production,
     )
     return create_app(deps)
 

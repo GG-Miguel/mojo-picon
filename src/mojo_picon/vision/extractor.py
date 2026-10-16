@@ -22,6 +22,12 @@ from mojo_picon.tools.food_search import FoodIndex
 MAX_BYTES = 10 * 1024 * 1024
 MAX_SIDE = 1024  # enough for Gemini to recognise a dish; less cost and latency
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+# Decompression bombs: a 165 KB PNG of 12000x12000 passed the 10 MB check and took 887 MB of memory
+# (the Cloud Run instance has 1 GiB). The size is read from the header and checked BEFORE decoding.
+# JPEG is decoded already reduced (draft), so phone photos up to 50 MP are cheap; PNG and WebP are
+# decoded at full size, so their limit is lower.
+MAX_PIXELS = {"JPEG": 50_000_000, "PNG": 16_000_000, "WEBP": 16_000_000}
+Image.MAX_IMAGE_PIXELS = max(MAX_PIXELS.values())  # Pillow's own guard, as a second barrier
 
 
 class InvalidImageError(ValueError):
@@ -36,11 +42,18 @@ def prepare_image(data: bytes) -> bytes:
         with Image.open(io.BytesIO(data)) as image:
             if image.format not in ALLOWED_FORMATS:
                 raise InvalidImageError("formato no admitido (usa JPEG, PNG o WebP)")
+            width, height = image.size  # from the header: nothing decoded yet
+            if width * height > MAX_PIXELS[image.format]:
+                raise InvalidImageError("la imagen tiene demasiados píxeles")
+            if image.format == "JPEG":
+                image.draft("RGB", (MAX_SIDE * 2, MAX_SIDE * 2))  # decode at 1/2, 1/4 or 1/8 scale
             image = ImageOps.exif_transpose(image)  # orientation BEFORE dropping EXIF (phone photos)
             image = image.convert("RGB")
             image.thumbnail((MAX_SIDE, MAX_SIDE))
             clean = Image.new("RGB", image.size)
             clean.paste(image)  # a new image carries no metadata at all (EXIF, GPS, XMP, ICC)
+    except Image.DecompressionBombError as e:
+        raise InvalidImageError("la imagen tiene demasiados píxeles") from e
     except (UnidentifiedImageError, OSError) as e:
         raise InvalidImageError("no es una imagen válida") from e
     out = io.BytesIO()

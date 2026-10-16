@@ -26,6 +26,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `config.py` (all settings from the environment) and `devtools.py` (development servers).
 
 ### Fixed
+- Security review (2026-10-16): photos are checked for pixel count before decoding (a 165 KB PNG used 887 MB of memory); JPEGs are decoded already reduced. Security headers (nosniff, Referrer-Policy, no framing); API docs off in production; trace links not sent to users in production; the guardian's delimiters cannot be closed from the message.
 - Planner: Gemini's reasoning used up the 2048-token output limit and half of the plans arrived cut; limits raised (reasoning counts inside them) and an unreadable proposal now counts as one failed attempt.
 - Number origin: a citation with a page ("[EFSA DRV 2017, p. 21]") was split into two sentences.
 - Numbers with origin: digits inside strings of tool results (e.g. random entry ids) were accepted as the origin of a figure; JSON lists were dropped as if they were citations.

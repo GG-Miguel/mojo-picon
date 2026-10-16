@@ -68,6 +68,7 @@ class AppDeps:
     frontend_dir: Path | None = None  # compiled React app (frontend/dist), if served here
     models: ModelProvider | None = None  # for the vision extractor (photos); None: photos rejected
     guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
+    production: bool = False  # no API docs and no trace links for users (security review 2026-10-16)
 
 
 class RateLimiter:
@@ -88,7 +89,19 @@ class RateLimiter:
 
 
 def create_app(deps: AppDeps) -> FastAPI:
-    app = FastAPI(title="Mojo Picón API", version="0.1.0")
+    docs = {} if not deps.production else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    app = FastAPI(title="Mojo Picón API", version="0.1.0", **docs)
+
+    @app.middleware("http")
+    async def security_headers(request, call_next):
+        response = await call_next(request)
+        # A full Content-Security-Policy (with the Firebase login domains) comes in milestone 2
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+        return response
+
     limiter = RateLimiter(RATE_LIMIT_PER_MINUTE)
     index = FoodIndex(deps.foods)
 
@@ -225,7 +238,7 @@ async def _run_turn(
                             diary_changed = True
                         if isinstance(m, ToolMessage) and m.name == RETRIEVAL_TOOL and m.status != "error":
                             retrieved.update(_passage_documents(m.text))
-            if trace.url:
+            if trace.url and not deps.production:  # trace links are for the developer, not for users
                 yield sse(TraceEvent(url=trace.url))
     except Exception:
         log.exception("turn failed")
