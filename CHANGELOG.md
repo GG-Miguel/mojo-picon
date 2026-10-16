@@ -5,6 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Added
+- Profile can be edited at any time ("Perfil" in the header): the same form, prefilled, over the chat so the conversation is kept; the day's targets are recalculated on save.
 - Planner prompt: minimally processed foods (AESAN), no fried food, pastries, chocolate or juices unless asked; protein in every main meal. Measured with real Gemini: 0 such items in 6/6 plans (3 before in 3/3 after a 10 km run), all verified at the first attempt.
 - Photo analysis hardened against text written in the photo (OWASP LLM01): food names and questions are length-limited, and the summary reaches the Coach between `<datos_foto>` tags that cannot be closed from inside.
 - Guideline retrieval (RAG): corpus manifest and download script; PDF transcription with Gemini (tables kept, numbers checked against the PDF text); hybrid index in Qdrant Cloud (gemini-embedding-2 + BM25, RRF); `search_guides` tool for the Coach, whose passages count as number origin only when cited; `scripts/ingest_rag.py` with a report.

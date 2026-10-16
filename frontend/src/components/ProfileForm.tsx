@@ -43,18 +43,28 @@ function parse(key: NumberField, raw: string): number | null {
   return value >= min && value <= max ? value : null
 }
 
-export function ProfileForm({ onSave }: { onSave: (profile: Profile) => Promise<void> }) {
-  const [p, setP] = useState<Profile>({
-    age: 30,
-    sex: 'female',
-    weight_kg: 65,
-    height_cm: 168,
-    activity_level: 'light',
-    goal: 'maintain',
-    weekly_rate_kg: 0.5,
-    allergens: [],
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Atlantic/Canary',
-  })
+export function ProfileForm({
+  initial,
+  onSave,
+  onCancel,
+}: {
+  initial?: Profile
+  onSave: (profile: Profile) => Promise<void>
+  onCancel?: () => void
+}) {
+  const [p, setP] = useState<Profile>(
+    initial ?? {
+      age: 30,
+      sex: 'female',
+      weight_kg: 65,
+      height_cm: 168,
+      activity_level: 'light',
+      goal: 'maintain',
+      weekly_rate_kg: 0.5,
+      allergens: [],
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Atlantic/Canary',
+    },
+  )
   // Number fields keep the text as typed: converting on every key turned an empty field into "0",
   // dropped the "." of "0." and rejected the Spanish decimal comma ("0,5"). Parsed on submit.
   const [text, setText] = useState<Record<NumberField, string>>({
@@ -103,7 +113,7 @@ export function ProfileForm({ onSave }: { onSave: (profile: Profile) => Promise<
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-md space-y-3 p-6">
-      <h2 className="text-xl font-semibold">Cuéntame un poco de ti</h2>
+      <h2 className="text-xl font-semibold">{initial ? 'Tu perfil' : 'Cuéntame un poco de ti'}</h2>
       <p className="text-sm text-stone-500">Con estos datos el código calcula tu gasto y tus objetivos.</p>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <label>Edad {num('age')}</label>
@@ -168,7 +178,18 @@ export function ProfileForm({ onSave }: { onSave: (profile: Profile) => Promise<
         </div>
       </fieldset>
       {error && <p className="text-sm text-picon">{error}</p>}
-      <button className="w-full rounded-full bg-picon py-2 font-medium text-white">Guardar</button>
+      <div className="flex gap-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-full border border-stone-300 py-2 font-medium text-stone-600"
+          >
+            Cancelar
+          </button>
+        )}
+        <button className="flex-1 rounded-full bg-picon py-2 font-medium text-white">Guardar</button>
+      </div>
     </form>
   )
 }
