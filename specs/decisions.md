@@ -99,6 +99,8 @@ Each decision has: context, decision, discarded alternatives, consequences and *
 - **Judge** (2026-10-12): **G-Eval only** (DeepEval) with **Claude Sonnet 5.5** as the model and **evaluation steps fixed** by hand, in CI and in the full evaluation. A single rubric.
 - **Discarded alternative:** a custom judge with Claude's Batch API. It halves the cost, but with tens of cases that is a few dollars, and it duplicates code and rubrics.
 - **Note:** with Claude, G-Eval uses the direct score (no weighting by token probabilities, which Claude does not expose).
+- **Judge revised** (2026-10-17): **GPT-OSS 120B on Groq's free tier** (`openai/gpt-oss-120b`), a different model family from the agents (Gemini). No Anthropic key was available, and OpenCode's Go plan is restricted to coding-agent traffic. It runs at temperature 0. On a rate limit it waits and retries the **same** model: switching judges in the middle of a run would make variants incomparable. Groq is hosted outside the EU, which is acceptable because the judge only sees **synthetic test cases**, never user data. Claude Sonnet stays the alternative if the tutor prefers it (a configuration change in `evals/judge.py`). A second judge from another family (Qwen 3.8 27B, same free tier) is used only to compare judges during calibration.
+- **Evaluation runs as scripts** (`evals/run.py`), not inside pytest: DeepEval's pytest plugin is disabled for the unit tests (`-p no:deepeval`), and DeepEval lives in its own dependency group (`eval`), so it never reaches the production image.
 
 ## ADR-14
 **Authorization in the tool layer**
