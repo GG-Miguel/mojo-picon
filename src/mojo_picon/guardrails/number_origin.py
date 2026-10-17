@@ -338,6 +338,18 @@ def numbers_in(obj: object) -> list[float]:
     return []
 
 
+def passage_numbers(passages: list[str]) -> list[float]:
+    """Numbers in guideline passages, read as source text (found while checking the expert brief):
+    brackets there are data, not citations («15–20% PRO [0.8–1.2 g/kg/day]»), and English sources
+    write thousands with a comma («8,000 mL»), so both readings of «8,000» are kept."""
+    values: list[float] = []
+    for text in passages:
+        plain = text.replace("[", " ").replace("]", " ")
+        values += numbers_in(plain)
+        values += [float(m.replace(",", "")) for m in re.findall(r"(?<![\d.,])\d{1,3}(?:,\d{3})+(?![\d,])", plain)]
+    return values
+
+
 def _json_numbers(obj: object) -> list[float]:
     """Numeric values of parsed JSON. Strings inside it are ignored: ids like "edcbc04c3000…" or
     food names are not the origin of any figure."""
@@ -392,7 +404,7 @@ def check_numbers(answer: str, sources: TurnSources) -> list[Violation]:
                     Violation(q, kind, f"«{q.text}» no sale de ninguna herramienta del turno ni del perfil")
                 )
         else:
-            reference_pool = numbers_in(_cited_passages(tags, sources.passages)) + tool_pool
+            reference_pool = passage_numbers(_cited_passages(tags, sources.passages)) + tool_pool
             if not tags and _per_kg(q):
                 # A per-kg recommendation needs its citation even if a tool echoes it: per_kg_target returns
                 # the per_kg values the model passed in (found by the evaluation, 2026-10-17).
@@ -417,7 +429,8 @@ def feedback(violations: list[Violation]) -> str:
         f"{lines}\n"
         "Usa solo cifras de las herramientas de este turno, del perfil o del mensaje del usuario. "
         "Los valores de referencia deben llevar la etiqueta de su fuente en la misma frase. "
-        "Si necesitas una cantidad personal por kg de peso, llama a per_kg_target."
+        "Si necesitas una cantidad personal por kg de peso, llama a per_kg_target. "
+        "Este aviso es interno: reescribe la respuesta para el usuario sin mencionarlo y sin disculparte."
     )
 
 
