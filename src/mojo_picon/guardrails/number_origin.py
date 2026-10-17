@@ -393,12 +393,20 @@ def check_numbers(answer: str, sources: TurnSources) -> list[Violation]:
                 )
         else:
             reference_pool = numbers_in(_cited_passages(tags, sources.passages)) + tool_pool
-            if not tags:
+            if not tags and _per_kg(q):
+                # A per-kg recommendation needs its citation even if a tool echoes it: per_kg_target returns
+                # the per_kg values the model passed in (found by the evaluation, 2026-10-17).
+                violations.append(Violation(q, kind, f"«{q.text}» es un valor de referencia sin cita"))
+            elif not tags:
                 if not _matches(q, reference_pool):
                     violations.append(Violation(q, kind, f"«{q.text}» es un valor de referencia sin cita"))
             elif not _matches(q, reference_pool):
                 violations.append(Violation(q, kind, f"«{q.text}» no aparece en la fuente citada ({', '.join(tags)})"))
     return violations
+
+
+def _per_kg(q: Quantity) -> bool:
+    return bool(q.unit) and q.unit.endswith("/kg")
 
 
 def feedback(violations: list[Violation]) -> str:
