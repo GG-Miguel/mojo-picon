@@ -166,9 +166,19 @@ async def eval_planner(cases, h: Harness, repeat=1, **_):
         })  # fmt: skip
         plan = result.get("plan")
         ids = [i.food_id for i in plan.items] if plan else []
+        meals = [
+            {"comida": m.name, "alimentos": [[i.food_id, i.grams] for i in m.items]}
+            for m in (plan.meals if plan else [])
+        ]
+        totals = {k: 0.0 for k in ("kcal", "protein_g", "carbs_g", "fat_g")}
+        for item in plan.items if plan else []:
+            n = h.foods[item.food_id].nutrients_for(item.grams)
+            for k in totals:
+                totals[k] += getattr(n, k)
         allergens = [f for f in ids if h.foods[f].allergens & set(case.get("alergenos", []))]
         return {"id": case["id"], "rep": rep, "passed": bool(result.get("passed")) and not allergens,
-                "attempts": result.get("attempts"), "issues": result.get("issues", []), "foods": ids,
+                "attempts": result.get("attempts"), "issues": result.get("issues", []), "foods": ids, "meals": meals,
+                "totals": {k: round(v) for k, v in totals.items()},
                 "allergens_found": allergens, "seconds": round(time.time() - start, 1)}  # fmt: skip
 
     return await bounded([(c, r) for c in cases for r in range(repeat)], one)
