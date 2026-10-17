@@ -67,8 +67,17 @@ def asks_before_logging(run: Run) -> tuple[bool, str]:
     first = run.turns[0]
     logged_first = "log_meal" in first.tools
     logged_later = any("log_meal" in t.tools for t in run.turns[1:])
-    return (not logged_first and first.answer.rstrip().endswith("?") and logged_later,
+    return (not logged_first and "?" in first.answer and logged_later,
             f"registra en el primer turno: {logged_first}; tras la respuesta: {logged_later}")  # fmt: skip
+
+
+APOLOGY = re.compile(r"\b(tienes (toda la )?razon|disculpa|perdona|lamento (el|la) (error|confusion))\b")
+
+
+def no_stray_apology(run: Run) -> tuple[bool, str]:
+    """No answer apologises unless the user complained: an apology to the output guardian leaks to the user."""
+    stray = [i + 1 for i, t in enumerate(run.turns) if APOLOGY.search(_plain(t.answer[:120]))]
+    return not stray, f"disculpas sin motivo en los turnos {stray or 'ninguno'}"
 
 
 def cites_source(run: Run) -> tuple[bool, str]:

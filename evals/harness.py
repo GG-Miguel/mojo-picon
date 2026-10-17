@@ -173,7 +173,7 @@ class Harness:
                 turn.answer = final["text"] if final else ""
                 session = final["session_id"] if final else session
                 turns.append(turn)
-                if simulated and not pending and len(turns) == len(messages) and turn.answer.rstrip().endswith("?"):
+                if simulated and not pending and len(turns) == len(messages) and "?" in turn.answer:
                     pending.append(simulated)  # the simulated user answers the agent's question, once
         day = datetime.now(UTC).date()
         return Run(case["id"], turns, await _all_entries(store, user, day), await _all_entries(store, victim, day))

@@ -20,8 +20,9 @@ from pathlib import Path
 from evals import checks
 from evals.cases import load, partition
 from evals.harness import Harness, Run
+from evals.metrics import RUBRIC_VERSION
 from mojo_picon.agents.planner import build_planner
-from mojo_picon.domain import MacroTargets
+from mojo_picon.domain import Allergen, MacroTargets
 from mojo_picon.rag.index import guide_index_from_settings
 
 RESULTS = Path(__file__).parent / "results"
@@ -160,7 +161,8 @@ async def eval_planner(cases, h: Harness, repeat=1, **_):
         start = time.time()
         result = await planner.ainvoke({
             "meals": case["comidas"], "preferences": case.get("preferencias", ""),
-            "remaining": MacroTargets(**case["queda"]), "allergens": case.get("alergenos", []),
+            "remaining": MacroTargets(**case["queda"]),
+            "allergens": [Allergen(a) for a in case.get("alergenos", [])],
         })  # fmt: skip
         plan = result.get("plan")
         ids = [i.food_id for i in plan.items] if plan else []
@@ -177,7 +179,7 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
         case, rep = item
         run = await h.chat(case, case["turnos"], simulated=case.get("usuario_simulado"))
         exp = case["esperado"]
-        results = [("trayectoria", checks.trajectory(run))]
+        results = [("trayectoria", checks.trajectory(run)), ("sin_disculpas", checks.no_stray_apology(run))]
         if "guardian" in exp:
             results.append(("guardian", checks.guardian(run, exp["guardian"])))
         if exp.get("herramientas"):
@@ -201,8 +203,11 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
                 f"Registrado hoy antes de la conversación: {case.get('hoy', {})}",
                 f"Nivel del guardián: {run.turns[0].guard_level}",
             ]
-            user_input = "\n".join(t.message for t in run.turns)
-            answer = "\n\n".join(f"Turno {i + 1}: {t.answer}" for i, t in enumerate(run.turns))
+            user_input = run.turns[0].message
+            if len(run.turns) == 1:
+                answer = run.turns[0].answer
+            else:  # a dialogue, so the judge sees what was asked and answered in order
+                answer = "\n\n".join(f"Usuario: {t.message}\nMojo: {t.answer}" for t in run.turns)
             out["judge"] = await score(judge, user_input, answer, context)
         return out
 
@@ -302,9 +307,9 @@ async def main() -> None:
         print(f"{name}: {len(cases)} casos…", flush=True)
         fn = globals()[f"eval_{name}"]
         results[name] = await fn(cases, h=h, repeat=args.repeat, judge=judge)
+    judge_name = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION}" if judge else None
     meta = {"started": started.strftime("%Y-%m-%d %H:%M"), "partition": args.partition, "repeat": args.repeat,
-            "model": h.settings.gemini_model, "judge": judge and "openai/gpt-oss-120b (Groq)",
-            "seconds": time.time() - start}  # fmt: skip
+            "model": h.settings.gemini_model, "judge": judge_name, "seconds": time.time() - start}  # fmt: skip
     RESULTS.mkdir(exist_ok=True)
     stem = RESULTS / f"{started.strftime('%Y%m%d-%H%M%S')}-{args.partition}-{'+'.join(results)}"
     stem.with_suffix(".json").write_text(
