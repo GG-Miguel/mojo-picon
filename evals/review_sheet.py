@@ -195,7 +195,8 @@ def section_rag(lines: list[str], chunks: dict) -> None:
 def section_numbers(lines: list[str]) -> None:
     results = latest("numbers")
     lines += ["## 6. Cifras con origen", "",
-              "Revisa la etiqueta: ¿la respuesta tiene alguna cifra que no sale de sus fuentes?", ""]  # fmt: skip
+              "Revisa la etiqueta: ¿la respuesta tiene alguna cifra que no sale de sus fuentes? «Acierta» significa que el "
+              "comprobador coincide con la etiqueta (detecta la cifra inventada, o no marca una correcta).", ""]  # fmt: skip
     for case in load("numbers"):
         r = results.get(case["id"], {})
         sources = [f"- Herramienta: `{t}`" for t in case.get("herramientas", [])]
@@ -208,7 +209,8 @@ def section_numbers(lines: list[str]) -> None:
         verdict = r.get("flagged")
         lines += [f"### {case['id']}", "", f"**Respuesta:** «{case['respuesta']}»", "", "**Fuentes del turno:**",
                   *(sources or ["- ninguna"]), "", f"**Esperado:** {expected}", "",
-                  f"**El comprobador dijo:** {'cifra sin origen' if verdict else 'todo con origen'} · {outcome(r)}", "",
+                  f"**El comprobador:** {'detecta una cifra sin origen' if verdict else 'no detecta ninguna'} · "
+                  f"{'✅ acierta' if r.get('passed') else '❌ se equivoca'} (tolerancia de redondeo: ±2 %, o ±5 % por debajo de 10)", "",
                   *decision()]  # fmt: skip
 
 

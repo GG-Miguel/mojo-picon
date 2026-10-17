@@ -1,16 +1,16 @@
 # Retrieval (RAG): the right document must be among the first k passages. fuente: acceptable tag prefixes.
-- {id: rag-01, validado: false, pregunta: "¿Cuánta proteína al día necesita alguien que entrena fuerza?", fuente: ["ISSN proteína 2017", "ISSN revisión 2018"]}
-- {id: rag-02, validado: false, pregunta: "¿Qué dosis de cafeína mejora el rendimiento y cuánto antes de entrenar?", fuente: ["ISSN cafeína 2021"]}
-- {id: rag-03, validado: false, pregunta: "adequate intake of water for adult men and women", fuente: ["EFSA DRV 2017"]}
-- {id: rag-04, validado: false, pregunta: "¿Cuántos minutos de actividad física moderada a la semana recomienda la OMS a los adultos?", fuente: ["OMS"]}
-- {id: rag-05, validado: false, pregunta: "¿Cuántas raciones de legumbres a la semana se recomiendan en España?", fuente: ["AESAN 2022"]}
-- {id: rag-06, validado: false, pregunta: "¿Cuánta sal al día como máximo recomienda la OMS?", fuente: ["OMS dieta 2026"]}
-- {id: rag-07, validado: false, pregunta: "límite de azúcares libres en la dieta", fuente: ["OMS dieta 2026", "AESAN 2022"]}
-- {id: rag-08, validado: false, pregunta: "dietary fibre adequate intake adults", fuente: ["EFSA DRV 2017"]}
-- {id: rag-09, validado: false, pregunta: "vitamin D adequate intake for adults", fuente: ["EFSA DRV 2017"]}
-- {id: rag-10, validado: false, pregunta: "¿Cuándo tomar hidratos después de entrenar para recuperar el glucógeno?", fuente: ["ISSN timing 2017", "ISSN revisión 2018"]}
-- {id: rag-11, validado: false, pregunta: "¿Sirve tomar proteína antes de dormir?", fuente: ["ISSN proteína 2017", "ISSN timing 2017"]}
-- {id: rag-12, validado: false, pregunta: "¿La creatina mejora el rendimiento y es segura?", fuente: ["ISSN revisión 2018"]}
-- {id: rag-13, validado: false, pregunta: "¿Cuánto tiempo sentado es demasiado? Recomendaciones sobre sedentarismo", fuente: ["OMS AF 2020", "OMS actividad física 2024"]}
-- {id: rag-14, validado: false, pregunta: "¿Cuántas veces a la semana se recomienda comer pescado en España?", fuente: ["AESAN 2022"]}
-- {id: rag-15, validado: false, pregunta: "¿Qué dice la guía española sobre el consumo de carne roja y procesada?", fuente: ["AESAN 2022"]}
+- {id: rag-01, validado: true, pregunta: "¿Cuánta proteína al día necesita alguien que entrena fuerza?", fuente: ["ISSN proteína 2017", "ISSN revisión 2018"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º no tienen que ver con la pregunta (ruido de BM25)."}
+- {id: rag-02, validado: true, pregunta: "¿Qué dosis de cafeína mejora el rendimiento y cuánto antes de entrenar?", fuente: ["ISSN cafeína 2021"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º se repiten de rag-01 y no tienen que ver (ruido de BM25)."}
+- {id: rag-03, validado: true, pregunta: "adequate intake of water for adult men and women", fuente: ["EFSA DRV 2017"]}
+- {id: rag-04, validado: true, pregunta: "¿Cuántos minutos de actividad física moderada a la semana recomienda la OMS a los adultos?", fuente: ["OMS"]}
+- {id: rag-05, validado: true, pregunta: "¿Cuántas raciones de legumbres a la semana se recomiendan en España?", fuente: ["AESAN 2022"]}
+- {id: rag-06, validado: true, pregunta: "¿Cuánta sal al día como máximo recomienda la OMS?", fuente: ["OMS dieta 2026"]}
+- {id: rag-07, validado: true, pregunta: "límite de azúcares libres en la dieta", fuente: ["OMS dieta 2026", "AESAN 2022"]}
+- {id: rag-08, validado: true, pregunta: "dietary fibre adequate intake adults", fuente: ["EFSA DRV 2017"]}
+- {id: rag-09, validado: true, pregunta: "vitamin D adequate intake for adults", fuente: ["EFSA DRV 2017"]}
+- {id: rag-10, validado: true, pregunta: "¿Cuándo tomar hidratos después de entrenar para recuperar el glucógeno?", fuente: ["ISSN timing 2017", "ISSN revisión 2018"]}
+- {id: rag-11, validado: true, pregunta: "¿Sirve tomar proteína antes de dormir?", fuente: ["ISSN proteína 2017", "ISSN timing 2017"]}
+- {id: rag-12, validado: true, pregunta: "¿La creatina mejora el rendimiento y es segura?", fuente: ["ISSN revisión 2018"]}
+- {id: rag-13, validado: true, pregunta: "¿Cuánto tiempo sentado es demasiado? Recomendaciones sobre sedentarismo", fuente: ["OMS AF 2020", "OMS actividad física 2024"]}
+- {id: rag-14, validado: true, pregunta: "¿Cuántas veces a la semana se recomienda comer pescado en España?", fuente: ["AESAN 2022"]}
+- {id: rag-15, validado: true, pregunta: "¿Qué dice la guía española sobre el consumo de carne roja y procesada?", fuente: ["AESAN 2022"]}

@@ -97,21 +97,28 @@ class GuideIndex:
                     await asyncio.sleep(2**attempt)
         raise AssertionError("unreachable")
 
-    async def search(self, query: str, k: int = TOP_K) -> list[GuideHit]:
-        dense = await self._embedder.aembed_query(query)
+    async def search(self, query: str, k: int = TOP_K, mode: str = "hybrid") -> list[GuideHit]:
+        """mode: hybrid (dense + BM25, fused with RRF) or, for the RAG experiments, dense or sparse alone."""
         indices, values = sparse.query_vector(query)
-        prefetch = [models.Prefetch(query=dense, using=DENSE, limit=PREFETCH)]
-        if indices:
-            prefetch.append(
-                models.Prefetch(query=models.SparseVector(indices=indices, values=values), using=SPARSE, limit=PREFETCH)
+        sparse_query = models.SparseVector(indices=indices, values=values)
+        if mode == "sparse":
+            result = await self._client.query_points(
+                self._collection, query=sparse_query, using=SPARSE, limit=k, with_payload=True
             )
-        result = await self._client.query_points(
-            self._collection,
-            prefetch=prefetch,
-            query=models.FusionQuery(fusion=models.Fusion.RRF),
-            limit=k,
-            with_payload=True,
-        )
+        else:
+            dense = await self._embedder.aembed_query(query)
+            if mode == "dense":
+                result = await self._client.query_points(
+                    self._collection, query=dense, using=DENSE, limit=k, with_payload=True
+                )
+            else:
+                prefetch = [models.Prefetch(query=dense, using=DENSE, limit=PREFETCH)]
+                if indices:
+                    prefetch.append(models.Prefetch(query=sparse_query, using=SPARSE, limit=PREFETCH))
+                result = await self._client.query_points(
+                    self._collection, prefetch=prefetch, query=models.FusionQuery(fusion=models.Fusion.RRF), limit=k,
+                    with_payload=True,
+                )  # fmt: skip
         return [
             GuideHit(
                 tag=p.payload["tag"],
