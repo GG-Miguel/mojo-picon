@@ -21,6 +21,7 @@ evals/run.sh                                   # every set, judge included
 evals/run.sh --sets safety,attacks --no-judge  # some sets, no judge
 evals/run.sh --partition prueba --repeat 3     # the frozen test partition, 3 runs per case
 evals/run.sh --sets safety --ids seg-13,seg-13b --no-judge  # a few cases, for a quick check
+uv run --group eval python -m evals.baseline evals/results/<run>.json  # chatbot with RAG in one call vs the agent
 ```
 
 `run.sh` needs `GROQ_API_KEY` in `.env` (the judge) and gcloud access to the Qdrant key.
