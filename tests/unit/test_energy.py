@@ -32,7 +32,7 @@ def test_calc_bmr_mifflin_st_jeor(profile, expected):
 
 
 def test_calc_tdee_applies_activity_factor_without_training():
-    assert calc_tdee(RUNNER) == pytest.approx(1628.75 * 1.3)
+    assert calc_tdee(RUNNER) == pytest.approx(1628.75 * 1.5)
 
 
 def test_macro_split_protein_per_kg_fat_share_and_carbs_remainder():
@@ -45,8 +45,8 @@ def test_macro_split_protein_per_kg_fat_share_and_carbs_remainder():
 def test_daily_target_maintain_adds_training():
     rest = daily_target(RUNNER)
     run = daily_target(RUNNER, training_kcal=616)
-    assert rest.target.kcal == 2117
-    assert run.target.kcal == 2117 + 616
+    assert rest.target.kcal == 2443
+    assert run.target.kcal == 2443 + 616
     assert not run.clamped_to_bmr
 
 
@@ -55,6 +55,28 @@ def test_daily_target_never_below_bmr():
     target = daily_target(profile)
     assert target.target.kcal == round(calc_bmr(profile))
     assert target.clamped_to_bmr
+
+
+@pytest.mark.parametrize(
+    ("goal", "rate", "adjustment"), [(Goal.LOSE, 0.5, -500), (Goal.LOSE, 1.0, -1000), (Goal.GAIN, 0.5, 500)]
+)
+def test_goal_adjustment_uses_7000_kcal_per_kg(goal, rate, adjustment):
+    profile = RUNNER.model_copy(update={"goal": goal, "weekly_rate_kg": rate})
+    assert daily_target(profile).goal_adjustment == adjustment
+
+
+def test_deficit_never_above_1000_kcal(monkeypatch):
+    monkeypatch.setattr("mojo_picon.tools.energy.KCAL_PER_KG_BODY_WEIGHT", 7700)
+    profile = RUNNER.model_copy(update={"goal": Goal.LOSE, "weekly_rate_kg": 1.0})
+    assert daily_target(profile).goal_adjustment == -1000
+
+
+def test_gaining_faster_than_half_a_kilo_is_rejected():
+    with pytest.raises(ValueError, match="extreme goal"):
+        Profile(age=34, sex=Sex.MALE, weight_kg=70, height_cm=175, goal=Goal.GAIN, weekly_rate_kg=0.8)
+    profile = RUNNER.model_copy(update={"goal": Goal.GAIN, "weekly_rate_kg": 0.8})  # bypasses validation
+    with pytest.raises(ExtremeGoalError):
+        daily_target(profile)
 
 
 def test_extreme_goal_is_rejected():

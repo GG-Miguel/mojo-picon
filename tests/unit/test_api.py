@@ -168,7 +168,9 @@ async def test_rate_limit():
 # --- review findings (2026-10-12) ---------------------------------------------------
 
 
-@pytest.mark.parametrize("change", [{"weekly_rate_kg": 2, "goal": "lose"}, {"timezone": "Foo/Bar"}])
+@pytest.mark.parametrize(
+    "change", [{"weekly_rate_kg": 2, "goal": "lose"}, {"weekly_rate_kg": 0.8, "goal": "gain"}, {"timezone": "Foo/Bar"}]
+)
 async def test_profiles_that_would_break_the_account_are_rejected(change):
     client, _ = await make_client(FakeProvider())
     async with client:

@@ -8,6 +8,7 @@ What Mojo Picón does from the user's point of view. The app's interface is in S
 The user gives age, sex, weight, height, activity level, goal, allergies, intolerances and preferences. **The agent only asks for what is missing.**
 - **Acceptance:** basal metabolic rate and daily expenditure are calculated by tools (Mifflin-St Jeor and activity factors); extreme goals are rejected with an explanation.
 - **(Implementation note, 2026-10-12)** The activity level describes **daily life without training**; training sessions are logged as activities (UC-04) and added separately, so they are not counted twice. Activity factors (1.2 / 1.3 / 1.4 / 1.5) are **provisional**. A goal faster than 1 kg per week is rejected (`ExtremeGoalError`), and the daily target never goes below the BMR.
+- **(Implementation note, 2026-10-18)** Values now cited: activity factors 1.4 / 1.5 / 1.6 / 1.7, inside the FAO/WHO/UNU 2004 range for a sedentary or lightly active life (1.40-1.69); 7000 kcal per kg of weight (not all the weight lost is fat) and a deficit of at most 1000 kcal per day (FESNAD-SEEDO 2012); at most 1 kg per week to lose (FESNAD-SEEDO) and 0.5 kg per week to gain (Urdampilleta et al. 2012). Profiles saved with a faster gain are read at 0.5 kg.
 
 ### UC-02 · Log a meal by text
 «He desayunado dos tostadas con aceite y un café con leche».

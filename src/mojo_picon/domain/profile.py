@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from mojo_picon.domain.food import Allergen
 
@@ -32,7 +32,11 @@ class Goal(StrEnum):
     GAIN = "gain"
 
 
-MAX_WEEKLY_RATE_KG = 1.0  # faster weight change is an extreme goal (Decisiones pendientes #5)
+# Faster weight change is an extreme goal. Losing: about 0.5-1 kg per week (consenso FESNAD-SEEDO,
+# Nutr Hosp 2012;27(3):833-864). Gaining: about 0.5 kg of muscle per week (Urdampilleta et al.,
+# Rev Esp Nutr Hum Diet 2012;16(1):25-35); faster gain is mostly fat.
+MAX_WEEKLY_LOSS_KG = 1.0
+MAX_WEEKLY_GAIN_KG = 0.5
 
 
 class Profile(BaseModel):
@@ -44,7 +48,7 @@ class Profile(BaseModel):
     height_cm: float = Field(gt=120, lt=250)
     activity_level: ActivityLevel = ActivityLevel.LIGHT
     goal: Goal = Goal.MAINTAIN
-    weekly_rate_kg: float = Field(default=0.5, ge=0, le=MAX_WEEKLY_RATE_KG)  # only when losing or gaining
+    weekly_rate_kg: float = Field(default=0.5, ge=0, le=MAX_WEEKLY_LOSS_KG)  # only when losing or gaining
     allergens: frozenset[Allergen] = frozenset()
     timezone: str = "Atlantic/Canary"
 
@@ -56,3 +60,9 @@ class Profile(BaseModel):
         except (ZoneInfoNotFoundError, ValueError) as e:
             raise ValueError(f"unknown timezone {value!r}") from e
         return value
+
+    @model_validator(mode="after")
+    def _gain_rate(self) -> Profile:
+        if self.goal is Goal.GAIN and self.weekly_rate_kg > MAX_WEEKLY_GAIN_KG:
+            raise ValueError(f"gaining more than {MAX_WEEKLY_GAIN_KG:g} kg per week is an extreme goal")
+        return self
