@@ -1,7 +1,8 @@
-"""Single access point to the models: get_model(role) (ADR-20).
+"""Single access point to the models: provider.get(role) (ADR-20).
 
-Today it returns Gemini on Vertex AI (EU region); in milestone 3 it points to LiteLLM by
-changing only this module's configuration. Tests inject a provider with fake models.
+The AI gateway is LiteLLM (ADR-04): Gemini on Vertex AI (EU endpoint) first and, if a call fails or
+times out, another family on the same EU endpoint (Claude Haiku). LLM_GATEWAY=direct calls Gemini
+without LiteLLM, as before. Tests inject a provider with fake models.
 """
 
 from __future__ import annotations
@@ -107,6 +108,74 @@ def gemini_embeddings(settings):
     )
 
 
+class LiteLLMProvider:
+    """LiteLLM Router per role: Gemini first, then the fallback model (ADR-04, AI gateway).
+
+    Both on Vertex AI with the same credentials (ADC) and the EU multi-region endpoint, so the data
+    stays in the EU whichever model answers (Principles #8). Without a fallback model it is
+    Gemini alone through LiteLLM.
+    """
+
+    def __init__(
+        self, project: str, location: str, endpoint: str, model: str, fallback_model: str, fallback_location: str
+    ):
+        self._project = project
+        self._primary = {"model": f"vertex_ai/{model}", "vertex_location": location, "api_base": endpoint}
+        self._fallback = (
+            {"model": f"vertex_ai/{fallback_model}", "vertex_location": fallback_location} if fallback_model else None
+        )
+        self._cache: dict[Role, BaseChatModel] = {}
+
+    @classmethod
+    def from_settings(cls, settings) -> LiteLLMProvider:
+        return cls(
+            settings.gcp_project_id,
+            settings.vertex_location,
+            settings.vertex_endpoint,
+            settings.gemini_model,
+            settings.fallback_model,
+            settings.fallback_location,
+        )
+
+    def _params(self, base: dict, role: Role, thinking: bool) -> dict:
+        params = {
+            **base,
+            "vertex_project": self._project,
+            "temperature": TEMPERATURES[role],
+            "max_tokens": MAX_OUTPUT_TOKENS[role],
+            "timeout": TIMEOUT_SECONDS[role],
+        }
+        if thinking and role in THINKING:
+            params["reasoning_effort"] = THINKING[role]  # Gemini 3: thinking level
+        return params
+
+    def get(self, role: Role) -> BaseChatModel:
+        if role not in self._cache:
+            import litellm
+            from langchain_litellm import ChatLiteLLMRouter
+            from litellm import Router
+
+            litellm.telemetry = False
+            litellm.suppress_debug_info = True
+            deployments = [{"model_name": role.value, "litellm_params": self._params(self._primary, role, True)}]
+            fallbacks = []
+            if self._fallback:
+                # Claude would think (and bill) with reasoning_effort: the fallback answers without it
+                name = f"{role.value}-fallback"
+                deployments.append({"model_name": name, "litellm_params": self._params(self._fallback, role, False)})
+                fallbacks = [{role.value: [name]}]
+            router = Router(model_list=deployments, fallbacks=fallbacks, num_retries=MAX_RETRIES)
+            self._cache[role] = ChatLiteLLMRouter(router=router, model_name=role.value)
+        return self._cache[role]
+
+
+def model_provider(settings) -> ModelProvider:
+    """The provider the app uses: the LiteLLM gateway, or Gemini directly (LLM_GATEWAY=direct)."""
+    if settings.llm_gateway == "direct":
+        return GeminiProvider.from_settings(settings)
+    return LiteLLMProvider.from_settings(settings)
+
+
 def ensure_not_blocked(message: AIMessage) -> AIMessage:
     """Raise SafetyBlockedError if Gemini's safety filters blocked this call (Guardrails spec)."""
     metadata = message.response_metadata or {}
@@ -115,6 +184,8 @@ def ensure_not_blocked(message: AIMessage) -> AIMessage:
     block_reason = feedback.get("block_reason") if isinstance(feedback, dict) else None
     if block_reason and str(block_reason).upper() not in ("0", "BLOCK_REASON_UNSPECIFIED"):
         raise SafetyBlockedError(f"input blocked: {block_reason}")
-    if finish_reason.endswith("SAFETY") or finish_reason in ("PROHIBITED_CONTENT", "BLOCKLIST", "SPII"):
+    # LiteLLM reports Gemini's SAFETY as the OpenAI-style "content_filter"
+    blocked = ("PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "CONTENT_FILTER")
+    if finish_reason.endswith("SAFETY") or finish_reason in blocked:
         raise SafetyBlockedError(f"output blocked: {finish_reason}")
     return message

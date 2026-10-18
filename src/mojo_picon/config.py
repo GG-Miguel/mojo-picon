@@ -23,6 +23,10 @@ class Settings:
     vertex_location: str = "eu"
     vertex_endpoint: str = "https://aiplatform.eu.rep.googleapis.com"
     gemini_model: str = "gemini-3.8-flash"
+    llm_gateway: str = "litellm"  # litellm (Gemini, then the fallback) | direct (Gemini without LiteLLM)
+    # Another model family on the EU endpoint when Gemini fails or times out (ADR-04); empty: no fallback
+    fallback_model: str = "claude-haiku-4-5@20251001"
+    fallback_location: str = "eu"
     embedding_model: str = "gemini-embedding-2"
     # Embeddings keep their own endpoint: the index was built with gemini-embedding-2, which is served
     # on the EU multi-region endpoint only, even if the chat model moves to a region (ADR-04, plan B).
@@ -51,6 +55,9 @@ class Settings:
             vertex_location=env.get("VERTEX_LOCATION", defaults.vertex_location),
             vertex_endpoint=env.get("VERTEX_ENDPOINT", defaults.vertex_endpoint),
             gemini_model=env.get("GEMINI_MODEL", defaults.gemini_model),
+            llm_gateway=env.get("LLM_GATEWAY", defaults.llm_gateway),
+            fallback_model=env.get("FALLBACK_MODEL", defaults.fallback_model),
+            fallback_location=env.get("FALLBACK_LOCATION", defaults.fallback_location),
             embedding_model=env.get("EMBEDDING_MODEL", defaults.embedding_model),
             embedding_location=env.get("EMBEDDING_LOCATION", defaults.embedding_location),
             embedding_endpoint=env.get("EMBEDDING_ENDPOINT", defaults.embedding_endpoint),

@@ -17,7 +17,7 @@ from mojo_picon.api.app import AppDeps, create_app
 from mojo_picon.auth import InvalidTokenError, UserContext
 from mojo_picon.config import Settings
 from mojo_picon.devtools import dev_store, require_development
-from mojo_picon.llm import GeminiProvider
+from mojo_picon.llm import model_provider
 from mojo_picon.observability import tracer_from_settings
 from mojo_picon.rag.index import guide_index_from_settings
 from mojo_picon.tools.energy import load_met_table
@@ -38,7 +38,7 @@ class DevTokenVerifier:
 def build_dev_app(settings: Settings):
     require_development(settings, "The development API")
     foods = load_foods()
-    models = GeminiProvider.from_settings(settings)
+    models = model_provider(settings)
     brief, passages = load_expert_brief()
     deps = AppDeps(
         verifier=DevTokenVerifier(settings.api_dev_tokens),

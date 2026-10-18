@@ -23,7 +23,7 @@ from mojo_picon.config import Settings
 from mojo_picon.domain import Profile
 from mojo_picon.domain.diary import EntrySource, MealItem
 from mojo_picon.guardrails.output import FEEDBACK_NAME
-from mojo_picon.llm import GeminiProvider
+from mojo_picon.llm import model_provider
 from mojo_picon.observability import NullTracer
 from mojo_picon.rag.index import guide_index_from_settings
 from mojo_picon.store import InMemoryStore
@@ -131,7 +131,7 @@ class Harness:
         self.settings = settings or Settings.from_env()
         self.foods = load_foods()
         self.activities = load_met_table()
-        self.models = GeminiProvider.from_settings(self.settings)
+        self.models = model_provider(self.settings)
         self.graph = build_graph(self.models, self.foods)
 
     async def chat(self, case: dict, messages: list[str], simulated: str | None = None,

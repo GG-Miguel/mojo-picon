@@ -32,8 +32,8 @@ spec:
               value: mojo-picon
             - name: FIRESTORE_DATABASE
               value: mojopicon
-            # Plan B if the EU endpoint is slow (EU residency kept; ADR-04; retires 2026-10-20): VERTEX_LOCATION=europe-west1,
-            # VERTEX_ENDPOINT=https://europe-west1-aiplatform.googleapis.com, GEMINI_MODEL=gemini-2.5-flash
+            # The AI gateway (LiteLLM) falls back to FALLBACK_MODEL on the EU endpoint if Gemini fails (ADR-04);
+            # LLM_GATEWAY=direct calls Gemini without LiteLLM
             - name: GEMINI_MODEL
               value: gemini-3.8-flash
             - name: LANGFUSE_HOST
