@@ -14,7 +14,7 @@ from mojo_picon.agents.knowledge import load_expert_brief
 from mojo_picon.api.app import AppDeps, create_app
 from mojo_picon.auth import FirebaseTokenVerifier
 from mojo_picon.config import Settings
-from mojo_picon.llm import GeminiProvider
+from mojo_picon.llm import model_provider
 from mojo_picon.observability import tracer_from_settings
 from mojo_picon.rag.index import guide_index_from_settings
 from mojo_picon.store.firestore import FirestoreStore
@@ -24,7 +24,7 @@ from mojo_picon.tools.foods import load_foods
 
 def build_app(settings: Settings):
     foods = load_foods()
-    models = GeminiProvider.from_settings(settings)
+    models = model_provider(settings)
     brief, passages = load_expert_brief()
     deps = AppDeps(
         verifier=FirebaseTokenVerifier(project_id=settings.gcp_project_id),
