@@ -13,7 +13,9 @@ from qdrant_client import AsyncQdrantClient, models
 from mojo_picon.rag import sparse
 from mojo_picon.rag.chunks import Chunk
 
-COLLECTION = "guides"
+# The Spanish corpus (18 Oct) has its own collection, so a deployed version keeps reading the index of
+# its own code; "guides" (the first corpus, partly in English) stays for a rollback.
+COLLECTION = "guides_es"
 DENSE = "dense"
 SPARSE = "bm25"
 TOP_K = 4

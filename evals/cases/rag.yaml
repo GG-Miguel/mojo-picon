@@ -1,16 +1,35 @@
 # Retrieval (RAG): the right document must be among the first k passages. fuente: acceptable tag prefixes.
-- {id: rag-01, validado: true, pregunta: "¿Cuánta proteína al día necesita alguien que entrena fuerza?", fuente: ["ISSN proteína 2017", "ISSN revisión 2018"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º no tienen que ver con la pregunta (ruido de BM25)."}
-- {id: rag-02, validado: true, pregunta: "¿Qué dosis de cafeína mejora el rendimiento y cuánto antes de entrenar?", fuente: ["ISSN cafeína 2021"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º se repiten de rag-01 y no tienen que ver (ruido de BM25)."}
-- {id: rag-03, validado: true, pregunta: "adequate intake of water for adult men and women", fuente: ["EFSA DRV 2017"]}
+# 18 oct: corpus only in Spanish. Cases whose expected source changed are validado: false again (fuente_cambiada).
+- {id: rag-01, validado: false, pregunta: "¿Cuánta proteína al día necesita alguien que entrena fuerza?", fuente: ["SEMED 2019", "RENHYD masa muscular 2012"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º no tienen que ver con la pregunta (ruido de BM25).", fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-02, validado: false, pregunta: "¿Qué dosis de cafeína mejora el rendimiento y cuánto antes de entrenar?", fuente: ["SEMED 2019", "AESAN bebidas energéticas 2021"], nota_autor: "Revisión del autor (17 oct): los pasajes 2.º y 3.º se repiten de rag-01 y no tienen que ver (ruido de BM25).", fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-03, validado: false, pregunta: "¿Cuál es la ingesta adecuada de agua para hombres y mujeres adultos?", fuente: ["Ingestas UE 2017"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
 - {id: rag-04, validado: true, pregunta: "¿Cuántos minutos de actividad física moderada a la semana recomienda la OMS a los adultos?", fuente: ["OMS"]}
 - {id: rag-05, validado: true, pregunta: "¿Cuántas raciones de legumbres a la semana se recomiendan en España?", fuente: ["AESAN 2022"]}
 - {id: rag-06, validado: true, pregunta: "¿Cuánta sal al día como máximo recomienda la OMS?", fuente: ["OMS dieta 2026"]}
 - {id: rag-07, validado: true, pregunta: "límite de azúcares libres en la dieta", fuente: ["OMS dieta 2026", "AESAN 2022"]}
-- {id: rag-08, validado: true, pregunta: "dietary fibre adequate intake adults", fuente: ["EFSA DRV 2017"]}
-- {id: rag-09, validado: true, pregunta: "vitamin D adequate intake for adults", fuente: ["EFSA DRV 2017"]}
-- {id: rag-10, validado: true, pregunta: "¿Cuándo tomar hidratos después de entrenar para recuperar el glucógeno?", fuente: ["ISSN timing 2017", "ISSN revisión 2018"]}
-- {id: rag-11, validado: true, pregunta: "¿Sirve tomar proteína antes de dormir?", fuente: ["ISSN proteína 2017", "ISSN timing 2017"]}
-- {id: rag-12, validado: true, pregunta: "¿La creatina mejora el rendimiento y es segura?", fuente: ["ISSN revisión 2018"]}
+- {id: rag-08, validado: false, pregunta: "¿Cuánta fibra al día se recomienda a un adulto?", fuente: ["Ingestas UE 2017", "OMS dieta 2026"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-09, validado: false, pregunta: "¿Cuánta vitamina D necesita un adulto al día?", fuente: ["AESAN INR 2019", "Ingestas UE 2017"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-10, validado: false, pregunta: "¿Cuándo tomar hidratos después de entrenar para recuperar el glucógeno?", fuente: ["SEMED 2019", "FEMEDE bebidas 2008"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-11, validado: false, pregunta: "¿Sirve tomar proteína antes de dormir?", fuente: ["SEMED 2019"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
+- {id: rag-12, validado: false, pregunta: "¿La creatina mejora el rendimiento y es segura?", fuente: ["SEMED 2019"], fuente_cambiada: "18 oct: corpus en español; la fuente esperada cambia y hay que revisarla."}
 - {id: rag-13, validado: true, pregunta: "¿Cuánto tiempo sentado es demasiado? Recomendaciones sobre sedentarismo", fuente: ["OMS AF 2020", "OMS actividad física 2024"]}
 - {id: rag-14, validado: true, pregunta: "¿Cuántas veces a la semana se recomienda comer pescado en España?", fuente: ["AESAN 2022"]}
 - {id: rag-15, validado: true, pregunta: "¿Qué dice la guía española sobre el consumo de carne roja y procesada?", fuente: ["AESAN 2022"]}
+# Exact terms (added 2026-10-17, rewritten 18 oct for the Spanish corpus): acronyms, technical names and figures,
+# where lexical search (BM25) should help.
+- {id: rag-16, validado: false, pregunta: "¿Cuál es la PRI de proteína para adultos?", fuente: ["Ingestas UE 2017"], origen: termino_exacto}
+- {id: rag-17, validado: false, pregunta: "¿Cómo es la ecuación de Mifflin-St Jeor para el gasto energético en reposo?", fuente: ["FESNAD-SEEDO 2012"], origen: termino_exacto}
+- {id: rag-18, validado: false, pregunta: "¿Cuántos MET tiene una actividad física de intensidad moderada?", fuente: ["OMS AF 2020"], origen: termino_exacto}
+- {id: rag-19, validado: false, pregunta: "¿Cuántos mmol/l de sodio debe llevar una bebida para deportistas?", fuente: ["FEMEDE bebidas 2008", "SEMED 2019"], origen: termino_exacto}
+- {id: rag-20, validado: false, pregunta: "¿Cuántos gramos de leucina por toma hacen falta para estimular la síntesis muscular?", fuente: ["SEMED 2019", "RENHYD masa muscular 2012"], origen: termino_exacto}
+- {id: rag-21, validado: false, pregunta: "¿Sirve el HMB para ganar músculo?", fuente: ["SEMED 2019"], origen: termino_exacto}
+- {id: rag-22, validado: false, pregunta: "¿Funciona el bicarbonato sódico como ayuda ergogénica?", fuente: ["SEMED 2019"], origen: termino_exacto}
+- {id: rag-23, validado: false, pregunta: "¿Qué pescados acumulan más mercurio?", fuente: ["AESAN 2022"], origen: termino_exacto}
+- {id: rag-24, validado: false, pregunta: "¿La beta-alanina mejora el rendimiento?", fuente: ["SEMED 2019"], origen: termino_exacto}
+# New documents of the Spanish corpus (18 oct).
+- {id: rag-25, validado: false, pregunta: "¿Cuántos kilos por semana es razonable perder?", fuente: ["FESNAD-SEEDO 2012"], origen: CU-01}
+- {id: rag-26, validado: false, pregunta: "¿Cuántas calorías de más hay que comer para ganar masa muscular?", fuente: ["RENHYD masa muscular 2012"], origen: CU-01}
+- {id: rag-27, validado: false, pregunta: "¿Cuánto magnesio necesita una mujer adulta al día?", fuente: ["AESAN INR 2019", "Ingestas UE 2017"], origen: CU-06}
+- {id: rag-28, validado: false, pregunta: "¿Quién debería evitar las bebidas energéticas?", fuente: ["AESAN bebidas energéticas 2021"], origen: CU-06}
+- {id: rag-29, validado: false, pregunta: "¿Cuánto líquido hay que beber durante el ejercicio y cada cuánto?", fuente: ["FEMEDE bebidas 2008", "SEMED 2019"], origen: CU-06}
+- {id: rag-30, validado: false, pregunta: "¿Qué déficit de calorías al día se recomienda para adelgazar?", fuente: ["FESNAD-SEEDO 2012"], origen: CU-01}

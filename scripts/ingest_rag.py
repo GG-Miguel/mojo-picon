@@ -5,8 +5,10 @@
     QDRANT_URL=... QDRANT_API_KEY=... uv run --group data python scripts/ingest_rag.py
 
 PDF pages are transcribed with Gemini once and cached next to the PDF (<id>.pages.json, git-ignored);
---retranscribe forces it again. The report (data/guides_report.md) lists the chunks per document
-and the transcribed numbers that pypdf does not find on the same page, for manual review.
+--retranscribe forces it again. Pages listed in "skip_pages" (only references or author lists) are
+neither transcribed nor indexed: they are not guidance. The report (data/guides_report.md) lists the
+chunks per document and the transcribed numbers that pypdf does not find on the same page, for
+manual review.
 """
 
 from __future__ import annotations
@@ -32,6 +34,11 @@ from mojo_picon.rag.transcribe import page_number_mismatches, page_texts, split_
 REPORT = ROOT / "data" / "guides_report.md"
 
 
+def skipped(guide: dict) -> set[int]:
+    """Page numbers (1-based) of the "skip_pages" ranges of the manifest."""
+    return {n for first, last in guide.get("skip_pages", []) for n in range(first, last + 1)}
+
+
 async def pdf_pages(guide: dict, settings: Settings, retranscribe: bool) -> list[str]:
     path = raw_path(guide)
     cache = path.with_suffix(".pages.json")
@@ -47,7 +54,12 @@ async def pdf_pages(guide: dict, settings: Settings, retranscribe: bool) -> list
         http_options=types.HttpOptions(base_url=settings.vertex_endpoint),
     )
     print(f"  transcribing {guide['id']} with {settings.gemini_model}…", flush=True)
-    pages = await transcribe_pages(client, settings.gemini_model, split_pages(path.read_bytes()))
+    pdf = split_pages(path.read_bytes())
+    keep = [n for n in range(1, len(pdf) + 1) if n not in skipped(guide)]
+    texts = await transcribe_pages(client, settings.gemini_model, [pdf[n - 1] for n in keep])
+    pages = [""] * len(pdf)  # a skipped page stays empty, so the index still matches the page number
+    for n, text in zip(keep, texts, strict=True):
+        pages[n - 1] = text
     cache.write_text(json.dumps(pages, ensure_ascii=False, indent=0), encoding="utf-8")
     return pages
 
@@ -60,6 +72,7 @@ async def sections_of(guide: dict, settings: Settings, retranscribe: bool) -> tu
         return jats_sections(path.read_text(encoding="utf-8")), {}
     pages = await pdf_pages(guide, settings, retranscribe)
     extracted = page_texts(path.read_bytes())
+    pages = ["" if n in skipped(guide) else page for n, page in enumerate(pages, start=1)]
     mismatches = {
         n: bad
         for n, (page, text) in enumerate(zip(pages, extracted, strict=True), start=1)

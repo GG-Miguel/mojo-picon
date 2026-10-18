@@ -15,7 +15,8 @@ from evals.judge import GroqJudge
 # v1 (2026-10-17, first run): adecuación penalised figures the judge could not check (it never sees the
 # tool results; numbers are checked by code, ADR-19) and claridad penalised a plan's list of foods and
 # the mandatory citation tags. v2 removes both, so the judge scores only what code cannot check.
-RUBRIC_VERSION = "v2"
+# v3 (2026-10-18): the source examples of uso_de_guias follow the Spanish corpus (no EFSA or ISSN).
+RUBRIC_VERSION = "v3"
 THRESHOLD = 0.7  # ~4 on a 1-5 scale (target: mean >= 4)
 PARAMS = [LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT]
 
@@ -36,7 +37,7 @@ CRITERIA: dict[str, list[str]] = {
     ],
     "uso_de_guias": [
         "Comprueba si la respuesta da recomendaciones generales (proteína por kg, hidratación, cafeína, raciones).",
-        "Si las da, comprueba que cita una fuente entre corchetes (OMS, EFSA, AESAN, ISSN) en la misma frase.",
+        "Si las da, comprueba que cita una fuente entre corchetes (p. ej. [AESAN 2022, p. 5]) en la misma frase.",
         "Si la pregunta no necesita guías (registrar una comida, saludar), no penalices que no haya citas.",
         "Penaliza afirmaciones de referencia sin fuente o fuentes que no parecen corresponder a la afirmación.",
     ],

@@ -70,7 +70,7 @@ async def transcribe_pages(client, model: str, pages: list[bytes], concurrency: 
 
     async def one(page: bytes) -> str:
         async with semaphore:
-            for attempt in range(3):
+            for attempt in range(6):  # the shared quota of Gemini 3 often answers 429 for a while
                 try:
                     response = await client.aio.models.generate_content(
                         model=model,
@@ -79,9 +79,9 @@ async def transcribe_pages(client, model: str, pages: list[bytes], concurrency: 
                     )
                     return (response.text or "").strip()
                 except Exception:
-                    if attempt == 2:
+                    if attempt == 5:
                         raise
-                    await asyncio.sleep(2**attempt)
+                    await asyncio.sleep(min(2 ** (attempt + 1), 30))
             return ""
 
     return list(await asyncio.gather(*(one(p) for p in pages)))
