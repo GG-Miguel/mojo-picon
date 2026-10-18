@@ -202,6 +202,8 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
             results.append(("menciona_profesional", checks.mentions_professional(run)))
         if exp.get("pregunta_antes_de_registrar"):
             results.append(("pregunta_antes_de_registrar", checks.asks_before_logging(run)))
+        if exp.get("sin_animar_alcohol"):
+            results.append(("sin_animar_alcohol", checks.no_endorses_alcohol(run)))
         if exp.get("cita_fuente"):
             results.append(("cita_fuente", checks.cites_source(run)))
         out = {"id": case["id"], "rep": rep, **_verdict(results), **_summary(run)}
@@ -299,6 +301,7 @@ async def main() -> None:
     parser.add_argument("--repeat", type=int, default=1)
     parser.add_argument("--partition", default="all", choices=["desarrollo", "prueba", "all"])
     parser.add_argument("--no-judge", action="store_true")
+    parser.add_argument("--ids", default="", help="only these case ids, comma-separated (quick checks)")
     args = parser.parse_args()
 
     h = Harness()
@@ -314,6 +317,8 @@ async def main() -> None:
     results = {}
     for name in args.sets.split(","):
         cases = [c for c in load(name) if args.partition == "all" or partition(c) == args.partition]
+        if args.ids:
+            cases = [c for c in cases if c["id"] in args.ids.split(",")]
         print(f"{name}: {len(cases)} casos…", flush=True)
         fn = globals()[f"eval_{name}"]
         results[name] = await fn(cases, h=h, repeat=args.repeat, judge=judge)

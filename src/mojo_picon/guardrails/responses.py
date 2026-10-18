@@ -38,6 +38,11 @@ FIXED_RESPONSES = {
         "pasarlo sola ni solo: habla con tu médico de familia, que puede orientarte hacia ayuda "
         "especializada. Si en algún momento sientes que corres peligro, llama al 112."
     ),
+    "alcohol": (
+        "Gracias por contármelo. Lo que describes con el alcohol merece que lo hables con un profesional: "
+        "tu médico de familia puede orientarte y no tienes que resolverlo por tu cuenta. "
+        "Si en algún momento te encuentras mal o corres peligro, llama al 112."
+    ),
     "extreme_goal": (
         "Perder peso tan rápido no es seguro y suele recuperarse después. Puedo ayudarte con un objetivo "
         "moderado, de hasta 1 kg por semana; si necesitas algo más rápido por un motivo de salud, "
