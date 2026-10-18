@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Chat } from './components/Chat'
 import { DayPanel } from './components/DayPanel'
+import { EmailLogin } from './components/EmailLogin'
 import { ProfileForm } from './components/ProfileForm'
 import { ApiError, getDay, getProfile, putProfile } from './lib/api'
-import { authConfigured, devMode, signIn, signOut, watchSession, type Session } from './lib/auth'
+import {
+  authConfigured,
+  checkVerified,
+  devMode,
+  resendVerification,
+  signIn,
+  signOut,
+  watchSession,
+  type Session,
+} from './lib/auth'
 import type { Day, Profile } from './lib/types'
 
 export default function App() {
@@ -19,7 +29,7 @@ export default function App() {
   }, [session])
 
   useEffect(() => {
-    if (!session) return
+    if (!session?.verified) return
     session
       .token()
       .then(getProfile)
@@ -41,9 +51,14 @@ export default function App() {
         <button onClick={signIn} className="mt-6 rounded-full bg-picon px-6 py-2 font-medium text-white">
           Entrar con Google
         </button>
+        <p className="mt-4 text-sm text-stone-400">o con tu email</p>
+        <EmailLogin />
         <AiNotice />
       </Centered>
     )
+  }
+  if (!session.verified) {
+    return <VerifyEmail onVerified={(s) => setSession(s)} session={session} />
   }
 
   return (
@@ -119,5 +134,43 @@ function AiNotice() {
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-1 p-6 text-center">{children}</div>
+  )
+}
+
+/** An email account whose address is not confirmed yet: the API rejects it until it is. */
+function VerifyEmail({ session, onVerified }: { session: Session; onVerified: (s: Session) => void }) {
+  const [message, setMessage] = useState('')
+  return (
+    <Centered>
+      <h1 className="text-2xl font-bold text-picon">Confirma tu email</h1>
+      <p className="max-w-xs text-center text-stone-600">
+        Te hemos enviado un enlace a {session.name}. Ábrelo y vuelve aquí.
+      </p>
+      <button
+        onClick={async () =>
+          (await checkVerified())
+            ? onVerified({ ...session, verified: true })
+            : setMessage('Todavía no consta como confirmado.')
+        }
+        className="mt-4 rounded-full bg-picon px-6 py-2 font-medium text-white"
+      >
+        Ya lo he confirmado
+      </button>
+      <div className="mt-2 flex gap-3 text-sm text-stone-500">
+        <button
+          onClick={async () => {
+            await resendVerification()
+            setMessage('Enlace reenviado.')
+          }}
+          className="underline"
+        >
+          Reenviar el enlace
+        </button>
+        <button onClick={signOut} className="underline">
+          Salir
+        </button>
+      </div>
+      {message && <p className="text-sm text-stone-600">{message}</p>}
+    </Centered>
   )
 }

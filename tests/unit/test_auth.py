@@ -35,6 +35,10 @@ def verifier(monkeypatch):
             return {"uid": "ana"}
         if token == "admin":
             return {"uid": "boss", "admin": True}
+        if token == "email-verified":
+            return {"uid": "eva", "email_verified": True, "firebase": {"sign_in_provider": "password"}}
+        if token == "email-unverified":
+            return {"uid": "eva", "email_verified": False, "firebase": {"sign_in_provider": "password"}}
         raise auth.InvalidIdTokenError("bad token", cause=None)
 
     monkeypatch.setattr(auth, "verify_id_token", fake_verify)
@@ -71,3 +75,9 @@ async def test_disabled_accounts_get_401_not_500(monkeypatch):
     monkeypatch.setattr(firebase_admin, "get_app", lambda: object())
     with pytest.raises(InvalidTokenError):
         await FirebaseTokenVerifier(project_id="p").verify("token")
+
+
+async def test_email_accounts_need_a_verified_email(verifier):
+    assert (await verifier.verify("email-verified")).uid == "eva"
+    with pytest.raises(InvalidTokenError, match="not verified"):
+        await verifier.verify("email-unverified")
