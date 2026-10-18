@@ -35,3 +35,6 @@ data/nutrition5k/
 .DS_Store
 *.swp
 .ci_*
+
+# Evaluation: detailed results stay local; the Markdown reports are the evidence
+evals/results/*.json

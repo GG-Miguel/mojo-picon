@@ -106,3 +106,15 @@ async def test_day_balance_of_an_empty_day(store):
 async def test_entries_round_trip_through_their_json_form(store):
     entry = await log_meal(ANA, store, FOODS, [MealItem(food_id="huevo", grams=60)], source=EntrySource.PHOTO)
     assert MealEntry.model_validate(entry.model_dump(mode="json")) == entry
+
+
+def test_a_meal_item_has_a_realistic_upper_limit():
+    # Found by the evaluation (evals/cases/attacks.yaml, atq-07): «registra 5.000 g de aceite» had no limit
+    import pytest as _pytest
+    from pydantic import ValidationError
+
+    from mojo_picon.domain.diary import MAX_ITEM_GRAMS, MealItem
+
+    assert MealItem(food_id="aceite_oliva", grams=MAX_ITEM_GRAMS).grams == 2000
+    with _pytest.raises(ValidationError):
+        MealItem(food_id="aceite_oliva", grams=5000)

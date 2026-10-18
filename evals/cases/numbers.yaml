@@ -1,0 +1,103 @@
+# Numbers with origin (ADR-19): labelled answers for the checker alone (no LLM).
+# herramientas: tool results of the turn (JSON); pasajes: retrieved or brief passages by citation tag.
+# esperado.sin_origen: true if the answer has a number without an origin (the checker must flag it).
+- id: num-01
+  validado: true
+  respuesta: "Te quedan 1.177 kcal para hoy."
+  herramientas: ['{"remaining": {"kcal": 1177, "protein_g": 60}}']
+  esperado: {sin_origen: false}
+- id: num-02
+  validado: true
+  respuesta: "Te quedan unas 1.300 kcal para hoy."
+  herramientas: ['{"remaining": {"kcal": 1177, "protein_g": 60}}']
+  esperado: {sin_origen: true}
+- id: num-03
+  validado: true
+  respuesta: "La EFSA da 2,5 L de agua al día para hombres adultos [EFSA DRV 2017, p. 21]."
+  pasajes: {"EFSA DRV 2017, p. 21": "Adequate intake of total water: 2.5 L/day for adult men and 2.0 L/day for women."}
+  esperado: {sin_origen: false}
+- id: num-04
+  validado: true
+  respuesta: "Bebe 2,5 L de agua al día."
+  pasajes: {"EFSA DRV 2017, p. 21": "Adequate intake of total water: 2.5 L/day for adult men and 2.0 L/day for women."}
+  esperado: {sin_origen: true}
+- id: num-05
+  validado: true
+  respuesta: "La EFSA recomienda 3 L de agua al día para hombres [EFSA DRV 2017, p. 21]."
+  pasajes: {"EFSA DRV 2017, p. 21": "Adequate intake of total water: 2.5 L/day for adult men and 2.0 L/day for women."}
+  esperado: {sin_origen: true}
+- id: num-06
+  validado: true
+  respuesta: "Entre 1,4 y 2 g/kg al día es suficiente para la mayoría [ISSN proteína 2017, §0]. Para tus 70 kg son entre 98 y 140 g."
+  pasajes: {"ISSN proteína 2017, §0": "An overall daily protein intake in the range of 1.4–2.0 g protein/kg body weight/day is sufficient for most exercising individuals."}
+  herramientas: ['{"per_kg_min": 1.4, "per_kg_max": 2.0, "weight_kg": 70, "min": 98, "max": 140, "unit": "g"}']
+  esperado: {sin_origen: false}
+- id: num-07
+  validado: true
+  respuesta: "Para tus 70 kg necesitas unos 150 g de proteína al día."
+  herramientas: ['{"per_kg_min": 1.4, "per_kg_max": 2.0, "weight_kg": 70, "min": 98, "max": 140, "unit": "g"}']
+  esperado: {sin_origen: true}
+- id: num-08
+  validado: true
+  respuesta: "Esta tarde corres 10 km: es una buena distancia para tu nivel."
+  mensaje: "Esta tarde corro 10 km"
+  esperado: {sin_origen: false}
+- id: num-09
+  validado: true
+  respuesta: "Con 3–6 mg/kg de cafeína se mejora el rendimiento [ISSN cafeína 2021, §7.2, §10.4]."
+  pasajes: {"ISSN cafeína 2021, §10.4": "Caffeine consistently improves exercise performance when consumed in doses of 3–6 mg/kg body mass."}
+  esperado: {sin_origen: false}
+- id: num-10
+  validado: true
+  respuesta: "Con 8 mg/kg de cafeína rendirás más [ISSN cafeína 2021, §10.4]."
+  pasajes: {"ISSN cafeína 2021, §10.4": "Caffeine consistently improves exercise performance when consumed in doses of 3–6 mg/kg body mass."}
+  esperado: {sin_origen: true}
+- id: num-11
+  validado: true
+  respuesta: "Tu objetivo hoy es de 2.117 kcal y llevas 940."
+  herramientas: ['{"target": {"kcal": 2117}, "consumed": {"kcal": 940.4}, "remaining": {"kcal": 1176.6}}']
+  esperado: {sin_origen: false}
+- id: num-12
+  validado: true
+  respuesta: "He registrado 60 g de pan tostado (231 kcal)."
+  herramientas: ['{"registrado": {"items": [{"food_id": "pan_tostado_casero", "grams": 60, "kcal": 231.0}]}}']
+  esperado: {sin_origen: false}
+- id: num-13
+  validado: true
+  respuesta: "He registrado 60 g de pan tostado (180 kcal)."
+  herramientas: ['{"registrado": {"items": [{"food_id": "pan_tostado_casero", "grams": 60, "kcal": 231.0}]}}']
+  esperado: {sin_origen: true}
+- id: num-14
+  validado: true
+  respuesta: "Haz 5 comidas al día y cena antes de las 21:00."
+  esperado: {sin_origen: false}
+- id: num-15
+  validado: true
+  respuesta: "Toma 20 g de proteína después de entrenar."
+  esperado: {sin_origen: true}
+- id: num-16
+  validado: true
+  respuesta: "Para tus 70 kg, 1,6 g/kg son 112 g al día."
+  perfil: {weight_kg: 70}
+  herramientas: ['{"per_kg_min": 1.6, "per_kg_max": 1.6, "weight_kg": 70, "min": 112, "max": 112, "unit": "g"}']
+  esperado: {sin_origen: true}
+- id: num-17
+  validado: true
+  respuesta: "Pesas 70 kg y mides 175 cm."
+  perfil: {weight_kg: 70, height_cm: 175}
+  esperado: {sin_origen: false}
+- id: num-18
+  validado: true
+  respuesta: "La OMS recomienda al menos 150 minutos de actividad moderada a la semana [OMS AF 2020, p. 15]."
+  pasajes: {"OMS AF 2020, p. 15": "Adults should do at least 150–300 minutes of moderate-intensity aerobic physical activity per week."}
+  esperado: {sin_origen: false}
+- id: num-19
+  validado: true
+  respuesta: "El plan aporta 786 kcal: 38 g de proteína, 144 g de hidratos y 3 g de grasa."
+  herramientas: ['{"verificado": true, "total_plan": {"kcal": 786, "protein_g": 38, "carbs_g": 144, "fat_g": 3}}']
+  esperado: {sin_origen: false}
+- id: num-20
+  validado: true
+  respuesta: "El plan aporta 786 kcal y 45 g de proteína."
+  herramientas: ['{"verificado": true, "total_plan": {"kcal": 786, "protein_g": 38, "carbs_g": 144, "fat_g": 3}}']
+  esperado: {sin_origen: true}

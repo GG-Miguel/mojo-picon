@@ -338,6 +338,18 @@ def numbers_in(obj: object) -> list[float]:
     return []
 
 
+def passage_numbers(passages: list[str]) -> list[float]:
+    """Numbers in guideline passages, read as source text (found while checking the expert brief):
+    brackets there are data, not citations («15–20% PRO [0.8–1.2 g/kg/day]»), and English sources
+    write thousands with a comma («8,000 mL»), so both readings of «8,000» are kept."""
+    values: list[float] = []
+    for text in passages:
+        plain = text.replace("[", " ").replace("]", " ")
+        values += numbers_in(plain)
+        values += [float(m.replace(",", "")) for m in re.findall(r"(?<![\d.,])\d{1,3}(?:,\d{3})+(?![\d,])", plain)]
+    return values
+
+
 def _json_numbers(obj: object) -> list[float]:
     """Numeric values of parsed JSON. Strings inside it are ignored: ids like "edcbc04c3000…" or
     food names are not the origin of any figure."""
@@ -361,14 +373,15 @@ def _normalize_tag(tag: str) -> str:
 
 
 def _cited_passages(tags: list[str], passages: Mapping[str, str]) -> list[str]:
-    # A citation matches its passage, or the passages of its sections: "[ISSN 2017]" -> "ISSN 2017, §3"
-    # (prefix up to a word boundary, so "[issn 20]" does not match "issn 2017").
+    # A citation matches its passage, or the passages of its sections: "[SEMED 2019]" -> "SEMED 2019, p. 17.4",
+    # and a page its chunks: "p. 5" -> "p. 5.1", "p. 5.3" (prefix up to a boundary, so "[semed 20]" does not
+    # match "semed 2019" and "p. 1" does not match "p. 17").
     norm = {_normalize_tag(k): v for k, v in passages.items()}
     return [
         text
         for tag in tags
         for key, text in norm.items()
-        if key == tag or key.startswith(tag + ",") or key.startswith(tag + " ")
+        if key == tag or any(key.startswith(tag + sep) for sep in (",", " ", "."))
     ]
 
 
@@ -392,13 +405,21 @@ def check_numbers(answer: str, sources: TurnSources) -> list[Violation]:
                     Violation(q, kind, f"«{q.text}» no sale de ninguna herramienta del turno ni del perfil")
                 )
         else:
-            reference_pool = numbers_in(_cited_passages(tags, sources.passages)) + tool_pool
-            if not tags:
+            reference_pool = passage_numbers(_cited_passages(tags, sources.passages)) + tool_pool
+            if not tags and _per_kg(q):
+                # A per-kg recommendation needs its citation even if a tool echoes it: per_kg_target returns
+                # the per_kg values the model passed in (found by the evaluation, 2026-10-17).
+                violations.append(Violation(q, kind, f"«{q.text}» es un valor de referencia sin cita"))
+            elif not tags:
                 if not _matches(q, reference_pool):
                     violations.append(Violation(q, kind, f"«{q.text}» es un valor de referencia sin cita"))
             elif not _matches(q, reference_pool):
                 violations.append(Violation(q, kind, f"«{q.text}» no aparece en la fuente citada ({', '.join(tags)})"))
     return violations
+
+
+def _per_kg(q: Quantity) -> bool:
+    return bool(q.unit) and q.unit.endswith("/kg")
 
 
 def feedback(violations: list[Violation]) -> str:
@@ -409,7 +430,8 @@ def feedback(violations: list[Violation]) -> str:
         f"{lines}\n"
         "Usa solo cifras de las herramientas de este turno, del perfil o del mensaje del usuario. "
         "Los valores de referencia deben llevar la etiqueta de su fuente en la misma frase. "
-        "Si necesitas una cantidad personal por kg de peso, llama a per_kg_target."
+        "Si necesitas una cantidad personal por kg de peso, llama a per_kg_target. "
+        "Este aviso es interno: reescribe la respuesta para el usuario sin mencionarlo y sin disculparte."
     )
 
 

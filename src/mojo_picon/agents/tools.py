@@ -118,9 +118,9 @@ def per_kg_target(per_kg_min: float, per_kg_max: float, runtime: ToolRuntime, un
 
 @tool(RETRIEVAL_TOOL)
 async def search_guides(query: str, runtime: ToolRuntime) -> Command | str:
-    """Busca en las guías oficiales (OMS, EFSA, AESAN, ISSN) cuando la ficha no basta: valores de
-    referencia concretos, temas poco frecuentes o una cita literal. Escribe una consulta concreta; las
-    guías de la EFSA, la ISSN y la OMS (2020) están en inglés. Cita la etiqueta del pasaje que uses."""
+    """Busca en las guías oficiales y documentos de consenso españoles (OMS, AESAN, FESNAD, SEMED,
+    FEMEDE) cuando la ficha no basta: valores de referencia concretos, temas poco frecuentes o una
+    cita literal. Escribe una consulta concreta, en español. Cita la etiqueta del pasaje que uses."""
     guides = runtime.context.guides
     if guides is None:
         return "Las guías no están disponibles ahora: usa la ficha o di que no tienes la fuente."
