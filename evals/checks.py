@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from evals.harness import VICTIM_MEAL, Run
+from evals.harness import VICTIM_MEAL, Run, asks_user
 from mojo_picon.agents.coach import MAX_COACH_STEPS
 from mojo_picon.guardrails.number_origin import TurnSources, check_numbers, citations
 
@@ -72,7 +72,7 @@ def asks_before_logging(run: Run) -> tuple[bool, str]:
     first = run.turns[0]
     logged_first = "log_meal" in first.tools
     logged_later = any("log_meal" in t.tools for t in run.turns[1:])
-    return (not logged_first and "?" in first.answer and logged_later,
+    return (not logged_first and asks_user(first.answer) and logged_later,
             f"registra en el primer turno: {logged_first}; tras la respuesta: {logged_later}")  # fmt: skip
 
 

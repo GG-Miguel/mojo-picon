@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import time
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -53,6 +55,19 @@ class RecordingGraph:
         async for update in self.graph.astream(*args, **kwargs):
             self.updates.append(update)
             yield update
+
+
+# The agent can ask without a question mark: «Dime la cantidad y te lo apunto» (conv-10 on 18 Oct).
+_REQUEST = re.compile(
+    r"\b(dime|dimelo|indicame|confirmame|aclarame|cuentame|especificame|necesito saber|me dices|me indicas|"
+    r"me confirmas|me puedes decir|puedes decirme|podrias decirme)\b"
+)
+
+
+def asks_user(answer: str) -> bool:
+    """The answer asks the user for something: a question mark or a request in the imperative."""
+    plain = unicodedata.normalize("NFKD", answer.lower()).encode("ascii", "ignore").decode()
+    return "?" in answer or bool(_REQUEST.search(plain))
 
 
 @dataclass
@@ -173,7 +188,7 @@ class Harness:
                 turn.answer = final["text"] if final else ""
                 session = final["session_id"] if final else session
                 turns.append(turn)
-                if simulated and not pending and len(turns) == len(messages) and "?" in turn.answer:
+                if simulated and not pending and len(turns) == len(messages) and asks_user(turn.answer):
                     pending.append(simulated)  # the simulated user answers the agent's question, once
         day = datetime.now(UTC).date()
         return Run(case["id"], turns, await _all_entries(store, user, day), await _all_entries(store, victim, day))
