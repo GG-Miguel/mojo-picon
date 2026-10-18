@@ -11,19 +11,23 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mojo_picon.domain import ActivityLevel, Goal, MacroTargets, Nutrients, Profile, Sex
-from mojo_picon.domain.profile import MAX_WEEKLY_RATE_KG  # the profile rejects faster rates too
+from mojo_picon.domain.profile import MAX_WEEKLY_GAIN_KG, MAX_WEEKLY_LOSS_KG  # the profile rejects faster rates too
 
 # Multipliers over BMR for daily life **without training** (trainings are added with
-# activity_energy). Provisional values: to be validated by the author and cited in the
-# expert brief before the demo.
+# activity_energy). FAO/WHO/UNU 2004 put a sedentary or lightly active lifestyle at a physical
+# activity level of 1.40-1.69, so even a desk job without exercise is 1.40 or more.
 ACTIVITY_FACTORS: dict[ActivityLevel, float] = {
-    ActivityLevel.SEDENTARY: 1.2,
-    ActivityLevel.LIGHT: 1.3,
-    ActivityLevel.MODERATE: 1.4,
-    ActivityLevel.HIGH: 1.5,
+    ActivityLevel.SEDENTARY: 1.4,
+    ActivityLevel.LIGHT: 1.5,
+    ActivityLevel.MODERATE: 1.6,
+    ActivityLevel.HIGH: 1.7,
 }
 
-KCAL_PER_KG_BODY_WEIGHT = 7700  # usual approximation for 1 kg of body weight change
+# 1 kg of adipose tissue holds about 7700 kcal, but not all the weight lost is fat, so about
+# 7000 kcal per kg of weight is used (Carbajal, Manual de Nutrición y Dietética, UCM). It matches
+# FESNAD-SEEDO: 0.5-1 kg per week needs a deficit of 500-1000 kcal per day.
+KCAL_PER_KG_BODY_WEIGHT = 7000
+MAX_DAILY_DEFICIT_KCAL = 1000  # FESNAD-SEEDO upper limit
 
 # Default macro split. Provisional: to be taken from the expert brief (with source tag).
 PROTEIN_G_PER_KG = 1.6
@@ -83,12 +87,13 @@ def goal_adjustment(profile: Profile) -> float:
     """Daily kcal to add (gain) or subtract (lose) for the weekly rate of the profile."""
     if profile.goal is Goal.MAINTAIN:
         return 0.0
-    if profile.weekly_rate_kg > MAX_WEEKLY_RATE_KG:
+    limit = MAX_WEEKLY_LOSS_KG if profile.goal is Goal.LOSE else MAX_WEEKLY_GAIN_KG
+    if profile.weekly_rate_kg > limit:
         raise ExtremeGoalError(
-            f"A change of {profile.weekly_rate_kg:g} kg per week is above the safe limit of {MAX_WEEKLY_RATE_KG:g} kg."
+            f"A change of {profile.weekly_rate_kg:g} kg per week is above the safe limit of {limit:g} kg."
         )
     daily = profile.weekly_rate_kg * KCAL_PER_KG_BODY_WEIGHT / 7
-    return -daily if profile.goal is Goal.LOSE else daily
+    return -min(daily, MAX_DAILY_DEFICIT_KCAL) if profile.goal is Goal.LOSE else daily
 
 
 def macro_split(kcal: float, weight_kg: float) -> MacroTargets:
