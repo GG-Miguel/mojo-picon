@@ -373,14 +373,15 @@ def _normalize_tag(tag: str) -> str:
 
 
 def _cited_passages(tags: list[str], passages: Mapping[str, str]) -> list[str]:
-    # A citation matches its passage, or the passages of its sections: "[ISSN 2017]" -> "ISSN 2017, §3"
-    # (prefix up to a word boundary, so "[issn 20]" does not match "issn 2017").
+    # A citation matches its passage, or the passages of its sections: "[SEMED 2019]" -> "SEMED 2019, p. 17.4",
+    # and a page its chunks: "p. 5" -> "p. 5.1", "p. 5.3" (prefix up to a boundary, so "[semed 20]" does not
+    # match "semed 2019" and "p. 1" does not match "p. 17").
     norm = {_normalize_tag(k): v for k, v in passages.items()}
     return [
         text
         for tag in tags
         for key, text in norm.items()
-        if key == tag or key.startswith(tag + ",") or key.startswith(tag + " ")
+        if key == tag or any(key.startswith(tag + sep) for sep in (",", " ", "."))
     ]
 
 

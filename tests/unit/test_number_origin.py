@@ -198,6 +198,13 @@ def test_a_citation_with_several_places_or_documents_is_expanded():
     assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passages)) == []
 
 
+def test_a_page_citation_matches_the_chunks_of_that_page_only():
+    passages = {"Ingestas UE 2017, p. 5.3": "| ≥ 14 años | ml/d | 2500 | 2000 |", "Ingestas UE 2017, p. 15": "3000 ml"}
+    sources = TurnSources(tool_results=[], profile={}, user_message="", passages=passages)
+    assert check_numbers("Los hombres, 2500 ml al día [Ingestas UE 2017, p. 5].", sources) == []
+    assert check_numbers("Los hombres, 3000 ml al día [Ingestas UE 2017, p. 1].", sources) != []  # p. 1 is not p. 15
+
+
 def test_a_per_kg_value_echoed_by_a_tool_still_needs_its_citation():
     # Found by the evaluation (evals/cases/numbers.yaml, num-16): per_kg_target echoes the model's own input
     tool = '{"per_kg_min": 1.6, "per_kg_max": 1.6, "weight_kg": 70, "min": 112, "max": 112, "unit": "g"}'
