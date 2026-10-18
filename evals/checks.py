@@ -39,6 +39,11 @@ def tools(run: Run, required: list[str]) -> tuple[bool, str]:
     return not missing, f"llamadas {sorted(called)}" + (f"; faltan {missing}" if missing else "")
 
 
+def no_tools(run: Run, forbidden: list[str]) -> tuple[bool, str]:
+    called = sorted({name for t in run.turns for name in t.tools if name in forbidden})
+    return not called, f"herramientas prohibidas llamadas: {called or 'ninguna'}"
+
+
 def plan_foods(run: Run) -> list[str]:
     ids = []
     for turn in run.turns:

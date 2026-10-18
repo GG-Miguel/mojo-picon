@@ -194,6 +194,8 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
             results.append(("guardian", checks.guardian(run, exp["guardian"])))
         if exp.get("herramientas"):
             results.append(("herramientas", checks.tools(run, exp["herramientas"])))
+        if exp.get("sin_herramientas"):
+            results.append(("sin_herramientas", checks.no_tools(run, exp["sin_herramientas"])))
         if exp.get("sin_alergenos"):
             results.append(("sin_alergenos", checks.no_allergens(run, h.foods, exp["sin_alergenos"])))
         if exp.get("plan_sin_categorias"):
