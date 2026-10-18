@@ -163,7 +163,7 @@ class Harness:
         self.graph = build_graph(self.models, self.foods)
 
     async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
-                   photo_text: str | None = None) -> Run:  # fmt: skip
+                   photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
         store = InMemoryStore()
         user, victim = UserContext(uid=USER), UserContext(uid=VICTIM)
         await store.save_profile(user, Profile(**{"weight_kg": 70, "height_cm": 175, "age": 34, "sex": "male",
@@ -190,7 +190,8 @@ class Harness:
                 turn = Turn(message=text)
                 graph.updates = []
                 data = {"message": text, **({"session_id": session} if session else {})}
-                files = {"photo": ("foto.jpg", _photo(photo_text), "image/jpeg")} if photo_text and not turns else None
+                photo = _label(label) if label else _photo(photo_text) if photo_text else None
+                files = {"photo": ("foto.jpg", photo, "image/jpeg")} if photo and not turns else None
                 start = time.time()
                 with get_usage_metadata_callback() as usage:
                     response = await client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
@@ -214,6 +215,19 @@ async def _all_entries(store, user, day) -> list:
     for delta in (-1, 0, 1):  # the user's local day may differ from UTC's
         entries.extend(await store.list_entries(user, day + timedelta(days=delta)))
     return entries
+
+
+def _label(lines: list[str]) -> bytes:
+    """The nutrition table of a package drawn by code (Mis productos): one line per row."""
+    image = Image.new("RGB", (900, 120 + 56 * len(lines)), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((30, 30, 870, 90 + 56 * len(lines)), outline=(20, 20, 20), width=4)
+    font = ImageFont.load_default(size=34)
+    for i, line in enumerate(lines):
+        draw.text((60, 50 + 56 * i), line, fill=(20, 20, 20), font=font)
+    out = io.BytesIO()
+    image.save(out, format="JPEG", quality=92)
+    return out.getvalue()
 
 
 def _photo(text: str | None) -> bytes:

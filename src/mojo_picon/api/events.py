@@ -64,6 +64,7 @@ TOOL_LABELS = {
     "get_nutrients": "Calculando nutrientes",
     "check_allergens": "Comprobando alérgenos",
     "log_meal": "Registrando la comida",
+    "save_product": "Guardando el producto",
     "list_activities": "Consultando actividades",
     "log_activity": "Registrando la actividad",
     "get_day_balance": "Calculando el balance del día",
