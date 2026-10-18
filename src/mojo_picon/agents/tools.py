@@ -16,6 +16,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
+from pydantic import BaseModel, Field, model_validator
 from pydantic_core import to_jsonable_python
 
 from mojo_picon.domain.diary import EntrySource, MealItem
@@ -24,6 +25,7 @@ from mojo_picon.tools import diary
 from mojo_picon.tools.energy import per_kg_target as compute_per_kg_target
 from mojo_picon.tools.food_search import check_allergens as compute_allergens
 from mojo_picon.tools.food_search import get_nutrients as compute_nutrients
+from mojo_picon.tools.measures import measures_of, to_grams
 
 PLAN_TOOL = "plan_rest_of_day"  # handled by the Planner subgraph, not by the ToolNode
 
@@ -36,8 +38,13 @@ def _json(value: object) -> str:
 @tool
 def search_food(query: str, runtime: ToolRuntime) -> str:
     """Busca un alimento en la tabla por su nombre en español. Devuelve candidatos con confianza y un
-    estado: exact (úsalo), approximate (confírmalo), ambiguous (pregunta cuál) o not_found (no inventes)."""
-    return _json(runtime.context.food_index.search(query))
+    estado: exact (úsalo), approximate (confírmalo), ambiguous (pregunta cuál) o not_found (no inventes).
+    Cada candidato trae sus `medidas` caseras con peso estándar (unidad, cucharada, vaso, loncha…):
+    si el usuario dice una de ellas, registra con `measure` y `count` en log_meal, sin preguntar gramos."""
+    result = to_jsonable_python(runtime.context.food_index.search(query))
+    for candidate in result["candidates"]:
+        candidate["medidas"] = sorted(measures_of(candidate["food_id"]))
+    return _json(result)
 
 
 @tool
@@ -55,13 +62,38 @@ def check_allergens(food_ids: list[str], runtime: ToolRuntime) -> str:
     return _json({food_id: sorted(a.value for a in found_allergens) for food_id, found_allergens in found.items()})
 
 
+class MealPortion(BaseModel):
+    """One food of a meal: in grams, or as a household measure of search_food (`measure` × `count`)."""
+
+    food_id: str
+    grams: float | None = Field(default=None, gt=0)
+    measure: str | None = Field(default=None, description="medida casera de search_food, p. ej. unidad, cucharada")
+    count: float = Field(default=1, gt=0, description="cuántas medidas, p. ej. 2 para «dos manzanas»")
+
+    @model_validator(mode="after")
+    def _one_quantity(self) -> "MealPortion":
+        if (self.grams is None) == (self.measure is None):
+            raise ValueError("da los gramos o una medida casera, una de las dos")
+        return self
+
+
 @tool
-async def log_meal(items: list[MealItem], runtime: ToolRuntime) -> str:
-    """Registra una comida que el usuario ha CONFIRMADO, como food_id + gramos (usa search_food antes).
-    Las cifras las calcula el código con la tabla."""
+async def log_meal(items: list[MealPortion], runtime: ToolRuntime) -> str:
+    """Registra una comida (usa search_food antes). Cada alimento en gramos o, si el usuario dice una
+    medida casera (una manzana, una cucharada de aceite, dos lonchas), con `measure` y `count`: el
+    código la pasa a gramos con su peso estándar. Las cifras las calcula el código con la tabla."""
     ctx = runtime.context
-    entry = await diary.log_meal(ctx.user, ctx.store, ctx.foods, items, source=EntrySource.TEXT)
-    return await _logged_with_balance(ctx, entry)
+    meal, assumed = [], []
+    for item in items:
+        grams = item.grams if item.measure is None else to_grams(item.food_id, item.measure, item.count)
+        meal.append(MealItem(food_id=item.food_id, grams=grams))
+        if item.measure is not None:
+            assumed.append(f"{item.count:g} × {item.measure} de {ctx.foods[item.food_id].name} = {grams:g} g")
+    entry = await diary.log_meal(ctx.user, ctx.store, ctx.foods, meal, source=EntrySource.TEXT)
+    logged = json.loads(await _logged_with_balance(ctx, entry))
+    if assumed:
+        logged["medidas_estandar"] = assumed  # tell the user, so they can correct it
+    return _json(logged)
 
 
 @tool
