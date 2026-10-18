@@ -1,24 +1,29 @@
 """Judge calibration: the author scores the same answers as the judge, blind, and we measure agreement.
 
-uv run --group eval python -m evals.calibrate export evals/results/<run>.json
-    -> evals/calibration/hoja.yaml: the conversations and empty scores (1-5), without the judge's
-(the author fills in `autor:` for each criterion)
-uv run --group eval python -m evals.calibrate compare evals/results/<run>.json
+uv run --group eval python -m evals.calibrate export evals/results/<run>.json [sheet.md]
+    -> a Markdown sheet (by default evals/calibration/hoja.md; it can be written straight into the
+       vault): each conversation with its context and empty 1-5 scores, without the judge's
+uv run --group eval python -m evals.calibrate compare evals/results/<run>.json [sheet.md]
     -> agreement per criterion: mean absolute difference, exact and ±1 agreement, Cohen's weighted kappa
 """
 
+# ruff: noqa: E501  (this module writes long Markdown lines for the sheet)
 from __future__ import annotations
 
 import itertools
 import json
+import re
 import sys
 from pathlib import Path
 
-import yaml
+from evals.cases import load
+from evals.metrics import CRITERIA, RUBRIC_VERSION
+from evals.review_sheet import food_line, profile_text, quote
 
-from evals.metrics import CRITERIA
-
-SHEET = Path(__file__).parent / "calibration" / "hoja.yaml"
+SHEET = Path(__file__).parent / "calibration" / "hoja.md"
+NAMES = {"adecuacion": "Adecuación", "seguridad": "Seguridad", "uso_de_guias": "Uso de guías", "claridad": "Claridad"}
+_CASE = re.compile(r"^## (\S+)")
+_SCORE = re.compile(r"^- \*\*(" + "|".join(NAMES.values()) + r")\*\* \(([a-z_]+)\):\s*([1-5])?\s*$")
 
 
 def _to_five(score: float) -> int:
@@ -26,26 +31,53 @@ def _to_five(score: float) -> int:
     return max(1, min(5, round(1 + 4 * score)))
 
 
-def export(results: Path) -> None:
+def export(results: Path, sheet: Path = SHEET) -> None:
     rows = json.loads(results.read_text())["results"]["conversations"]
-    sheet = {
-        "instrucciones": (
-            "Puntúa cada respuesta de 1 (muy mal) a 5 (muy bien) en cada criterio, sin mirar las notas del juez. "
-            "Los criterios y sus pasos están en evals/metrics.py."
-        ),
-        "criterios": list(CRITERIA),
-        "casos": [
-            {
-                "id": r["id"],
-                "conversacion": [{"usuario": t["message"], "mojo": t["answer"]} for t in r["turns"]],
-                "autor": {c: None for c in CRITERIA},
-            }
-            for r in rows
-        ],
-    }
-    SHEET.parent.mkdir(exist_ok=True)
-    SHEET.write_text(yaml.safe_dump(sheet, allow_unicode=True, sort_keys=False, width=110), encoding="utf-8")
-    print(f"{len(rows)} conversaciones en {SHEET}")
+    cases = {c["id"]: c for c in load("conversations")}
+    lines = [
+        "---", "tags: [evaluacion, juez]", "---", "",
+        "# Calibración del juez", "",
+        f"Puntúa cada respuesta de **1 (muy mal) a 5 (muy bien)** en los cuatro criterios, **sin mirar las notas del juez** (no están en esta hoja). "
+        f"Escribe solo el número después de los dos puntos. Respuestas de la evaluación `{results.name}`; rúbrica del juez {RUBRIC_VERSION}.", "",
+        "Después: `uv run --group eval python -m evals.calibrate compare <resultados.json> <esta nota>`.", "",
+        "## Criterios", "",
+        "Son los mismos pasos que sigue el juez. Si crees que un paso está mal planteado, dilo en el comentario: es lo que ajustará la rúbrica.", "",
+    ]  # fmt: skip
+    for name, steps in CRITERIA.items():
+        lines += [f"**{NAMES[name]}**", "", *[f"{i}. {step}" for i, step in enumerate(steps, 1)], ""]
+    lines += ["---", ""]
+    for r in rows:
+        case = cases.get(r["id"], {})
+        today = [food_line(f, g) for f, g in case.get("hoy", {}).items()]
+        lines += [f"## {r['id']}", "", f"**Perfil:** {profile_text(case.get('perfil', {}))}", "",
+                  f"**Ya registrado hoy:** {'; '.join(today) if today else 'nada'}", ""]  # fmt: skip
+        for turn in r["turns"]:
+            lines += ["**Usuario:**", "", quote(turn["message"]), "", "**Mojo:**", "", quote(turn["answer"]), ""]
+        lines += [
+            "**Tu nota (1–5):**",
+            "",
+            *[f"- **{NAMES[c]}** ({c}): " for c in CRITERIA],
+            "",
+            "**Comentario:** ",
+            "",
+            "---",
+            "",
+        ]
+    sheet.parent.mkdir(parents=True, exist_ok=True)
+    sheet.write_text("\n".join(lines), encoding="utf-8")
+    print(f"{len(rows)} conversaciones en {sheet}")
+
+
+def read_sheet(sheet: Path) -> dict[str, dict[str, int]]:
+    """Case id -> criterion -> the author's score (blank scores are left out)."""
+    scores: dict[str, dict[str, int]] = {}
+    case = None
+    for line in sheet.read_text(encoding="utf-8").splitlines():
+        if m := _CASE.match(line):
+            case = m.group(1)
+        elif (m := _SCORE.match(line.strip())) and case and m.group(3):
+            scores.setdefault(case, {})[m.group(2)] = int(m.group(3))
+    return scores
 
 
 def _weighted_kappa(a: list[int], b: list[int], k: int = 5) -> float:
@@ -64,14 +96,14 @@ def _weighted_kappa(a: list[int], b: list[int], k: int = 5) -> float:
     return 1 - num / den if den else 1.0
 
 
-def compare(results: Path) -> None:
+def compare(results: Path, sheet: Path = SHEET) -> None:
     judge = {r["id"]: r.get("judge", {}) for r in json.loads(results.read_text())["results"]["conversations"]}
-    sheet = yaml.safe_load(SHEET.read_text(encoding="utf-8"))
+    author = read_sheet(sheet)
     print("| Criterio | Casos | Diferencia media | Coinciden | ±1 | Kappa ponderado |")
     print("| --- | --- | --- | --- | --- | --- |")
     for criterion in CRITERIA:
-        scored = [c for c in sheet["casos"] if c["autor"].get(criterion) and criterion in judge.get(c["id"], {})]
-        pairs = [(c["autor"][criterion], _to_five(judge[c["id"]][criterion]["score"])) for c in scored]
+        pairs = [(scores[criterion], _to_five(judge[case][criterion]["score"]))
+                 for case, scores in author.items() if criterion in scores and criterion in judge.get(case, {})]  # fmt: skip
         if not pairs:
             continue
         a, b = [p[0] for p in pairs], [p[1] for p in pairs]
@@ -82,4 +114,5 @@ def compare(results: Path) -> None:
 
 
 if __name__ == "__main__":
-    {"export": export, "compare": compare}[sys.argv[1]](Path(sys.argv[2]))
+    command, results, *rest = sys.argv[1:]
+    {"export": export, "compare": compare}[command](Path(results), *(Path(r) for r in rest))
