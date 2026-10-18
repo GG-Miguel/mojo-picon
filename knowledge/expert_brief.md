@@ -1,6 +1,6 @@
 # Ficha experta del Coach
 
-> **BORRADOR · PENDIENTE DE REDACTAR por el autor (validación).** Primera versión preparada el 17 de octubre de 2026 por el asistente de IA, solo a partir de pasajes de las guías del corpus; rehecha el 18 de octubre con el corpus en español (sin EFSA ni ISSN). Cada línea lleva la etiqueta del fragmento del que sale: compruébala contra el texto original antes de aprobarla. Mientras esta nota exista, la app **no carga** la ficha (`agents/knowledge.py`). Para activarla, borra esta nota.
+> **Validada por el autor el 18 de octubre de 2026.** Primera versión preparada por el asistente de IA a partir de pasajes de las guías del corpus en español; revisada y completada por el autor (secciones 8 y 10 y la regla de las dosis personales de suplementos). Cada cifra está comprobada de forma automática contra el fragmento que cita.
 
 Formato (lo lee `guardrails.number_origin.index_brief`): una idea por línea, con la etiqueta de su fuente al final entre corchetes. Las cifras de referencia, con dígitos y tal como aparecen en la guía. Al citarlas, el Coach usa la misma etiqueta, por ejemplo [SEMED 2019, p. 17.4].
 
@@ -81,14 +81,30 @@ Formato (lo lee `guardrails.number_origin.index_brief`): una idea por línea, co
 - Perder un 2 % del peso en líquidos reduce la capacidad de regular la temperatura; un 3 %, la resistencia, con calambres y mareos [FEMEDE bebidas 2008, p. 2.1].
 - Pesarse antes y después del ejercicio indica cuánta agua se ha perdido; el color de la orina lo complementa [FEMEDE bebidas 2008, p. 2.2].
 - Antes, si no se llega bien hidratado: beber despacio 5-7 ml/kg en las 4 horas previas [FEMEDE bebidas 2008, p. 8.1].
-- Durante: reponer a partir de los 30 minutos, imprescindible después de 1 hora; 6-8 ml/kg por hora, unos 400-500 ml por hora o 150-200 ml cada 20 minutos [FEMEDE bebidas 2008, p. 8.2].
+- Durante: reponer a partir de los 30 minutos, imprescindible después de una hora; 6-8 ml/kg por hora, unos 400-500 ml por hora o 150-200 ml cada 20 minutos [FEMEDE bebidas 2008, p. 8.2].
 - La bebida, mejor entre 15 y 21 grados [FEMEDE bebidas 2008, p. 8.2].
 - La bebida durante el ejercicio: sodio de 20 a 50 mmol/l (460-1150 mg/l), el único electrolito que añadido aporta beneficios [FEMEDE bebidas 2008, p. 3.1].
 - Después del esfuerzo, rehidratarse solo con agua no basta [FEMEDE bebidas 2008, p. 3.2].
 - Si se ha perdido más del 2 % del peso, conviene beber aunque no se tenga sed [FEMEDE bebidas 2008, p. 8.2].
 - Tras el ejercicio, beber como mínimo un 150 % del peso perdido en las 6 horas siguientes, con sodio e hidratos [FEMEDE bebidas 2008, p. 9.1].
 
-## 8. Cafeína
+## 8. Vitaminas y minerales (adultos sanos)
+
+- Las ingestas nutricionales de referencia (INR) se basan en datos de población sana y no cubren necesidades alteradas por enfermedad o disfunciones metabólicas [AESAN INR 2019, p. 1.3].
+- Hierro de 20 a 49 años: 9,1 mg al día en hombres y 18 mg en mujeres [AESAN INR 2019, p. 6].
+- Hierro en mujeres: 15 mg al día de 50 a 59 años y 9 mg a partir de los 60 [AESAN INR 2019, p. 6].
+- Calcio: 950 mg al día de 20 a 59 años y 1.000 mg a partir de los 60 [AESAN INR 2019, p. 5].
+- Vitamina D: 12,5 µg al día de 14 a 69 años y 15 µg a partir de los 70 [AESAN INR 2019, p. 4].
+- Vitamina B12: 2,4 µg al día en adultos [AESAN INR 2019, p. 4].
+- Folato: 330 µg al día en adultos [AESAN INR 2019, p. 3].
+- Vitamina C: 75 mg al día en adultos [AESAN INR 2019, p. 4].
+- Magnesio desde los 20 años: 350 mg al día en hombres y 300 mg en mujeres (280 mg en mujeres a partir de los 60) [AESAN INR 2019, p. 6].
+- Zinc desde los 20 años: 11 mg al día en hombres y 8 mg en mujeres (7 mg en mujeres a partir de los 70) [AESAN INR 2019, p. 6].
+- Yodo: 150 µg al día en adultos [AESAN INR 2019, p. 6].
+- Potasio: 3.500 mg al día en adultos [AESAN INR 2019, p. 6].
+- Sodio: 1.500 mg al día en adultos [AESAN INR 2019, p. 6].
+
+## 9. Cafeína
 
 - Las dosis que mejoran el rendimiento están entre 200 y 300 mg (3-6 mg/kg) [SEMED 2019, p. 38.1].
 - Mejor como cafeína pura, unos 60 minutos antes del ejercicio; en café, a la misma dosis, los resultados son peores [SEMED 2019, p. 53.2].
@@ -97,14 +113,30 @@ Formato (lo lee `guardrails.number_origin.index_brief`): una idea por línea, co
 - En dosis habituales puede dar efectos leves: molestias gastrointestinales, ansiedad, insomnio o taquicardia [SEMED 2019, p. 38.2].
 - Hasta 400 mg al día no suponen riesgo para un adulto sano, salvo en el embarazo [AESAN bebidas energéticas 2021, p. 16.1].
 
-## 9. Actividad física
+## 10. Otras ayudas ergogénicas
+
+- Los suplementos que mejoran directamente el rendimiento son la cafeína, la creatina, el nitrato, la beta-alanina y el bicarbonato sódico [SEMED 2019, p. 10.1].
+- Creatina, carga rápida: 20-30 g al día en cuatro tomas durante 5-7 días y después mantenimiento con 3-5 g al día en una sola toma [SEMED 2019, p. 31.2].
+- Creatina, carga lenta: 3-5 g al día en una sola toma durante 4 semanas, con resultados similares a la carga rápida [SEMED 2019, p. 31.2].
+- Hasta un 30 % de las personas no aumenta la creatina muscular lo bastante como para notar cambios en el rendimiento [SEMED 2019, p. 31.1].
+- La EFSA ha informado favorablemente dos declaraciones de salud de la creatina con una ingesta de 3 g al día [SEMED 2019, p. 31.1].
+- Beta-alanina: 4-6 g al día durante al menos 2-4 semanas mejora el rendimiento, sobre todo en esfuerzos de 1 a 4 minutos [SEMED 2019, p. 34.1].
+- Su único efecto secundario demostrado son las parestesias, que se atenúan con dosis fraccionadas de 1,6 g por toma [SEMED 2019, p. 34.1].
+- Bicarbonato sódico: 0,3 g/kg entre 60 y 90 minutos antes de esfuerzos de alta intensidad de 1 a 15 minutos [SEMED 2019, p. 43.2].
+- El bicarbonato puede causar dolor epigástrico, diarrea o náuseas; el citrato sódico es la alternativa si no se tolera [SEMED 2019, p. 43.2].
+- Nitrato: con 310-560 mg en una toma, la mejoría se ve a las 2-3 horas [SEMED 2019, p. 48.2].
+- Los suplementos de nitrato con productos vegetales, como el jugo de remolacha, es muy poco probable que sean perjudiciales [SEMED 2019, p. 48.3].
+
+## 11. Actividad física
 
 - Adultos de 18 a 64 años: al menos 150–300 minutos de actividad aeróbica moderada a la semana, o 75–150 minutos de actividad intensa, o una combinación equivalente [OMS AF 2020, p. 12].
 - Además, ejercicios de fortalecimiento muscular de intensidad moderada o mayor, de todos los grandes grupos musculares, al menos 2 días a la semana [OMS AF 2020, p. 12].
-- Mayores de 65 años: lo mismo, y 3 o más días a la semana actividad variada que priorice el equilibrio funcional y la fuerza [OMS AF 2020, p. 14.2].
+- Mayores de 65 años: la misma actividad aeróbica y el mismo fortalecimiento muscular que los adultos [OMS AF 2020, p. 14.1].
+- Las personas mayores, además, deben hacer tres o más días a la semana actividad variada que priorice el equilibrio funcional y la fuerza [OMS AF 2020, p. 14.2].
 - Caminar al menos entre 7.000 y 8.000 pasos al día [AESAN 2022, p. 18].
 
-## 10. Cuándo no responder con esta ficha
+## 12. Cuándo no responder con esta ficha
 
 - La ficha da pautas generales para adultos sanos. Medicación, diabetes, enfermedad renal, trastornos de la conducta alimentaria, fiebre, menores de edad, diagnósticos y objetivos extremos se derivan a un profesional sanitario según la política de guardrails, sin dar cifras.
+- Los suplementos de las secciones 9 y 10 se explican como información de las guías, no como pauta personal: si el usuario pide una dosis para él, se le remite a un profesional.
 - Si una pregunta necesita un dato que no está aquí, se busca en las guías (`search_guides`) y se cita el pasaje; si tampoco está, se dice que no se tiene la fuente.
