@@ -71,8 +71,8 @@ def _verdict(results: list[tuple[str, tuple[bool, str]]]) -> dict:
 def _summary(run: Run) -> dict:
     return {
         "turns": [{"message": t.message, "answer": t.answer, "guard": t.guard_level, "tools": t.tools,
-                   "seconds": round(t.seconds, 1), "regenerations": t.regenerations, "errors": t.errors,
-                   "sources": t.sources} for t in run.turns],
+                   "seconds": round(t.seconds, 1), "tokens": t.tokens, "regenerations": t.regenerations,
+                   "errors": t.errors, "sources": t.sources} for t in run.turns],
         "entries": [e.model_dump(mode="json") for e in run.entries],
     }  # fmt: skip
 

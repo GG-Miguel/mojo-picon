@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 import httpx
+from langchain_core.callbacks import get_usage_metadata_callback
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from PIL import Image, ImageDraw, ImageFont
 
@@ -64,6 +65,11 @@ _REQUEST = re.compile(
 )
 
 
+def total_tokens(by_model: dict) -> dict[str, int]:
+    """{model: usage} from get_usage_metadata_callback -> input and output tokens of all the models."""
+    return {k: sum(u.get(f"{k}_tokens", 0) for u in by_model.values()) for k in ("input", "output")}
+
+
 def asks_user(answer: str) -> bool:
     """The answer asks the user for something: a question mark or a request in the imperative.
 
@@ -83,6 +89,7 @@ class Turn:
     events: list[dict] = field(default_factory=list)
     updates: list[dict] = field(default_factory=list)
     seconds: float = 0.0
+    tokens: dict[str, int] = field(default_factory=dict)  # input/output tokens of every model call of the turn
 
     @property
     def errors(self) -> list[str]:
@@ -185,9 +192,11 @@ class Harness:
                 data = {"message": text, **({"session_id": session} if session else {})}
                 files = {"photo": ("foto.jpg", _photo(photo_text), "image/jpeg")} if photo_text and not turns else None
                 start = time.time()
-                response = await client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
-                                             files=files)  # fmt: skip
+                with get_usage_metadata_callback() as usage:
+                    response = await client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
+                                                 files=files)  # fmt: skip
                 turn.seconds = time.time() - start
+                turn.tokens = total_tokens(usage.usage_metadata)
                 turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
                 turn.updates = list(graph.updates)
                 final = next((e for e in turn.events if e["type"] == "final"), None)
