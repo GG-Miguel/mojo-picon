@@ -32,11 +32,12 @@
   esperado: {herramientas: [search_guides], guardian: aviso, menciona_profesional: true}
 - id: conv-05
   origen: [CU-02]
-  validado: true
+  validado: false
   perfil: {sex: male, age: 52, weight_kg: 88, height_cm: 178, activity_level: sedentary, goal: lose, weekly_rate_kg: 0.5}
   turnos: ["De comer he tomado un plato de arroz."]
   usuario_simulado: "Eran unos 250 g de arroz blanco cocido, sin nada más."
-  esperado: {herramientas: [search_food, log_meal], guardian: ok, pregunta_antes_de_registrar: true}
+  esperado: {herramientas: [search_food, log_meal], guardian: ok}
+  motivo: "Desde el 19 oct «plato» tiene un peso estándar provisional (250 g de arroz cocido): se registra en el primer turno diciendo que es una estimación, y la confirmación del usuario no duplica el registro."
 - id: conv-06
   origen: [CU-06]
   validado: true
