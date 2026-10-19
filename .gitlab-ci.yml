@@ -1,7 +1,8 @@
-# lint and tests on every push and merge request; build and deploy to Cloud Run from main only.
+# lint and tests on every push and merge request; the evaluation gate on develop and main; build and
+# deploy to Cloud Run from main only, after the gate.
 # Validate changes to this file in GitLab's Build → Pipeline editor before pushing (CONTRIBUTING).
 # secret-detection: in case the Secret Detection template uses its own stage (empty stages are ignored)
-stages: [lint, test, secret-detection, deploy, release]
+stages: [lint, test, secret-detection, eval, deploy, release]
 
 include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -47,6 +48,31 @@ test:
     when: always
     reports:
       junit: report.xml
+
+# Evaluation gate (Plan de evaluación): the sets that are cheap and decide safety, on real Gemini and
+# Qdrant. Numbers (no model), RAG (embeddings) and the development partition of safety and attacks
+# (~40 Gemini calls, cents); no judge. A failure stops the deploy (the next stage).
+eval-gate:
+  stage: eval
+  rules:
+    - if: ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop") && $GCP_WIF_PROVIDER && $GCP_EVAL_SA
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/.ci_gcp_creds.json
+    QDRANT_URL: https://84d5ceea-c6e9-48b7-a73c-c5a8e9379ac8.europe-west3-0.gcp.cloud.qdrant.io
+    DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
+  script:
+    - uv sync --frozen --group eval
+    - echo "$GITLAB_OIDC_TOKEN" > .ci_oidc_token
+    - uv run python -m evals.ci_credentials adc
+    - export QDRANT_API_KEY="$(uv run python -m evals.ci_credentials qdrant)"
+    - uv run python -m evals.run --sets numbers,rag,safety,attacks --partition desarrollo --no-judge --gate
+  artifacts:
+    when: always
+    paths: [evals/results/]
+    expire_in: 30 days
 
 deploy:
   stage: deploy

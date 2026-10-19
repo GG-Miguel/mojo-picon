@@ -9,6 +9,8 @@
 #     from protected branches of GG-Miguel/mojo-picon. It can deploy new revisions (run.developer)
 #     but not change who can call the service; it writes only to this project's image repository
 #     and to its own Cloud Build bucket.
+#   - The evaluation gate in GitLab CI runs as gitlab-eval, through the same federation and only
+#     from protected branches: it may call Vertex AI and read the Qdrant secret, nothing else.
 #   - Public access (allUsers may call the service; the app checks Firebase tokens) is granted
 #     once here, by the project owner, on a placeholder service that the first CI deploy replaces.
 #
@@ -22,6 +24,7 @@ SERVICE="mojo-picon"
 BUILD_BUCKET="$PROJECT-cloudbuild-src"
 RUN_SA="mojo-run"
 DEPLOY_SA="gitlab-deploy"
+EVAL_SA="gitlab-eval"
 POOL="gitlab"
 PROVIDER="gitlab-com"
 GITLAB_PROJECT="GG-Miguel/mojo-picon"
@@ -44,6 +47,7 @@ exists() { "$@" >/dev/null 2>&1; }
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 RUN_SA_EMAIL="$RUN_SA@$PROJECT.iam.gserviceaccount.com"
 DEPLOY_SA_EMAIL="$DEPLOY_SA@$PROJECT.iam.gserviceaccount.com"
+EVAL_SA_EMAIL="$EVAL_SA@$PROJECT.iam.gserviceaccount.com"
 
 # --- APIs -----------------------------------------------------------------------------
 run gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
@@ -123,6 +127,19 @@ retry run gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA_EMAIL" 
   --role roles/iam.workloadIdentityUser --quiet >/dev/null \
   --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.project_path/$GITLAB_PROJECT"
 
+# --- GitLab evaluation identity (CI gate): Vertex AI and the Qdrant secret only ----------------
+exists gcloud iam service-accounts describe "$EVAL_SA_EMAIL" --project "$PROJECT" ||
+  run gcloud iam service-accounts create "$EVAL_SA" --display-name "GitLab CI evaluation gate" --project "$PROJECT"
+for role in roles/aiplatform.user roles/serviceusage.serviceUsageConsumer; do
+  retry run gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$EVAL_SA_EMAIL" \
+    --role "$role" --condition None --quiet >/dev/null
+done
+retry run gcloud secrets add-iam-policy-binding qdrant-api-key --project "$PROJECT" \
+  --member "serviceAccount:$EVAL_SA_EMAIL" --role roles/secretmanager.secretAccessor --quiet >/dev/null
+retry run gcloud iam service-accounts add-iam-policy-binding "$EVAL_SA_EMAIL" --project "$PROJECT" \
+  --role roles/iam.workloadIdentityUser --quiet >/dev/null \
+  --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.project_path/$GITLAB_PROJECT"
+
 # --- Cloud Run service: placeholder + public access, once ---------------------------------
 exists gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT" ||
   run gcloud run deploy "$SERVICE" --image "$PLACEHOLDER_IMAGE" --region "$REGION" --project "$PROJECT" \
@@ -137,6 +154,7 @@ Done. In GitLab (Settings → CI/CD → Variables; not secrets, can be visible):
   GCP_REGION        = $REGION
   GCP_WIF_PROVIDER  = projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/providers/$PROVIDER
   GCP_DEPLOY_SA     = $DEPLOY_SA_EMAIL
+  GCP_EVAL_SA       = $EVAL_SA_EMAIL      (evaluation gate; without it the gate job is skipped)
   GCP_BUILD_BUCKET  = $BUILD_BUCKET
 
 Before the first deploy, add the Langfuse keys as secret versions (Google Cloud console →
