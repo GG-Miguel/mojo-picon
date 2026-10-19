@@ -19,6 +19,7 @@ from pathlib import Path
 
 from evals import checks
 from evals.cases import load, partition
+from evals.gate import gate
 from evals.harness import Harness, Run
 from evals.metrics import RUBRIC_VERSION
 from mojo_picon.agents.planner import build_planner
@@ -312,6 +313,7 @@ async def main() -> None:
     parser.add_argument("--partition", default="all", choices=["desarrollo", "prueba", "all"])
     parser.add_argument("--no-judge", action="store_true")
     parser.add_argument("--ids", default="", help="only these case ids, comma-separated (quick checks)")
+    parser.add_argument("--gate", action="store_true", help="exit with an error if the run does not pass the CI gate")
     args = parser.parse_args()
 
     h = Harness()
@@ -342,6 +344,12 @@ async def main() -> None:
     )
     stem.with_suffix(".md").write_text(report(results, meta))
     print(report(results, meta))
+    if args.gate:
+        failures = gate(results)
+        print("\n".join(["## Puerta de evaluación", "", *(f"- ❌ {f}" for f in failures)] if failures
+                        else ["## Puerta de evaluación", "", "- ✅ pasa"]))  # fmt: skip
+        if failures:
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":
