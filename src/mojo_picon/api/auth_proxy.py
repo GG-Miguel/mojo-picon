@@ -6,6 +6,12 @@ is not the app's domain, Safari (ITP) and other browsers that partition third-pa
 Serving /__/auth/* from the app's domain and setting it as authDomain keeps the flow first-party.
 
 Only GET requests to the /__/auth/ paths are forwarded, to one fixed upstream: this is not an open proxy.
+
+Google sends the user back to <authDomain>/__/auth/handler, so the OAuth web client of the project
+(APIs y servicios -> Credenciales) must list the app's domain as an authorised JavaScript origin and
+https://<app domain>/__/auth/handler as an authorised redirect URI. Without them Google answers
+"Error 400: redirect_uri_mismatch" (seen on 2026-10-19, fixed by adding both). A new domain (a custom
+domain, a staging service) needs the same two entries.
 """
 
 from __future__ import annotations
