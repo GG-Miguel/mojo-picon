@@ -26,6 +26,8 @@ from mojo_picon.tools.energy import per_kg_target as compute_per_kg_target
 from mojo_picon.tools.food_search import check_allergens as compute_allergens
 from mojo_picon.tools.food_search import get_nutrients as compute_nutrients
 from mojo_picon.tools.measures import measure_label, measure_options, to_grams
+from mojo_picon.tools.products import ProductError, matching
+from mojo_picon.tools.products import save_product as store_product
 
 PLAN_TOOL = "plan_rest_of_day"  # handled by the Planner subgraph, not by the ToolNode
 
@@ -35,22 +37,31 @@ def _json(value: object) -> str:
     return json.dumps(to_jsonable_python(value), ensure_ascii=False)
 
 
+async def _foods(ctx) -> dict:
+    """The food table plus the user's own products (Mis productos), for this turn."""
+    return {**ctx.foods, **{p.id: p for p in await ctx.store.get_products(ctx.user)}}
+
+
 @tool
-def search_food(query: str, runtime: ToolRuntime) -> str:
+async def search_food(query: str, runtime: ToolRuntime) -> str:
     """Busca un alimento en la tabla por su nombre en español. Devuelve candidatos con confianza y un
     estado: exact (úsalo), approximate (confírmalo), ambiguous (pregunta cuál) o not_found (no inventes).
     Cada candidato trae sus `medidas` caseras con peso estándar (id, nombre, gramos, volumen y estado):
-    si el usuario dice una de ellas, registra con su `id` en `measure` y `count` en log_meal, sin preguntar gramos."""
-    result = to_jsonable_python(runtime.context.food_index.search(query))
+    si el usuario dice una de ellas, registra con su `id` en `measure` y `count` en log_meal, sin preguntar gramos.
+    `mis_productos`: productos que el usuario guardó desde una etiqueta; si nombra uno, úsalo."""
+    ctx = runtime.context
+    result = to_jsonable_python(ctx.food_index.search(query))
     for candidate in result["candidates"]:
         candidate["medidas"] = measure_options(candidate["food_id"])
+    products = matching(await ctx.store.get_products(ctx.user), query)
+    result["mis_productos"] = [{"food_id": p.id, "name": p.name} for p in products[:5]]
     return _json(result)
 
 
 @tool
-def get_nutrients(food_id: str, grams: float, runtime: ToolRuntime) -> str:
-    """Nutrientes de una cantidad de un alimento de la tabla (kcal, proteína, hidratos, grasas…)."""
-    return _json(compute_nutrients(runtime.context.foods, food_id, grams))
+async def get_nutrients(food_id: str, grams: float, runtime: ToolRuntime) -> str:
+    """Nutrientes de una cantidad de un alimento de la tabla o de un producto del usuario."""
+    return _json(compute_nutrients(await _foods(runtime.context), food_id, grams))
 
 
 @tool
@@ -85,19 +96,46 @@ async def log_meal(items: list[MealPortion], runtime: ToolRuntime) -> str:
     medida casera (una manzana, una cucharada de aceite, dos lonchas), con `measure` y `count`: el
     código la pasa a gramos con su peso estándar. Las cifras las calcula el código con la tabla."""
     ctx = runtime.context
+    foods = await _foods(ctx)
     meal, assumed = [], []
     for item in items:
         grams = item.grams if item.measure is None else to_grams(item.food_id, item.measure, item.count)
-        meal.append(MealItem(food_id=item.food_id, grams=grams))
+        product = item.food_id not in ctx.foods and item.food_id in foods
+        meal.append(MealItem(food_id=item.food_id, grams=grams, name=foods[item.food_id].name if product else None))
         if item.measure is not None:
             assumed.append(
-                f"{item.count:g} × {measure_label(item.measure)} de {ctx.foods[item.food_id].name} = {grams:g} g"
+                f"{item.count:g} × {measure_label(item.measure)} de {foods[item.food_id].name} = {grams:g} g"
             )
-    entry = await diary.log_meal(ctx.user, ctx.store, ctx.foods, meal, source=EntrySource.TEXT)
+    entry = await diary.log_meal(ctx.user, ctx.store, foods, meal, source=EntrySource.TEXT)
     logged = json.loads(await _logged_with_balance(ctx, entry))
     if assumed:
         logged["medidas_estandar"] = assumed  # tell the user, so they can correct it
     return _json(logged)
+
+
+@tool
+async def save_product(
+    name: str,
+    kcal: float,
+    protein_g: float,
+    carbs_g: float,
+    fat_g: float,
+    runtime: ToolRuntime,
+    sugars_g: float = 0,
+    saturated_g: float = 0,
+    fiber_g: float = 0,
+    salt_g: float = 0,
+) -> str:
+    """Guarda en «Mis productos» un producto leído de la etiqueta de una foto, con sus valores POR 100 g,
+    solo después de que el usuario los haya confirmado. Devuelve su food_id para registrarlo con
+    log_meal. Si las kcal no cuadran con los macronutrientes, devuelve un error: repasa la lectura."""
+    ctx = runtime.context
+    try:
+        product = await store_product(ctx.user, ctx.store, name, kcal, protein_g, carbs_g, fat_g,
+                                      sugars_g, saturated_g, fiber_g, salt_g)  # fmt: skip
+    except ProductError as e:
+        return _json({"error": str(e)})
+    return _json({"guardado": {"food_id": product.id, "name": product.name, "por_100g": product.per_100g}})
 
 
 @tool
@@ -183,6 +221,7 @@ COACH_TOOLS = [
     get_nutrients,
     check_allergens,
     log_meal,
+    save_product,
     list_activities,
     log_activity,
     get_day_balance,

@@ -66,7 +66,7 @@ async def extract(models: ModelProvider, jpeg: bytes) -> VisionResult:
     image_url = "data:image/jpeg;base64," + base64.b64encode(jpeg).decode()
     message = HumanMessage(
         content=[
-            {"type": "text", "text": "Analiza esta foto de comida."},
+            {"type": "text", "text": "Analiza esta foto de comida o de la etiqueta de un producto."},
             {"type": "image_url", "image_url": {"url": image_url}},
         ]
     )
@@ -86,6 +86,8 @@ class PhotoSummary:
 def summarise(result: VisionResult, index: FoodIndex) -> PhotoSummary:
     """Match each food with the table and describe it as data for the Coach (no image, no numbers
     beyond the model's own gram ranges, which the Coach must confirm before logging)."""
+    if result.label is not None:
+        return _label_summary(result)
     if not result.is_food or not result.items:
         return PhotoSummary(text=_as_data(["No se ve comida en la foto."]), label="no veo comida")
     lines = ["Estimación con rango: confírmala antes de registrar."]
@@ -103,6 +105,24 @@ def summarise(result: VisionResult, index: FoodIndex) -> PhotoSummary:
     if result.questions:
         lines.append("Preguntas generales: " + " / ".join(result.questions))
     return PhotoSummary(text=_as_data(lines), label=", ".join(i.food for i in result.items))
+
+
+def _label_summary(result: VisionResult) -> PhotoSummary:
+    """A nutrition label (Mis productos): the values as read, for the user to confirm before saving."""
+    label = result.label
+    assert label is not None
+    lines = [
+        f"Etiqueta nutricional de «{label.product}», valores por {label.basis} leídos de la foto: "
+        f"{label.kcal:g} kcal, proteínas {label.protein_g:g} g, hidratos {label.carbs_g:g} g "
+        f"(azúcares {label.sugars_g:g} g), grasas {label.fat_g:g} g (saturadas {label.saturated_g:g} g), "
+        f"fibra {label.fiber_g:g} g, sal {label.salt_g:g} g.",
+        "Confírmalos con el usuario antes de guardar el producto (save_product) y registrar lo que ha tomado.",
+    ]
+    if label.serving_g:
+        lines.append(f"El envase indica una ración de {label.serving_g:g} g.")
+    if result.questions:
+        lines.append("Dudas de la lectura: " + " / ".join(result.questions))
+    return PhotoSummary(text=_as_data(lines), label=f"etiqueta de {label.product}")
 
 
 def _as_data(lines: list[str]) -> str:

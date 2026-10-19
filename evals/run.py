@@ -187,7 +187,8 @@ async def eval_planner(cases, h: Harness, repeat=1, **_):
 async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
     async def one(item):
         case, rep = item
-        run = await h.chat(case, case["turnos"], simulated=case.get("usuario_simulado"))
+        simulated, label = case.get("usuario_simulado"), case.get("foto_etiqueta")
+        run = await h.chat(case, case["turnos"], simulated=simulated, label=label)
         exp = case["esperado"]
         results = [("trayectoria", checks.trajectory(run)), ("sin_disculpas", checks.no_stray_apology(run))]
         if "guardian" in exp:
