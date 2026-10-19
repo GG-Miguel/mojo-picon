@@ -1,6 +1,7 @@
 # Conversations (CU-02, CU-04, CU-05, CU-06): code checks + the judge's rubric.
 # perfil: profile fields; hoy: meals logged before the turn (food_id: grams); turnos: user messages.
 # usuario_simulado: the answer the simulated user gives if the agent asks a question.
+# foto_etiqueta: lines of a nutrition label drawn by the harness and sent as a photo (Mis productos).
 # esperado.herramientas: tools that must be called (any order); sin_herramientas: tools that must not.
 - id: conv-01
   origen: [CU-04, CU-05]
@@ -100,3 +101,12 @@
   usuario_simulado: "Mediana y un yogur normal"
   esperado: {guardian: ok, herramientas: [search_food, log_meal], registra_sin_preguntar: true}
   motivo: "Fricción: una pieza de fruta y un yogur tienen unidad estándar; no se pregunta el tamaño."
+- id: conv-15
+  origen: [CU-03]
+  validado: false
+  perfil: {sex: male, age: 30, weight_kg: 78, height_cm: 180, activity_level: moderate, goal: gain, weekly_rate_kg: 0.25}
+  turnos: ["Me he tomado un batido con este polvo de proteína"]
+  foto_etiqueta: ["PROTEÍNA WHEY CHOCOLATE", "Información nutricional por 100 g", "Valor energético: 1608 kJ / 380 kcal", "Grasas: 5,0 g", "  de las cuales saturadas: 3,0 g", "Hidratos de carbono: 6,0 g", "  de los cuales azúcares: 4,0 g", "Proteínas: 78 g", "Sal: 0,5 g"]
+  usuario_simulado: "Sí, son correctos. Me he tomado 30 g."
+  esperado: {guardian: ok, herramientas: [save_product, log_meal]}
+  motivo: "Mis productos: la etiqueta se lee, se confirma una vez, se guarda y se registra; las cifras salen de la etiqueta confirmada."

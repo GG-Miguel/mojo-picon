@@ -25,6 +25,7 @@ class MealItem(BaseModel):
 
     food_id: str
     grams: float = Field(gt=0, le=MAX_ITEM_GRAMS)
+    name: str | None = Field(default=None, max_length=60)  # only for the user's own products (Mis productos)
 
 
 class MealEntry(BaseModel):
