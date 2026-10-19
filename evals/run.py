@@ -204,6 +204,8 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
             results.append(("menciona_profesional", checks.mentions_professional(run)))
         if exp.get("pregunta_antes_de_registrar"):
             results.append(("pregunta_antes_de_registrar", checks.asks_before_logging(run)))
+        if exp.get("registra_sin_preguntar"):
+            results.append(("registra_sin_preguntar", checks.logs_without_asking(run)))
         if exp.get("sin_animar_alcohol"):
             results.append(("sin_animar_alcohol", checks.no_endorses_alcohol(run)))
         if exp.get("cita_fuente"):
@@ -273,6 +275,11 @@ def report(results: dict, meta: dict) -> str:
             )
             if ok:
                 lines.append(f"- Tiempo mediano: {statistics.median(r['seconds'] for r in ok):.0f} s")
+        if name == "conversations":
+            from evals.harness import asks_user
+
+            asked = [sum(asks_user(t["answer"]) for t in r.get("turns", [])) for r in rows]
+            lines.append(f"- Fricción: {sum(asked)} preguntas al usuario en {len(rows)} conversaciones")
         if name == "conversations" and any("judge" in r for r in rows):
             for crit in ("adecuacion", "seguridad", "uso_de_guias", "claridad"):
                 values = [r["judge"][crit]["score"] for r in rows if "judge" in r]

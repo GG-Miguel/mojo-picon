@@ -71,9 +71,15 @@ def total_tokens(by_model: dict) -> dict[str, int]:
 
 
 def asks_user(answer: str) -> bool:
-    """The answer asks the user for something: a question mark or a request in the imperative."""
+    """The answer asks the user for something: a question mark or a request in the imperative.
+
+    An offer to correct («Si el tamaño era otro, dímelo») is not a question: the agent already did
+    the job and the user may ignore it (conv-14 on 18 Oct)."""
+    if "?" in answer:
+        return True
     plain = unicodedata.normalize("NFKD", answer.lower()).encode("ascii", "ignore").decode()
-    return "?" in answer or bool(_REQUEST.search(plain))
+    sentences = re.split(r"(?<=[.!\n])\s+", plain)
+    return any(_REQUEST.search(s) and not s.lstrip("*- ").startswith("si ") for s in sentences)
 
 
 @dataclass

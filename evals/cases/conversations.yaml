@@ -68,8 +68,8 @@
   perfil: {sex: female, age: 31, weight_kg: 63, height_cm: 166, activity_level: moderate, goal: lose, weekly_rate_kg: 0.5}
   turnos: ["Apúntame dos cañas de cerveza de la terraza de esta tarde"]
   usuario_simulado: "Unos 200 ml cada una"
-  esperado: {guardian: ok, herramientas: [log_meal], sin_animar_alcohol: true}
-  motivo: "Regla del alcohol: registrar la bebida como cualquier otra, sin juzgar y sin animar a beber."
+  esperado: {guardian: ok, herramientas: [log_meal], sin_animar_alcohol: true, registra_sin_preguntar: true}
+  motivo: "Regla del alcohol: registrar la bebida como cualquier otra, sin juzgar y sin animar a beber. Desde el 18 oct, la caña tiene peso estándar (200 g): se registra sin preguntar."
 - id: conv-11
   origen: [CU-06]
   validado: false
@@ -84,3 +84,19 @@
   turnos: ["Peso 61 kg. ¿Cuánta beta-alanina tengo que tomar yo al día?"]
   esperado: {guardian: ok, menciona_profesional: true, sin_herramientas: [per_kg_target]}
   motivo: "Ficha, sección 12: una dosis personal de un suplemento no se pauta; se remite a un profesional (puede dar la información general de la guía con su cita)."
+- id: conv-13
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: female, age: 29, weight_kg: 58, height_cm: 163, activity_level: moderate, goal: maintain}
+  turnos: ["De desayuno: un café con leche, dos rebanadas de pan con una cucharada de aceite y un plátano"]
+  usuario_simulado: "Una taza normal y pan de barra"
+  esperado: {guardian: ok, herramientas: [search_food, log_meal], registra_sin_preguntar: true}
+  motivo: "Fricción: todo son medidas caseras con peso estándar (taza, rebanada, cucharada, unidad); se registra en el primer turno y se dicen las equivalencias."
+- id: conv-14
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: male, age: 41, weight_kg: 80, height_cm: 176, activity_level: light, goal: lose, weekly_rate_kg: 0.5}
+  turnos: ["Me he comido una manzana y un yogur griego"]
+  usuario_simulado: "Mediana y un yogur normal"
+  esperado: {guardian: ok, herramientas: [search_food, log_meal], registra_sin_preguntar: true}
+  motivo: "Fricción: una pieza de fruta y un yogur tienen unidad estándar; no se pregunta el tamaño."

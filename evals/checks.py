@@ -76,6 +76,14 @@ def asks_before_logging(run: Run) -> tuple[bool, str]:
             f"registra en el primer turno: {logged_first}; tras la respuesta: {logged_later}")  # fmt: skip
 
 
+def logs_without_asking(run: Run) -> tuple[bool, str]:
+    """Less friction (18 Oct): with standard household measures the agent logs in the first turn."""
+    first = run.turns[0]
+    logged = "log_meal" in first.tools
+    asked = asks_user(first.answer)
+    return logged and not asked, f"registra en el primer turno: {logged}; pregunta: {asked}"
+
+
 APOLOGY = re.compile(r"\b(tienes (toda la )?razon|disculpa|perdona|lamento (el|la) (error|confusion))\b")
 
 
