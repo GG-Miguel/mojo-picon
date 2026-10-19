@@ -25,7 +25,7 @@ from mojo_picon.tools import diary
 from mojo_picon.tools.energy import per_kg_target as compute_per_kg_target
 from mojo_picon.tools.food_search import check_allergens as compute_allergens
 from mojo_picon.tools.food_search import get_nutrients as compute_nutrients
-from mojo_picon.tools.measures import measures_of, to_grams
+from mojo_picon.tools.measures import measure_label, measure_options, to_grams
 
 PLAN_TOOL = "plan_rest_of_day"  # handled by the Planner subgraph, not by the ToolNode
 
@@ -43,7 +43,7 @@ def search_food(query: str, runtime: ToolRuntime) -> str:
     si el usuario dice una de ellas, registra con `measure` y `count` en log_meal, sin preguntar gramos."""
     result = to_jsonable_python(runtime.context.food_index.search(query))
     for candidate in result["candidates"]:
-        candidate["medidas"] = sorted(measures_of(candidate["food_id"]))
+        candidate["medidas"] = measure_options(candidate["food_id"])
     return _json(result)
 
 
@@ -88,7 +88,9 @@ async def log_meal(items: list[MealPortion], runtime: ToolRuntime) -> str:
         grams = item.grams if item.measure is None else to_grams(item.food_id, item.measure, item.count)
         meal.append(MealItem(food_id=item.food_id, grams=grams))
         if item.measure is not None:
-            assumed.append(f"{item.count:g} × {item.measure} de {ctx.foods[item.food_id].name} = {grams:g} g")
+            assumed.append(
+                f"{item.count:g} × {measure_label(item.measure)} de {ctx.foods[item.food_id].name} = {grams:g} g"
+            )
     entry = await diary.log_meal(ctx.user, ctx.store, ctx.foods, meal, source=EntrySource.TEXT)
     logged = json.loads(await _logged_with_balance(ctx, entry))
     if assumed:
