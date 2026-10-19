@@ -5,6 +5,9 @@ uv run --group eval python -m evals.calibrate export evals/results/<run>.json [s
        vault): each conversation with its context and empty 1-5 scores, without the judge's
 uv run --group eval python -m evals.calibrate compare evals/results/<run>.json [sheet.md]
     -> agreement per criterion: mean absolute difference, exact and ±1 agreement, Cohen's weighted kappa
+uv run --group eval python -m evals.calibrate rescore evals/results/<run>.json
+    -> the same answers judged again with the current rubric (<run>-<rubric>.json), so a new rubric is
+       compared with the author on exactly what the author scored
 """
 
 # ruff: noqa: E501  (this module writes long Markdown lines for the sheet)
@@ -113,6 +116,33 @@ def compare(results: Path, sheet: Path = SHEET) -> None:
         print(f"| {criterion} | {len(pairs)} | {mad:.2f} | {exact} | {near} | {_weighted_kappa(a, b):.2f} |")
 
 
+def rescore(results: Path) -> None:
+    import asyncio
+
+    from evals.judge import GroqJudge
+    from evals.metrics import rubric, score
+
+    data = json.loads(results.read_text())
+    cases = {c["id"]: c for c in load("conversations")}
+    metrics = rubric(GroqJudge())
+
+    async def run() -> None:
+        for row in data["results"]["conversations"]:
+            case, turns = cases.get(row["id"], {}), row["turns"]
+            context = [f"Perfil: {case.get('perfil')}", f"Registrado hoy antes de la conversación: {case.get('hoy', {})}",
+                       f"Nivel del guardián: {turns[0].get('guard')}"]  # fmt: skip
+            answer = turns[0]["answer"] if len(turns) == 1 else "\n\n".join(
+                f"Usuario: {t['message']}\nMojo: {t['answer']}" for t in turns)  # fmt: skip
+            row["judge"] = await score(metrics, turns[0]["message"], answer, context)
+            print(row["id"], {k: v["score"] for k, v in row["judge"].items()}, flush=True)
+
+    asyncio.run(run())
+    data.setdefault("meta", {})["judge"] = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION} (re-puntuado)"
+    out = results.with_name(f"{results.stem}-{RUBRIC_VERSION}.json")
+    out.write_text(json.dumps(data, ensure_ascii=False, indent=1))
+    print(out)
+
+
 if __name__ == "__main__":
     command, results, *rest = sys.argv[1:]
-    {"export": export, "compare": compare}[command](Path(results), *(Path(r) for r in rest))
+    {"export": export, "compare": compare, "rescore": rescore}[command](Path(results), *(Path(r) for r in rest))
