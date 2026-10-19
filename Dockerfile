@@ -20,7 +20,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY src/ src/
-COPY data/foods.csv data/met_table.csv data/
+COPY data/foods.csv data/met_table.csv data/household_measures.csv data/household_measure_definitions.csv data/
 COPY knowledge/ knowledge/
 RUN uv sync --frozen --no-dev
 COPY --from=web /web/dist /app/frontend/dist
