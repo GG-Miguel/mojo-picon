@@ -46,6 +46,11 @@ class FirebaseTokenVerifier:
             # Expired and revoked tokens are InvalidIdTokenError subclasses; a disabled account or a
             # failure to fetch Google's keys also means "not authenticated" (401), not a server error.
             raise InvalidTokenError(str(e)) from e
+        # Email and password accounts must verify their email first (anyone can type someone else's
+        # address); Google accounts come verified. The frontend asks for it too, this is the server's check.
+        provider = (claims.get("firebase") or {}).get("sign_in_provider")
+        if provider == "password" and claims.get("email_verified") is not True:
+            raise InvalidTokenError("email not verified")
         roles = frozenset({"user", "admin"} if claims.get("admin") is True else {"user"})
         return UserContext(uid=claims["uid"], roles=roles)
 
