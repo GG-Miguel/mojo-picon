@@ -14,8 +14,10 @@ from typing import TYPE_CHECKING
 from pydantic import TypeAdapter
 
 from mojo_picon.auth.context import UserContext
-from mojo_picon.domain import Profile
+from mojo_picon.domain import Goal, Profile
 from mojo_picon.domain.diary import DiaryEntry, Session
+from mojo_picon.domain.food import Food
+from mojo_picon.domain.profile import MAX_WEEKLY_GAIN_KG
 
 if TYPE_CHECKING:
     from google.cloud.firestore import AsyncClient, AsyncDocumentReference
@@ -40,10 +42,22 @@ class FirestoreStore:
 
     async def get_profile(self, ctx: UserContext) -> Profile | None:
         snapshot = await self._user(ctx).collection("profile").document("current").get()
-        return Profile.model_validate(snapshot.to_dict()) if snapshot.exists else None
+        if not snapshot.exists:
+            return None
+        data = snapshot.to_dict()
+        if data.get("goal") == Goal.GAIN and data.get("weekly_rate_kg", 0) > MAX_WEEKLY_GAIN_KG:
+            data["weekly_rate_kg"] = MAX_WEEKLY_GAIN_KG  # saved before the gain limit existed
+        return Profile.model_validate(data)
 
     async def save_profile(self, ctx: UserContext, profile: Profile) -> None:
         await self._user(ctx).collection("profile").document("current").set(profile.model_dump(mode="json"))
+
+    async def get_products(self, ctx: UserContext) -> list[Food]:
+        docs = self._user(ctx).collection("products").stream()
+        return sorted([Food.model_validate(d.to_dict()) async for d in docs], key=lambda p: p.name)
+
+    async def save_product(self, ctx: UserContext, product: Food) -> None:
+        await self._user(ctx).collection("products").document(product.id).set(product.model_dump(mode="json"))
 
     async def put_entry(self, ctx: UserContext, day: date, entry: DiaryEntry) -> None:
         ref = self._user(ctx).collection("days").document(day.isoformat()).collection("entries").document(entry.id)

@@ -50,6 +50,8 @@ File used for the current build: 3,632,640 bytes, SHA-256 `5551841f12f40fb6c869f
 ## Own fields (to be reviewed by the author)
 - **Allergens:** the 14 of Regulation (EU) 1169/2011, assigned by food type. Processed foods (muesli, surimi, cereal bars) vary by brand: noted in `review_note`.
 - **Maximum realistic portion** (`max_portion_g`): used by `verify_plan` to reject unrealistic quantities.
+- **Household measures:** canonical conversational ids and nominal volumes live in `household_measure_definitions.csv`; food-specific gram conversions live in `household_measures.csv`.
+- **Standard plate:** provisional food-specific entries are marked as such and require author review before treating them as authoritative portions.
 - **Supermarket section** and **synonyms** (including Canary terms: papa, millo, bubango).
 - **Pending columns:** household servings and shopping format (needed by the shopping list, milestone 3).
 

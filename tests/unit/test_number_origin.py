@@ -196,3 +196,41 @@ def test_a_citation_with_several_places_or_documents_is_expanded():
     passages = {"ISSN cafeína 2021, §10.4": "Caffeine 3–6 mg/kg improves performance."}
     answer = "Entre 3 y 6 mg/kg mejora el rendimiento [ISSN cafeína 2021, §7.2, §10.4]."
     assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passages)) == []
+
+
+def test_a_page_citation_matches_the_chunks_of_that_page_only():
+    passages = {"Ingestas UE 2017, p. 5.3": "| ≥ 14 años | ml/d | 2500 | 2000 |", "Ingestas UE 2017, p. 15": "3000 ml"}
+    sources = TurnSources(tool_results=[], profile={}, user_message="", passages=passages)
+    assert check_numbers("Los hombres, 2500 ml al día [Ingestas UE 2017, p. 5].", sources) == []
+    assert check_numbers("Los hombres, 3000 ml al día [Ingestas UE 2017, p. 1].", sources) != []  # p. 1 is not p. 15
+
+
+def test_a_per_kg_value_echoed_by_a_tool_still_needs_its_citation():
+    # Found by the evaluation (evals/cases/numbers.yaml, num-16): per_kg_target echoes the model's own input
+    tool = '{"per_kg_min": 1.6, "per_kg_max": 1.6, "weight_kg": 70, "min": 112, "max": 112, "unit": "g"}'
+    sources = TurnSources(tool_results=[tool], profile={"weight_kg": 70}, user_message="", passages={})
+    violations = check_numbers("Para tus 70 kg, 1,6 g/kg son 112 g al día.", sources)
+    assert [v.quantity.text for v in violations] == ["1,6 g/kg"]  # the 112 g from the tool is fine
+    cited = {"ISSN proteína 2017, §0": "1.4–2.0 g protein/kg body weight/day"}
+    ok = TurnSources(tool_results=[tool], profile={}, user_message="", passages=cited)
+    assert check_numbers("Con 1,4–2 g/kg [ISSN proteína 2017, §0], para ti son 112 g.", ok) == []
+
+
+def test_the_feedback_tells_the_coach_not_to_apologise_to_the_user():
+    # Found by the evaluation (conv-05): after a correction the user read «Tienes toda la razón, disculpa»
+    from mojo_picon.guardrails.number_origin import feedback
+
+    violation = check_numbers("Toma 20 g.", TurnSources(tool_results=[], profile={}, user_message="", passages={}))
+    assert "sin disculparte" in feedback(violation)
+
+
+def test_passage_numbers_are_read_as_source_text():
+    # Found while checking the expert brief: brackets inside a guideline are data, and English thousands
+    from mojo_picon.guardrails.number_origin import passage_numbers
+
+    issn = "15–20% PRO [0.8–1.2 g/kg/day], and 25–35% fat [0.5–1.5 g/kg/day]"
+    assert {0.8, 1.2, 0.5, 1.5} <= set(passage_numbers([issn]))
+    assert 8000 in passage_numbers(["losses can be up to about 8,000 mL/day"])
+    passages = {"ISSN revisión 2018, §1.30": issn}
+    answer = "Basta con 0,8–1,2 g/kg de proteína al día [ISSN revisión 2018, §1.30]."
+    assert check_numbers(answer, TurnSources(tool_results=[], profile={}, user_message="", passages=passages)) == []

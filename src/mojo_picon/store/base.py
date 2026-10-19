@@ -12,6 +12,7 @@ from typing import Protocol
 from mojo_picon.auth.context import UserContext
 from mojo_picon.domain import Profile
 from mojo_picon.domain.diary import DiaryEntry, Session
+from mojo_picon.domain.food import Food
 
 
 class Store(Protocol):
@@ -24,6 +25,10 @@ class Store(Protocol):
         ...
 
     async def list_entries(self, ctx: UserContext, day: date) -> list[DiaryEntry]: ...
+
+    async def get_products(self, ctx: UserContext) -> list[Food]: ...
+
+    async def save_product(self, ctx: UserContext, product: Food) -> None: ...
 
     async def get_session(self, ctx: UserContext, session_id: str) -> Session | None: ...
 

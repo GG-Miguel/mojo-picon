@@ -1,0 +1,12 @@
+# Planner (CU-05): remaining targets for the rest of the day; passes when verify_plan accepts the plan.
+# Targets near a typical remainder after one or two meals; allergens and preferences vary.
+- {id: plan-01, validado: true, comidas: [merienda, cena], queda: {kcal: 900, protein_g: 50, carbs_g: 110, fat_g: 28}}
+- {id: plan-02, validado: true, comidas: [cena], queda: {kcal: 650, protein_g: 40, carbs_g: 70, fat_g: 22}}
+- {id: plan-03, validado: true, comidas: [comida, merienda, cena], queda: {kcal: 1600, protein_g: 90, carbs_g: 190, fat_g: 52}, alergenos: [gluten]}
+- {id: plan-04, validado: true, comidas: [merienda, cena], queda: {kcal: 1100, protein_g: 45, carbs_g: 160, fat_g: 30}, preferencias: "vegetariano"}
+- {id: plan-05, validado: true, comidas: [cena], queda: {kcal: 500, protein_g: 35, carbs_g: 45, fat_g: 18}, alergenos: [fish, crustaceans, molluscs]}
+- {id: plan-06, validado: true, comidas: [merienda, cena], queda: {kcal: 1300, protein_g: 70, carbs_g: 170, fat_g: 36}, alergenos: [milk]}
+- {id: plan-07, validado: true, comidas: [cena], queda: {kcal: 800, protein_g: 30, carbs_g: 120, fat_g: 20}, preferencias: "tengo arroz, huevos y tomate en casa"}
+- {id: plan-08, validado: true, comidas: [desayuno, comida], queda: {kcal: 1400, protein_g: 80, carbs_g: 160, fat_g: 45}, alergenos: [tree_nuts, peanuts]}
+- {id: plan-09, validado: true, comidas: [merienda, cena], queda: {kcal: 1829, protein_g: 52, carbs_g: 262, fat_g: 66}}
+- {id: plan-10, validado: true, comidas: [cena], queda: {kcal: 718, protein_g: 37, carbs_g: 142, fat_g: 0}}

@@ -195,7 +195,7 @@ def _with_names(entry, deps: AppDeps) -> dict:
     if data["kind"] == "meal":
         for item in data["items"]:
             food = deps.foods.get(item["food_id"])
-            item["name"] = food.name if food else item["food_id"]
+            item["name"] = food.name if food else item.get("name") or item["food_id"]
     else:
         activity = deps.activities.get(data["activity_id"])
         data["name"] = activity.name if activity else data["activity_id"]
@@ -292,7 +292,7 @@ def _cited_sources(answer: str, retrieved: dict[str, tuple[str, str]]) -> list[S
     documents: dict[tuple[str, str], list[str]] = {}
     for tag, document in retrieved.items():
         norm = " ".join(tag.split()).lower()
-        if any(norm == c or norm.startswith(c + ",") or norm.startswith(c + " ") for c in cited):
+        if any(norm == c or any(norm.startswith(c + sep) for sep in (",", " ", ".")) for c in cited):
             documents.setdefault(document, []).append(tag)
     return [SourceRef(title=title, url=url, tags=tags) for (title, url), tags in documents.items()]
 

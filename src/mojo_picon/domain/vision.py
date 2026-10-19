@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 # Nothing without a limit (Principles), and a defence against text written in the photo
@@ -40,11 +42,34 @@ class VisionItem(BaseModel):
         return _cut_questions(value)
 
 
+class NutritionLabel(BaseModel):
+    """The nutrition table of a package, copied from the photo (Mis productos). Values per 100 g or ml,
+    as printed: the user confirms them and save_product checks that kcal fit the macronutrients."""
+
+    product: str = Field(description="nombre del producto tal como aparece en el envase (marca y tipo)")
+    basis: Literal["100 g", "100 ml"] = "100 g"
+    kcal: float = Field(ge=0, le=900)
+    protein_g: float = Field(ge=0, le=100)
+    carbs_g: float = Field(ge=0, le=100)
+    sugars_g: float = Field(default=0, ge=0, le=100)
+    fat_g: float = Field(ge=0, le=100)
+    saturated_g: float = Field(default=0, ge=0, le=100)
+    fiber_g: float = Field(default=0, ge=0, le=100)
+    salt_g: float = Field(default=0, ge=0, le=100)
+    serving_g: float | None = Field(default=None, gt=0, le=2000, description="ración del envase, si la indica")
+
+    @field_validator("product")
+    @classmethod
+    def _short_product(cls, value: str) -> str:
+        return _cut(value, MAX_FOOD_CHARS)
+
+
 class VisionResult(BaseModel):
     """Structured output of the vision extractor (Análisis de fotos)."""
 
     is_food: bool
     items: list[VisionItem] = Field(default_factory=list)
+    label: NutritionLabel | None = Field(default=None, description="solo si la foto es una tabla nutricional")
     questions: list[str] = Field(default_factory=list, description="preguntas generales sobre el plato")
 
     @field_validator("items")

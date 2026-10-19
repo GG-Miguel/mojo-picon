@@ -21,6 +21,7 @@ const ALLERGENS: [string, string][] = [
 type NumberField = 'age' | 'weight_kg' | 'height_cm' | 'weekly_rate_kg'
 
 // The same limits as the API (domain/profile.py)
+const MAX_WEEKLY_GAIN_KG = 0.5
 const RANGES: Record<NumberField, { min: number; max: number; decimals: boolean; message: string }> = {
   age: { min: 18, max: 100, decimals: false, message: 'La edad debe estar entre 18 y 100 años.' },
   weight_kg: { min: 30.1, max: 299.9, decimals: true, message: 'El peso debe estar entre 30 y 300 kg.' },
@@ -101,6 +102,12 @@ export function ProfileForm({
         setError(RANGES[key].message)
         return
       }
+      if (key === 'weekly_rate_kg' && p.goal === 'gain' && value > MAX_WEEKLY_GAIN_KG) {
+        setError(
+          'Para ganar peso, el ritmo máximo es 0,5 kg por semana: más rápido se gana sobre todo grasa.',
+        )
+        return
+      }
       values[key] = value
     }
     setError('')
@@ -155,7 +162,11 @@ export function ProfileForm({
             <option value="gain">Ganar peso</option>
           </select>
         </label>
-        {p.goal !== 'maintain' && <label>Kg por semana (máx. 1) {num('weekly_rate_kg')}</label>}
+        {p.goal !== 'maintain' && (
+          <label>
+            Kg por semana (máx. {p.goal === 'gain' ? '0,5' : '1'}) {num('weekly_rate_kg')}
+          </label>
+        )}
       </div>
       <fieldset className="text-sm">
         <legend className="mb-1">Alergias</legend>

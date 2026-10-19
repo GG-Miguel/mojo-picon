@@ -15,6 +15,11 @@ def _pairs(value: str) -> dict[str, str]:
     return {token.strip(): uid.strip() for token, uid in items if token.strip() and uid.strip()}
 
 
+def _names(value: str) -> list[str]:
+    """ "a, b" -> ["a", "b"]; an empty value is an empty list."""
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 @dataclass(frozen=True)
 class Settings:
     environment: str = "development"  # development | staging | production
@@ -23,6 +28,11 @@ class Settings:
     vertex_location: str = "eu"
     vertex_endpoint: str = "https://aiplatform.eu.rep.googleapis.com"
     gemini_model: str = "gemini-3.8-flash"
+    llm_gateway: str = "litellm"  # litellm (Gemini, then the fallback) | direct (Gemini without LiteLLM)
+    # Tried in order on the EU endpoint when Gemini fails or times out (ADR-04); empty: no fallback.
+    # Another Gemini has its own quota (the frequent 429); Claude is another family (an outage of Gemini).
+    fallback_models: list[str] = field(default_factory=lambda: ["gemini-3.5-flash", "claude-haiku-4-5@20251001"])
+    fallback_location: str = "eu"
     embedding_model: str = "gemini-embedding-2"
     # Embeddings keep their own endpoint: the index was built with gemini-embedding-2, which is served
     # on the EU multi-region endpoint only, even if the chat model moves to a region (ADR-04, plan B).
@@ -51,6 +61,9 @@ class Settings:
             vertex_location=env.get("VERTEX_LOCATION", defaults.vertex_location),
             vertex_endpoint=env.get("VERTEX_ENDPOINT", defaults.vertex_endpoint),
             gemini_model=env.get("GEMINI_MODEL", defaults.gemini_model),
+            llm_gateway=env.get("LLM_GATEWAY", defaults.llm_gateway),
+            fallback_models=_names(env["FALLBACK_MODELS"]) if "FALLBACK_MODELS" in env else defaults.fallback_models,
+            fallback_location=env.get("FALLBACK_LOCATION", defaults.fallback_location),
             embedding_model=env.get("EMBEDDING_MODEL", defaults.embedding_model),
             embedding_location=env.get("EMBEDDING_LOCATION", defaults.embedding_location),
             embedding_endpoint=env.get("EMBEDDING_ENDPOINT", defaults.embedding_endpoint),

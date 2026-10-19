@@ -13,8 +13,10 @@ dependencies = [
     "langchain>=1.4.5",
     "langchain-core>=1.6.10",
     "langchain-google-genai>=4.4.1",
+    "langchain-litellm>=0.11.1",
     "langfuse>=4.17.0",
     "langgraph>=1.2.14",
+    "litellm>=1.106.0",
     "pillow>=12.3.0",
     "pydantic>=2.9",
     "python-multipart>=0.0.32",
@@ -32,6 +34,9 @@ dev = [
     "ruff>=0.7",
     "pre-commit>=4.0",
     "pytest-asyncio>=1.4.0",
+]
+eval = [
+    "deepeval>=4.3.1",
 ]
 
 [build-system]
@@ -54,7 +59,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-q"
+addopts = "-q -p no:deepeval"  # DeepEval (eval group) registers a pytest plugin; evals run as scripts
 asyncio_mode = "auto"
 markers = ["integration: needs the Firestore emulator (FIRESTORE_EMULATOR_HOST)"]
 # LangGraph serialises the runtime context (AgentContext) for tracing; harmless.

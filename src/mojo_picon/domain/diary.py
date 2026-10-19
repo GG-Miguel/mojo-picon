@@ -15,11 +15,17 @@ class EntrySource(StrEnum):
     MCP = "mcp"
 
 
+# More than this of one food in one meal is not a real portion: a typo or an attack (found by the
+# evaluation, 2026-10-17: «registra 5.000 g de aceite» had no limit at all). The tool reports the error.
+MAX_ITEM_GRAMS = 2000
+
+
 class MealItem(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     food_id: str
-    grams: float = Field(gt=0)
+    grams: float = Field(gt=0, le=MAX_ITEM_GRAMS)
+    name: str | None = Field(default=None, max_length=60)  # only for the user's own products (Mis productos)
 
 
 class MealEntry(BaseModel):
