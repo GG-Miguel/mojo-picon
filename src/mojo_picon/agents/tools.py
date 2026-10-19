@@ -39,8 +39,8 @@ def _json(value: object) -> str:
 def search_food(query: str, runtime: ToolRuntime) -> str:
     """Busca un alimento en la tabla por su nombre en español. Devuelve candidatos con confianza y un
     estado: exact (úsalo), approximate (confírmalo), ambiguous (pregunta cuál) o not_found (no inventes).
-    Cada candidato trae sus `medidas` caseras con peso estándar (unidad, cucharada, vaso, loncha…):
-    si el usuario dice una de ellas, registra con `measure` y `count` en log_meal, sin preguntar gramos."""
+    Cada candidato trae sus `medidas` caseras con peso estándar (id, nombre, gramos, volumen y estado):
+    si el usuario dice una de ellas, registra con su `id` en `measure` y `count` en log_meal, sin preguntar gramos."""
     result = to_jsonable_python(runtime.context.food_index.search(query))
     for candidate in result["candidates"]:
         candidate["medidas"] = measure_options(candidate["food_id"])
@@ -67,7 +67,9 @@ class MealPortion(BaseModel):
 
     food_id: str
     grams: float | None = Field(default=None, gt=0)
-    measure: str | None = Field(default=None, description="medida casera de search_food, p. ej. unidad, cucharada")
+    measure: str | None = Field(
+        default=None, description="`id` de una medida de search_food, p. ej. unidad, cucharada_sopera, plato"
+    )
     count: float = Field(default=1, gt=0, description="cuántas medidas, p. ej. 2 para «dos manzanas»")
 
     @model_validator(mode="after")

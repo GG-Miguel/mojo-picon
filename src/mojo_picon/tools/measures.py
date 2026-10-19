@@ -19,24 +19,9 @@ DEFAULT_MEASURES = Path(__file__).resolve().parents[3] / "data" / "household_mea
 DEFAULT_DEFINITIONS = Path(__file__).resolve().parents[3] / "data" / "household_measure_definitions.csv"
 MAX_COUNT = 20  # «30 manzanas» is not one meal: the tool reports it, as with grams
 
-# What users say -> the measure names of the table
+# What users say -> the measure names of the table, for measures without a canonical definition.
+# Aliases of canonical measures (vaso, taza, cucharadas, plato, unidad) live only in DEFAULT_DEFINITIONS.
 SYNONYMS = {
-    "cuchara": "cucharada",
-    "cucharada sopera": "cucharada",
-    "cuchara sopera": "cucharada",
-    "cucharada rasa": "cucharada",
-    "cucharada grande": "cucharada colmada",
-    "cucharilla": "cucharadita",
-    "cuchara de cafe": "cucharadita",
-    "cucharada de cafe": "cucharadita",
-    "cucharada pequena": "cucharadita",
-    "cucharada de postre": "cucharadita",
-    "cucharadita de cafe": "cucharadita",
-    "pieza": "unidad",
-    "unidad mediana": "unidad",
-    "mediana": "unidad",
-    "mediano": "unidad",
-    "pieza mediana": "unidad",
     "pieza pequena": "unidad pequena",
     "pieza grande": "unidad grande",
     "pequena": "unidad pequena",
@@ -46,10 +31,6 @@ SYNONYMS = {
     "lonchita": "loncha",
     "rebanadita": "rebanada",
     "tostada": "rebanada",
-    "vasito": "vaso",
-    "plato estandar": "plato",
-    "plato llano": "plato",
-    "plato hondo": "plato",
     "copa": "copa",
     "botella pequena": "botellin",
     "pellizco": "pizca",
