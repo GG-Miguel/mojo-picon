@@ -25,7 +25,7 @@ from mojo_picon.tools import diary
 from mojo_picon.tools.energy import per_kg_target as compute_per_kg_target
 from mojo_picon.tools.food_search import check_allergens as compute_allergens
 from mojo_picon.tools.food_search import get_nutrients as compute_nutrients
-from mojo_picon.tools.measures import measures_of, to_grams
+from mojo_picon.tools.measures import measure_label, measure_options, to_grams
 from mojo_picon.tools.products import ProductError, matching
 from mojo_picon.tools.products import save_product as store_product
 
@@ -46,13 +46,13 @@ async def _foods(ctx) -> dict:
 async def search_food(query: str, runtime: ToolRuntime) -> str:
     """Busca un alimento en la tabla por su nombre en español. Devuelve candidatos con confianza y un
     estado: exact (úsalo), approximate (confírmalo), ambiguous (pregunta cuál) o not_found (no inventes).
-    Cada candidato trae sus `medidas` caseras con peso estándar (unidad, cucharada, vaso, loncha…):
-    si el usuario dice una de ellas, registra con `measure` y `count` en log_meal, sin preguntar gramos.
+    Cada candidato trae sus `medidas` caseras con peso estándar (id, nombre, gramos, volumen y estado):
+    si el usuario dice una de ellas, registra con su `id` en `measure` y `count` en log_meal, sin preguntar gramos.
     `mis_productos`: productos que el usuario guardó desde una etiqueta; si nombra uno, úsalo."""
     ctx = runtime.context
     result = to_jsonable_python(ctx.food_index.search(query))
     for candidate in result["candidates"]:
-        candidate["medidas"] = sorted(measures_of(candidate["food_id"]))
+        candidate["medidas"] = measure_options(candidate["food_id"])
     products = matching(await ctx.store.get_products(ctx.user), query)
     result["mis_productos"] = [{"food_id": p.id, "name": p.name} for p in products[:5]]
     return _json(result)
@@ -78,7 +78,9 @@ class MealPortion(BaseModel):
 
     food_id: str
     grams: float | None = Field(default=None, gt=0)
-    measure: str | None = Field(default=None, description="medida casera de search_food, p. ej. unidad, cucharada")
+    measure: str | None = Field(
+        default=None, description="`id` de una medida de search_food, p. ej. unidad, cucharada_sopera, plato"
+    )
     count: float = Field(default=1, gt=0, description="cuántas medidas, p. ej. 2 para «dos manzanas»")
 
     @model_validator(mode="after")
@@ -101,7 +103,9 @@ async def log_meal(items: list[MealPortion], runtime: ToolRuntime) -> str:
         product = item.food_id not in ctx.foods and item.food_id in foods
         meal.append(MealItem(food_id=item.food_id, grams=grams, name=foods[item.food_id].name if product else None))
         if item.measure is not None:
-            assumed.append(f"{item.count:g} × {item.measure} de {foods[item.food_id].name} = {grams:g} g")
+            assumed.append(
+                f"{item.count:g} × {measure_label(item.measure)} de {foods[item.food_id].name} = {grams:g} g"
+            )
     entry = await diary.log_meal(ctx.user, ctx.store, foods, meal, source=EntrySource.TEXT)
     logged = json.loads(await _logged_with_balance(ctx, entry))
     if assumed:

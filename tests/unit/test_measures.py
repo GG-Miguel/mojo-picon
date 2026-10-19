@@ -4,7 +4,15 @@ import pytest
 
 from mojo_picon.tools.diary import MAX_LOGGED_PORTION_FACTOR
 from mojo_picon.tools.foods import load_foods
-from mojo_picon.tools.measures import DEFAULT_MEASURES, MAX_COUNT, UnknownMeasureError, measures_of, to_grams
+from mojo_picon.tools.measures import (
+    DEFAULT_MEASURES,
+    MAX_COUNT,
+    UnknownMeasureError,
+    canonical_measure,
+    measure_options,
+    measures_of,
+    to_grams,
+)
 
 
 def test_household_measures_become_grams_of_edible_portion():
@@ -21,6 +29,43 @@ def test_what_users_say_matches_the_table(measure, grams):
     assert to_grams("aceite_oliva", measure) == grams
 
 
+@pytest.mark.parametrize(
+    ("spoken", "canonical"),
+    [
+        ("vasito", "vaso"),
+        ("una taza", "taza"),
+        ("taza", "taza"),
+        ("cuchara sopera", "cucharada_sopera"),
+        ("cuchara de café", "cucharadita"),
+        ("cucharada de postre", "cucharadita"),
+        ("plato estándar", "plato"),
+    ],
+)
+def test_conversational_measure_aliases_have_canonical_ids(spoken, canonical):
+    assert canonical_measure(spoken) == canonical
+
+
+def test_canonical_measure_ids_are_accepted_by_conversion():
+    assert to_grams("aceite_oliva", "cucharada_sopera") == 10
+    assert to_grams("aceite_oliva", "cucharadita") == 5
+
+
+def test_measure_options_expose_canonical_name_and_volume():
+    options = measure_options("leche_semidesnatada")
+    vaso = next(option for option in options if option["id"] == "vaso")
+    assert vaso["nombre"] == "vaso"
+    assert vaso["volumen_ml"] == 200
+    assert vaso["estado"] == "approved"
+
+
+def test_standard_plate_is_marked_provisional_until_reviewed():
+    assert to_grams("arroz_blanco_cocido", "plato estándar") == 250
+    assert any(
+        option["id"] == "plato" and option["estado"] == "provisional"
+        for option in measure_options("arroz_blanco_cocido")
+    )
+
+
 def test_plurals_and_pieces():
     assert to_grams("cerveza", "cañas", 2) == 400
     assert to_grams("platano", "pieza") == 106
@@ -29,7 +74,7 @@ def test_plurals_and_pieces():
 
 def test_an_unknown_measure_lists_the_available_ones():
     with pytest.raises(UnknownMeasureError) as e:
-        to_grams("arroz_blanco_cocido", "plato")
+        to_grams("apio", "plato")
     assert e.value.available == []
     with pytest.raises(UnknownMeasureError) as e:
         to_grams("manzana", "cucharada")
@@ -54,7 +99,7 @@ def test_every_row_is_a_known_food_with_consistent_grams():
         assert float(row["grams"]) == round(float(row["purchase_grams"]) * portion), row
         # one measure fits in what the diary accepts for one food (the planner's max portion x 3)
         assert float(row["grams"]) <= foods[row["food_id"]].max_portion_g * MAX_LOGGED_PORTION_FACTOR, row
-        assert row["source"].startswith("Carbajal"), row
+        assert row["source"].startswith(("Carbajal", "Mojo Picón provisional")), row
     assert measures_of("leche_semidesnatada")["vaso"] == 200
 
 

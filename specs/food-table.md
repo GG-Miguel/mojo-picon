@@ -64,6 +64,22 @@ Checked in BEDCA on 2026-10-10:
 7. **Author review** (30–60 min): flagged rows + a random sample.
 8. **Datasheet** in the repository (`data/DATASHEET.md`): sources, licences, attribution, date, method, limitations.
 
+## Household measures
+
+Conversational measures have stable canonical ids in [`data/household_measure_definitions.csv`](../data/household_measure_definitions.csv):
+
+| User expression | Canonical id | Nominal volume |
+|---|---|---:|
+| vaso, vasito | `vaso` | 200 ml |
+| taza | `taza` | 250 ml |
+| cucharada, cuchara sopera | `cucharada_sopera` | 15 ml |
+| cucharadita, cuchara de café | `cucharadita` | 5 ml |
+| plato, plato hondo, plato estándar | `plato` | food-specific |
+
+Volume is only a conversational reference. Nutrient calculations use the food-specific grams in `household_measures.csv`, because density differs between foods. `plato` is provisional and only available for selected cooked foods and dishes; raw/cooked variants remain separate candidates when the difference matters.
+
+The Coach should use an available measure without asking for grams, communicate the assumption briefly, and ask one question only when the food state or variant changes the result materially.
+
 ## How `search_food` searches
 1. Normalises the text (lowercase, no accents, singular).
 2. Exact match on names and synonyms.

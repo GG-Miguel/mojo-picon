@@ -1,0 +1,8 @@
+measure_id,display_name,aliases,volume_ml,kind,status,source
+vaso,vaso,"vasito|un vaso",200,volume,approved,"Carbajal, UCM 2015"
+taza,taza,"una taza",250,volume,approved,"Carbajal, UCM 2015"
+cucharada_sopera,cucharada sopera,"cucharada|cuchara|cucharada rasa|cuchara sopera",15,volume,approved,"Carbajal, UCM 2015"
+cucharada_colmada,cucharada sopera colmada,"cucharada colmada|cucharada grande|cuchara sopera colmada",15,volume,approved,"Carbajal, UCM 2015"
+cucharadita,cucharadita,"cucharilla|cuchara de cafe|cucharada de cafe|cucharadita de cafe|cucharada de postre|cucharada pequena",5,volume,approved,"Carbajal, UCM 2015"
+plato,plato,"plato estandar|plato estándar|plato llano|plato hondo",,serving,provisional,"Mojo Picón 2026; pendiente de revisión"
+unidad,unidad,"pieza|una pieza|unidad mediana|pieza mediana|mediana|mediano",,count,approved,"Carbajal, UCM 2015"
