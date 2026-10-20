@@ -20,7 +20,7 @@ from pathlib import Path
 from evals import checks
 from evals.cases import load, partition
 from evals.gate import gate
-from evals.harness import Harness, Run
+from evals.harness import VARIANTS, Harness, Run
 from evals.metrics import RUBRIC_VERSION
 from mojo_picon.agents.planner import build_planner
 from mojo_picon.domain import Allergen, MacroTargets
@@ -73,7 +73,7 @@ def _summary(run: Run) -> dict:
     return {
         "turns": [{"message": t.message, "answer": t.answer, "guard": t.guard_level, "tools": t.tools,
                    "seconds": round(t.seconds, 1), "tokens": t.tokens, "regenerations": t.regenerations,
-                   "errors": t.errors, "sources": t.sources} for t in run.turns],
+                   "number_checks": t.number_checks, "errors": t.errors, "sources": t.sources} for t in run.turns],
         "entries": [e.model_dump(mode="json") for e in run.entries],
     }  # fmt: skip
 
@@ -239,6 +239,8 @@ def report(results: dict, meta: dict) -> str:
     lines = [f"# Evaluación · {meta['started']}", "",
              f"Partición: **{meta['partition']}** · repeticiones: {meta['repeat']} · modelo: {meta['model']} · "
              f"juez: {meta['judge'] or 'sin juez'} · duración: {meta['seconds'] / 60:.1f} min", ""]  # fmt: skip
+    if meta.get("variant", "completo") != "completo":
+        lines += [f"Variante: **{VARIANTS[meta['variant']].description}**", ""]
     for name, all_rows in results.items():
         infra = [r for r in all_rows if r.get("infra_error")]
         unproven = [r for r in all_rows if r.get("inconclusive")]
@@ -314,9 +316,11 @@ async def main() -> None:
     parser.add_argument("--no-judge", action="store_true")
     parser.add_argument("--ids", default="", help="only these case ids, comma-separated (quick checks)")
     parser.add_argument("--gate", action="store_true", help="exit with an error if the run does not pass the CI gate")
+    parser.add_argument("--variant", default="completo", choices=list(VARIANTS),
+                        help="switch one piece of the agent off (evals/variants.py compares the runs)")  # fmt: skip
     args = parser.parse_args()
 
-    h = Harness()
+    h = Harness(variant=VARIANTS[args.variant])
     judge = None
     if not args.no_judge and "conversations" in args.sets:
         from evals.judge import GroqJudge
@@ -336,9 +340,11 @@ async def main() -> None:
         results[name] = await fn(cases, h=h, repeat=args.repeat, judge=judge)
     judge_name = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION}" if judge else None
     meta = {"started": started.strftime("%Y-%m-%d %H:%M"), "partition": args.partition, "repeat": args.repeat,
-            "model": h.settings.gemini_model, "judge": judge_name, "seconds": time.time() - start}  # fmt: skip
+            "model": h.settings.gemini_model, "judge": judge_name, "variant": args.variant,
+            "seconds": time.time() - start}  # fmt: skip
     RESULTS.mkdir(exist_ok=True)
-    stem = RESULTS / f"{started.strftime('%Y%m%d-%H%M%S')}-{args.partition}-{'+'.join(results)}"
+    variant = "" if args.variant == "completo" else f"-{args.variant}"
+    stem = RESULTS / f"{started.strftime('%Y%m%d-%H%M%S')}-{args.partition}-{'+'.join(results)}{variant}"
     stem.with_suffix(".json").write_text(
         json.dumps({"meta": meta, "results": results}, ensure_ascii=False, indent=1, default=str)
     )

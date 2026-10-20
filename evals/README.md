@@ -12,9 +12,10 @@ judge only scores what is subjective.
 | `cases/rag.yaml` | Questions with the guideline that must be retrieved (recall@k) |
 | `cases/numbers.yaml` | Labelled answers for the numbers-with-origin checker (no LLM) |
 | `checks.py` | The code checks |
-| `harness.py` | Runs a case through the real API (SSE), real Gemini and Qdrant, an in-memory store per case |
+| `harness.py` | Runs a case through the real API (SSE), real Gemini and Qdrant, an in-memory store per case, configured as production (expert brief, guides, number checker) or as a variant with one piece off |
 | `judge.py`, `metrics.py` | G-Eval with fixed evaluation steps; judge GPT-OSS 120B on Groq (ADR-13) |
 | `run.py`, `run.sh` | Runs the sets and writes `results/<date>.json` and `.md` |
+| `variants.py` | Compares runs of the conversations set with one piece off: what each piece adds |
 
 ```bash
 evals/run.sh                                   # every set, judge included
@@ -22,6 +23,8 @@ evals/run.sh --sets safety,attacks --no-judge  # some sets, no judge
 evals/run.sh --partition prueba --repeat 3     # the frozen test partition, 3 runs per case
 evals/run.sh --sets safety --ids seg-13,seg-13b --no-judge  # a few cases, for a quick check
 uv run --group eval python -m evals.baseline evals/results/<run>.json  # chatbot with RAG in one call vs the agent
+evals/run.sh --sets conversations --variant sin_ficha  # also: completo (default), sin_rag, sin_verificador
+uv run --group eval python -m evals.variants evals/results/<run>.json ...  # one run per variant, one table
 ```
 
 `run.sh` needs `GROQ_API_KEY` in `.env` (the judge) and gcloud access to the Qdrant key.

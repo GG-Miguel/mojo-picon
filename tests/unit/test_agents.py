@@ -136,6 +136,30 @@ async def test_invented_number_twice_is_removed(context):
     assert final_text(state) == NO_RELIABLE_FIGURE
 
 
+async def test_every_number_check_is_recorded(context):
+    models = FakeProvider(guardian=[OK], coach=toast_script(["Te quedan 2.500 kcal.", "Te quedan 3.000 kcal."]))
+    state = await run(models, context, "He desayunado dos tostadas")
+    assert state["number_check"] == {"unsourced": ["3.000 kcal"], "action": "drop"}
+
+
+async def test_without_the_number_checker_an_invented_number_reaches_the_user_and_is_recorded(context):
+    """The variant the evaluation compares against: the guardian records, but does not correct."""
+    models = FakeProvider(guardian=[OK], coach=toast_script(["Te quedan 2.500 kcal."]))
+    graph = build_graph(models, FOODS, number_check=False)
+    state = await graph.ainvoke({"messages": [HumanMessage("He desayunado dos tostadas")]}, context=context)
+    assert final_text(state) == "Te quedan 2.500 kcal."
+    assert "output_attempts" not in state
+    assert state["number_check"] == {"unsourced": ["2.500 kcal"], "action": "off"}
+
+
+async def test_without_guides_search_guides_cannot_run(context):
+    models = FakeProvider(guardian=[OK], coach=[tool_call("search_guides", query="agua"), AIMessage("Bebe agua.")])
+    graph = build_graph(models, FOODS, guides=False)
+    state = await graph.ainvoke({"messages": [HumanMessage("¿Cuánta agua bebo?")]}, context=context)
+    result = next(m for m in state["messages"] if isinstance(m, ToolMessage))
+    assert result.status == "error" and "search_guides" in result.text
+
+
 async def test_warning_level_adds_the_recommendation(context):
     models = FakeProvider(guardian=[OK], coach=[AIMessage("Una cena ligera y bebe agua.")])
     state = await run(models, context, "Estoy algo resfriado, ¿qué ceno?")
