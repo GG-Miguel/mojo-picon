@@ -20,8 +20,10 @@ from datetime import datetime
 from pathlib import Path
 
 from evals.prices import PRICES, PRICES_2027, cost
-from evals.run import RESULTS
 from mojo_picon.config import ROLES
+
+# Not imported from evals.run: that pulls DeepEval, which the unit tests in the CI do not install.
+RESULTS = Path(__file__).parent / "results"
 
 SETS = ("safety", "attacks", "planner", "conversations")
 CRITERIA = ("adecuacion", "seguridad", "uso_de_guias", "claridad")
