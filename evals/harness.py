@@ -14,6 +14,8 @@ import json
 import re
 import time
 import unicodedata
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -202,8 +204,11 @@ class Harness:
         self.graph = build_graph(self.models, self.foods, guides=variant.guides, number_check=variant.number_check)
         self.brief, self.brief_passages = load_expert_brief() if variant.brief else ("", {})
 
-    async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
-                   photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
+    @asynccontextmanager
+    async def conversation(self, case: dict) -> AsyncIterator[Conversation]:
+        """An open conversation with the agent, one turn at a time (multi-turn attacks); chat() runs a
+        case's messages through one. The user's profile and today come from the case; a victim user
+        with a distinctive meal shares the store, to catch any leak of another user's data."""
         store = InMemoryStore()
         user, victim = UserContext(uid=USER), UserContext(uid=VICTIM)
         await store.save_profile(user, Profile(**{"weight_kg": 70, "height_cm": 175, "age": 34, "sex": "male",
@@ -222,35 +227,58 @@ class Harness:
             guides=guide_index_from_settings(self.settings) if self.variant.guides else None,
             expert_brief=self.brief, brief_passages=self.brief_passages,
         )  # fmt: skip
-        turns: list[Turn] = []
-        session = None
-        pending = list(messages)
         transport = httpx.ASGITransport(app=create_app(deps))
         async with httpx.AsyncClient(transport=transport, base_url="http://eval", timeout=300) as client:
+            yield Conversation(case["id"], client, graph, store, user, victim)
+
+    async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
+                   photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
+        async with self.conversation(case) as conversation:
+            pending = list(messages)
             while pending:
-                text = pending.pop(0)
-                turn = Turn(message=text)
-                graph.updates = []
-                data = {"message": text, **({"session_id": session} if session else {})}
-                photo = _label(label) if label else _photo(photo_text) if photo_text else None
-                files = {"photo": ("foto.jpg", photo, "image/jpeg")} if photo and not turns else None
-                start = time.time()
-                with get_usage_metadata_callback() as usage:
-                    response = await client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
-                                                 files=files)  # fmt: skip
-                turn.seconds = time.time() - start
-                turn.tokens = total_tokens(usage.usage_metadata)
-                turn.tokens_by_model = tokens_per_model(usage.usage_metadata)
-                turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
-                turn.updates = list(graph.updates)
-                final = next((e for e in turn.events if e["type"] == "final"), None)
-                turn.answer = final["text"] if final else ""
-                session = final["session_id"] if final else session
-                turns.append(turn)
-                if simulated and not pending and len(turns) == len(messages) and asks_user(turn.answer):
+                photo = None
+                if not conversation.turns:  # a photo goes with the first message only
+                    photo = _label(label) if label else _photo(photo_text) if photo_text else None
+                turn = await conversation.send(pending.pop(0), photo)
+                if simulated and not pending and len(conversation.turns) == len(messages) and asks_user(turn.answer):
                     pending.append(simulated)  # the simulated user answers the agent's question, once
+            return await conversation.run()
+
+
+class Conversation:
+    """One conversation through the real API (SSE included): send() a turn, run() the result."""
+
+    def __init__(self, case_id: str, client: httpx.AsyncClient, graph: RecordingGraph, store, user, victim):
+        self.case_id = case_id
+        self.turns: list[Turn] = []
+        self._client, self._graph, self._store = client, graph, store
+        self._user, self._victim = user, victim
+        self._session = None
+
+    async def send(self, text: str, photo: bytes | None = None) -> Turn:
+        turn = Turn(message=text)
+        self._graph.updates = []
+        data = {"message": text, **({"session_id": self._session} if self._session else {})}
+        files = {"photo": ("foto.jpg", photo, "image/jpeg")} if photo else None
+        start = time.time()
+        with get_usage_metadata_callback() as usage:
+            response = await self._client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
+                                               files=files)  # fmt: skip
+        turn.seconds = time.time() - start
+        turn.tokens = total_tokens(usage.usage_metadata)
+        turn.tokens_by_model = tokens_per_model(usage.usage_metadata)
+        turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
+        turn.updates = list(self._graph.updates)
+        final = next((e for e in turn.events if e["type"] == "final"), None)
+        turn.answer = final["text"] if final else ""
+        self._session = final["session_id"] if final else self._session
+        self.turns.append(turn)
+        return turn
+
+    async def run(self) -> Run:
         day = datetime.now(UTC).date()
-        return Run(case["id"], turns, await _all_entries(store, user, day), await _all_entries(store, victim, day))
+        return Run(self.case_id, self.turns, await _all_entries(self._store, self._user, day),
+                   await _all_entries(self._store, self._victim, day))  # fmt: skip
 
 
 async def _all_entries(store, user, day) -> list:
