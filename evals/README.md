@@ -24,6 +24,7 @@ evals/run.sh --partition prueba --repeat 3     # the frozen test partition, 3 ru
 evals/run.sh --sets safety --ids seg-13,seg-13b --no-judge  # a few cases, for a quick check
 uv run --group eval python -m evals.baseline evals/results/<run>.json  # chatbot with RAG in one call vs the agent
 evals/run.sh --sets conversations --variant sin_ficha  # also: completo (default), sin_rag, sin_verificador
+MODEL_GUARDIAN=gemini-3.5-flash-lite evals/run.sh --sets safety,attacks --no-judge  # another model for one role
 uv run --group eval python -m evals.variants evals/results/<run>.json ...  # one run per variant, one table
 ```
 

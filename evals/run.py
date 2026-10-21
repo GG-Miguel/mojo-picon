@@ -17,12 +17,15 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from langchain_core.callbacks import get_usage_metadata_callback
+
 from evals import checks
 from evals.cases import load, partition
 from evals.gate import gate
-from evals.harness import VARIANTS, Harness, Run
+from evals.harness import VARIANTS, Harness, Run, tokens_per_model, total_tokens
 from evals.metrics import RUBRIC_VERSION
 from mojo_picon.agents.planner import build_planner
+from mojo_picon.config import ROLES
 from mojo_picon.domain import Allergen, MacroTargets
 from mojo_picon.rag.index import guide_index_from_settings
 
@@ -72,7 +75,8 @@ def _verdict(results: list[tuple[str, tuple[bool, str]]]) -> dict:
 def _summary(run: Run) -> dict:
     return {
         "turns": [{"message": t.message, "answer": t.answer, "guard": t.guard_level, "tools": t.tools,
-                   "seconds": round(t.seconds, 1), "tokens": t.tokens, "regenerations": t.regenerations,
+                   "seconds": round(t.seconds, 1), "tokens": t.tokens, "tokens_by_model": t.tokens_by_model,
+                   "regenerations": t.regenerations,
                    "number_checks": t.number_checks, "errors": t.errors, "sources": t.sources} for t in run.turns],
         "entries": [e.model_dump(mode="json") for e in run.entries],
     }  # fmt: skip
@@ -160,11 +164,12 @@ async def eval_planner(cases, h: Harness, repeat=1, **_):
     async def one(item):
         case, rep = item
         start = time.time()
-        result = await planner.ainvoke({
-            "meals": case["comidas"], "preferences": case.get("preferencias", ""),
-            "remaining": MacroTargets(**case["queda"]),
-            "allergens": [Allergen(a) for a in case.get("alergenos", [])],
-        })  # fmt: skip
+        with get_usage_metadata_callback() as usage:
+            result = await planner.ainvoke({
+                "meals": case["comidas"], "preferences": case.get("preferencias", ""),
+                "remaining": MacroTargets(**case["queda"]),
+                "allergens": [Allergen(a) for a in case.get("alergenos", [])],
+            })  # fmt: skip
         plan = result.get("plan")
         ids = [i.food_id for i in plan.items] if plan else []
         meals = [
@@ -180,7 +185,9 @@ async def eval_planner(cases, h: Harness, repeat=1, **_):
         return {"id": case["id"], "rep": rep, "passed": bool(result.get("passed")) and not allergens,
                 "attempts": result.get("attempts"), "issues": result.get("issues", []), "foods": ids, "meals": meals,
                 "totals": {k: round(v) for k, v in totals.items()},
-                "allergens_found": allergens, "seconds": round(time.time() - start, 1)}  # fmt: skip
+                "allergens_found": allergens, "seconds": round(time.time() - start, 1),
+                "tokens": total_tokens(usage.usage_metadata),
+                "tokens_by_model": tokens_per_model(usage.usage_metadata)}  # fmt: skip
 
     return await bounded([(c, r) for c in cases for r in range(repeat)], one)
 
@@ -235,9 +242,15 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
 # --- report -------------------------------------------------------------------------------
 
 
+def _models(meta: dict) -> str:
+    """The model, and the roles that use another one (MODEL_<ROLE>)."""
+    others = [f"{role}: {m}" for role, m in meta.get("models", {}).items() if m != meta["model"]]
+    return meta["model"] + (f" ({', '.join(others)})" if others else "")
+
+
 def report(results: dict, meta: dict) -> str:
     lines = [f"# Evaluación · {meta['started']}", "",
-             f"Partición: **{meta['partition']}** · repeticiones: {meta['repeat']} · modelo: {meta['model']} · "
+             f"Partición: **{meta['partition']}** · repeticiones: {meta['repeat']} · modelo: {_models(meta)} · "
              f"juez: {meta['judge'] or 'sin juez'} · duración: {meta['seconds'] / 60:.1f} min", ""]  # fmt: skip
     if meta.get("variant", "completo") != "completo":
         lines += [f"Variante: **{VARIANTS[meta['variant']].description}**", ""]
@@ -340,7 +353,8 @@ async def main() -> None:
         results[name] = await fn(cases, h=h, repeat=args.repeat, judge=judge)
     judge_name = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION}" if judge else None
     meta = {"started": started.strftime("%Y-%m-%d %H:%M"), "partition": args.partition, "repeat": args.repeat,
-            "model": h.settings.gemini_model, "judge": judge_name, "variant": args.variant,
+            "model": h.settings.gemini_model, "models": {r: h.settings.model_for(r) for r in ROLES},
+            "judge": judge_name, "variant": args.variant,
             "seconds": time.time() - start}  # fmt: skip
     RESULTS.mkdir(exist_ok=True)
     variant = "" if args.variant == "completo" else f"-{args.variant}"

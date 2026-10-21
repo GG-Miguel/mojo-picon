@@ -60,3 +60,28 @@ def test_fallback_models_come_from_a_comma_separated_variable(monkeypatch):
     assert Settings.from_env().fallback_models == ["gemini-3.5-flash-lite", "claude-haiku-4-5@20251001"]
     monkeypatch.setenv("FALLBACK_MODELS", "")
     assert Settings.from_env().fallback_models == []
+
+
+def test_a_role_can_use_its_own_model_and_the_others_keep_gemini():
+    settings = replace(Settings(), role_models={"guardian": "gemini-3.5-flash-lite"})
+    provider = LiteLLMProvider.from_settings(settings)
+    guardian = _deployments(provider, Role.GUARDIAN)
+    assert guardian["guardian"]["model"] == "vertex_ai/gemini-3.5-flash-lite"
+    assert guardian["guardian"]["api_base"] == "https://aiplatform.eu.rep.googleapis.com"
+    assert guardian["guardian"]["reasoning_effort"] == "low"
+    assert _deployments(provider, Role.COACH)["coach"]["model"] == "vertex_ai/gemini-3.8-flash"
+
+
+def test_a_role_on_a_fallback_model_does_not_fall_back_to_itself():
+    provider = LiteLLMProvider.from_settings(replace(Settings(), role_models={"planner": "gemini-3.5-flash"}))
+    deployments = _deployments(provider, Role.PLANNER)
+    assert [d["model"] for d in deployments.values()] == [
+        "vertex_ai/gemini-3.5-flash",
+        "vertex_ai/claude-haiku-4-5@20251001",
+    ]
+
+
+def test_direct_mode_also_takes_the_model_of_the_role():
+    provider = GeminiProvider.from_settings(replace(Settings(), role_models={"guardian": "gemini-3.1-flash-lite"}))
+    assert provider.get(Role.GUARDIAN).model.endswith("gemini-3.1-flash-lite")
+    assert provider.get(Role.COACH).model.endswith("gemini-3.8-flash")

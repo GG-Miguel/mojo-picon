@@ -94,6 +94,14 @@ def total_tokens(by_model: dict) -> dict[str, int]:
     return {k: sum(u.get(f"{k}_tokens", 0) for u in by_model.values()) for k in ("input", "output")}
 
 
+def tokens_per_model(by_model: dict) -> dict[str, dict[str, int]]:
+    """{model: usage} -> {model: input and output tokens}: the cost of a run is priced model by model.
+
+    Through the gateway the key is the role (ChatLiteLLMRouter is named after it): its model is in
+    meta["models"]. A call answered by a fallback model is counted under the role's model."""
+    return {model: total_tokens({model: usage}) for model, usage in by_model.items()}
+
+
 def asks_user(answer: str) -> bool:
     """The answer asks the user for something: a question mark or a request in the imperative.
 
@@ -114,6 +122,7 @@ class Turn:
     updates: list[dict] = field(default_factory=list)
     seconds: float = 0.0
     tokens: dict[str, int] = field(default_factory=dict)  # input/output tokens of every model call of the turn
+    tokens_by_model: dict[str, dict[str, int]] = field(default_factory=dict)  # the same, model by model
 
     @property
     def errors(self) -> list[str]:
@@ -231,6 +240,7 @@ class Harness:
                                                  files=files)  # fmt: skip
                 turn.seconds = time.time() - start
                 turn.tokens = total_tokens(usage.usage_metadata)
+                turn.tokens_by_model = tokens_per_model(usage.usage_metadata)
                 turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
                 turn.updates = list(graph.updates)
                 final = next((e for e in turn.events if e["type"] == "final"), None)

@@ -28,3 +28,12 @@ def test_thinking_settings_follow_the_model_family():
 
     assert thinking_config("gemini-3.8-flash", "low") == {"thinking_level": "low"}
     assert thinking_config("gemini-2.5-flash", "low") == {"thinking_budget": 0}  # 2.5 rejects levels (400)
+
+
+def test_a_role_model_comes_from_its_variable_and_the_rest_use_gemini_model(monkeypatch):
+    monkeypatch.setenv("MODEL_GUARDIAN", "gemini-3.5-flash-lite")
+    monkeypatch.setenv("MODEL_PLANNER", " ")  # empty: not set
+    settings = Settings.from_env()
+    assert settings.role_models == {"guardian": "gemini-3.5-flash-lite"}
+    assert settings.model_for("guardian") == "gemini-3.5-flash-lite"
+    assert settings.model_for("planner") == settings.gemini_model

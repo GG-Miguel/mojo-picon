@@ -20,6 +20,10 @@ def _names(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+# Roles of llm.Role, one model each: MODEL_COACH, MODEL_PLANNER, MODEL_GUARDIAN, MODEL_VISION.
+ROLES = ("coach", "planner", "guardian", "vision")
+
+
 @dataclass(frozen=True)
 class Settings:
     environment: str = "development"  # development | staging | production
@@ -28,6 +32,9 @@ class Settings:
     vertex_location: str = "eu"
     vertex_endpoint: str = "https://aiplatform.eu.rep.googleapis.com"
     gemini_model: str = "gemini-3.8-flash"
+    # A model for one role instead of gemini_model (MODEL_<ROLE>), on the same endpoint: e.g. a cheaper
+    # Gemini for the guardian, measured with the evaluation before it reaches production (ADR-04).
+    role_models: dict[str, str] = field(default_factory=dict)
     llm_gateway: str = "litellm"  # litellm (Gemini, then the fallback) | direct (Gemini without LiteLLM)
     # Tried in order on the EU endpoint when Gemini fails or times out (ADR-04); empty: no fallback.
     # Another Gemini has its own quota (the frequent 429); Claude is another family (an outage of Gemini).
@@ -46,6 +53,9 @@ class Settings:
     api_dev_tokens: dict[str, str] = field(default_factory=dict)
     mcp_dev_tokens: dict[str, str] = field(default_factory=dict)
 
+    def model_for(self, role: str) -> str:
+        return self.role_models.get(role, self.gemini_model)
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
@@ -61,6 +71,7 @@ class Settings:
             vertex_location=env.get("VERTEX_LOCATION", defaults.vertex_location),
             vertex_endpoint=env.get("VERTEX_ENDPOINT", defaults.vertex_endpoint),
             gemini_model=env.get("GEMINI_MODEL", defaults.gemini_model),
+            role_models={r: env[f"MODEL_{r.upper()}"] for r in ROLES if env.get(f"MODEL_{r.upper()}", "").strip()},
             llm_gateway=env.get("LLM_GATEWAY", defaults.llm_gateway),
             fallback_models=_names(env["FALLBACK_MODELS"]) if "FALLBACK_MODELS" in env else defaults.fallback_models,
             fallback_location=env.get("FALLBACK_LOCATION", defaults.fallback_location),
