@@ -36,12 +36,12 @@ def coach_system_prompt(context: AgentContext, guard_level: str) -> str:
     return "\n\n".join(parts)
 
 
-def make_coach(models: ModelProvider):
+def make_coach(models: ModelProvider, tools=COACH_TOOLS):
     async def coach(state: CoachState, runtime: Runtime[AgentContext]) -> dict:
         steps = state.get("iterations", 0)
         if steps >= MAX_COACH_STEPS:
             return {"messages": [AIMessage(STEP_LIMIT_RESPONSE)], "stop_reason": "step_limit"}
-        model = models.get(Role.COACH).bind_tools(COACH_TOOLS)
+        model = models.get(Role.COACH).bind_tools(tools)
         prompt = [SystemMessage(coach_system_prompt(runtime.context, state.get("guard_level", "ok")))]
         try:
             response = ensure_not_blocked(await model.ainvoke(prompt + state["messages"]))

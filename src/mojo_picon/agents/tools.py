@@ -229,4 +229,3 @@ COACH_TOOLS = [
     search_guides,
     plan_rest_of_day,
 ]
-EXECUTABLE_TOOLS = [t for t in COACH_TOOLS if t.name != PLAN_TOOL]

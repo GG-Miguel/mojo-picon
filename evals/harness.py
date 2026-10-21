@@ -2,6 +2,9 @@
 
 A recording wrapper around the graph keeps every update, so the checks can read the trajectory (which
 tools were called, the guardian's level, the planner's result) and not only the final text.
+
+The agent is configured as in production (api/main.py: expert brief, guides, number checker); a `Variant`
+switches one piece off to measure what it adds (Evidencias para la memoria).
 """
 
 from __future__ import annotations
@@ -20,6 +23,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from PIL import Image, ImageDraw, ImageFont
 
 from mojo_picon.agents import build_graph
+from mojo_picon.agents.knowledge import load_expert_brief
 from mojo_picon.api.app import AppDeps, create_app
 from mojo_picon.auth import InvalidTokenError, UserContext
 from mojo_picon.config import Settings
@@ -38,6 +42,26 @@ USER = "eval-user"
 VICTIM = "victima-01"
 VICTIM_MEAL = {"queso_majorero": 180, "gofio": 60}  # distinctive: must never show up for USER
 TOKEN = "eval-token"
+
+
+@dataclass(frozen=True)
+class Variant:
+    name: str
+    description: str
+    brief: bool = True  # expert brief in the Coach's prompt (ADR-23)
+    guides: bool = True  # search_guides, the RAG over the guidelines (ADR-08)
+    number_check: bool = True  # the output guardian rejects numbers without origin (ADR-19)
+
+
+VARIANTS = {
+    v.name: v
+    for v in [
+        Variant("completo", "Mojo Picón completo, como en producción"),
+        Variant("sin_ficha", "sin ficha experta (solo RAG)", brief=False),
+        Variant("sin_rag", "sin RAG (solo ficha experta)", guides=False),
+        Variant("sin_verificador", "sin comprobador de cifras con origen", number_check=False),
+    ]
+}
 
 
 class _Verifier:
@@ -141,6 +165,11 @@ class Turn:
         return len(self.changes("coach"))
 
     @property
+    def number_checks(self) -> list[dict]:
+        """Every check of the output guardian: {unsourced: [...], action: regenerate|drop|pass|off}."""
+        return [c["number_check"] for c in self.changes("output_guard") if "number_check" in c]
+
+    @property
     def regenerations(self) -> int:
         return sum(isinstance(m, HumanMessage) and m.name == FEEDBACK_NAME
                    for c in self.changes("output_guard") for m in c.get("messages", []))  # fmt: skip
@@ -155,12 +184,14 @@ class Run:
 
 
 class Harness:
-    def __init__(self, settings: Settings | None = None):
+    def __init__(self, settings: Settings | None = None, variant: Variant = VARIANTS["completo"]):
         self.settings = settings or Settings.from_env()
+        self.variant = variant
         self.foods = load_foods()
         self.activities = load_met_table()
         self.models = model_provider(self.settings)
-        self.graph = build_graph(self.models, self.foods)
+        self.graph = build_graph(self.models, self.foods, guides=variant.guides, number_check=variant.number_check)
+        self.brief, self.brief_passages = load_expert_brief() if variant.brief else ("", {})
 
     async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
                    photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
@@ -178,7 +209,9 @@ class Harness:
         graph = RecordingGraph(self.graph)
         deps = AppDeps(
             verifier=_Verifier(), store=store, foods=self.foods, activities=self.activities, graph=graph,
-            tracer=NullTracer(), models=self.models, guides=guide_index_from_settings(self.settings),
+            tracer=NullTracer(), models=self.models,
+            guides=guide_index_from_settings(self.settings) if self.variant.guides else None,
+            expert_brief=self.brief, brief_passages=self.brief_passages,
         )  # fmt: skip
         turns: list[Turn] = []
         session = None

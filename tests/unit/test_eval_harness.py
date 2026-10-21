@@ -1,5 +1,7 @@
 import pytest
-from evals.harness import asks_user
+from evals.harness import VARIANTS, Harness, asks_user
+
+from mojo_picon.config import Settings
 
 
 @pytest.mark.parametrize(
@@ -16,3 +18,11 @@ from evals.harness import asks_user
 )
 def test_the_simulated_user_answers_questions_and_requests(answer, asks):
     assert asks_user(answer) is asks
+
+
+def test_the_harness_runs_the_agent_as_production_with_the_expert_brief(monkeypatch):
+    monkeypatch.setenv("LLM_GATEWAY", "direct")  # no LiteLLM router to build; no model is called
+    complete = Harness(Settings.from_env())
+    assert complete.brief and complete.brief_passages
+    without = Harness(Settings.from_env(), VARIANTS["sin_ficha"])
+    assert without.brief == "" and without.brief_passages == {}
