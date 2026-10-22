@@ -11,6 +11,7 @@ model: switching judges in the middle of a run would make the scores of differen
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import time
@@ -140,9 +141,20 @@ def _seconds(value: str) -> float | None:
 
 
 def _json_block(text: str) -> str:
-    """The JSON object in the answer (some models wrap it in ```json fences)."""
+    """The JSON object in the answer (some models wrap it in ```json fences, and GPT-OSS now and then
+    as {"final": "<json>"}, its own output channel leaking into the answer)."""
+    if not text:  # an empty answer is invalid JSON, so the caller retries or reports it
+        return ""
     match = re.search(r"\{.*\}", text, re.S)
-    return match.group(0) if match else text
+    block = match.group(0) if match else text
+    try:
+        data = json.loads(block)
+    except ValueError:
+        return block
+    if isinstance(data, dict) and len(data) == 1 and next(iter(data)).startswith("final"):
+        inner = next(iter(data.values()))  # {"final": "<json>"}, or {"final{": {...}} when the leak is worse
+        return _json_block(inner) if isinstance(inner, str) else json.dumps(inner, ensure_ascii=False)
+    return block
 
 
 if __name__ == "__main__":  # quick check: uv run --group eval python -m evals.judge
