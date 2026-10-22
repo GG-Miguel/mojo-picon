@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -86,6 +87,8 @@ async def main() -> None:
                 for attempt in range(3):
                     try:
                         judged[key] = parse(await judge.a_generate(prompt + "\n\nResponde solo con el objeto JSON."))
+                        if len(judged) % 25 == 0:  # progress, so a slow judge shows
+                            print(f"{len(judged)} pasajes juzgados", file=sys.stderr, flush=True)
                         break
                     except ValueError:  # invalid or empty JSON from the judge
                         if attempt == 2:

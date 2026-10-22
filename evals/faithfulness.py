@@ -18,6 +18,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -32,6 +34,7 @@ from mojo_picon.guardrails.number_origin import citations, index_brief
 from mojo_picon.rag.index import COLLECTION
 
 RESULTS = Path(__file__).parent / "results"
+ANSWER_TIMEOUT = 300  # seconds to score one answer; past that it is reported without a score
 BRIEF = Path(__file__).parents[1] / "knowledge" / "expert_brief.md"
 
 
@@ -91,8 +94,23 @@ async def main() -> None:
             row = {"id": case["id"], "pregunta": case["pregunta"], "respuesta": answer, "citas": cited,
                    "citas_sin_texto": [c for c in cited if c not in sources]}  # fmt: skip
             if not context:
-                return {**row, "faithfulness": None, "motivo": "la respuesta no cita ninguna fuente"}
-            return {**row, **await score(judge, case["pregunta"], answer, context)}
+                return progress({**row, "faithfulness": None, "motivo": "la respuesta no cita ninguna fuente"})
+            start = time.monotonic()
+            try:
+                result = await asyncio.wait_for(score(judge, case["pregunta"], answer, context), ANSWER_TIMEOUT)
+            except TimeoutError:
+                result = {"faithfulness": None, "motivo": f"tiempo agotado ({ANSWER_TIMEOUT} s)"}
+            return progress({**row, **result}, time.monotonic() - start)
+
+    done = 0
+
+    def progress(row: dict, seconds: float = 0) -> dict:
+        """One line per answer as it is scored, so a slow judge shows instead of a silent run."""
+        nonlocal done
+        done += 1
+        value = "—" if row["faithfulness"] is None else f"{row['faithfulness']:.2f}"
+        print(f"[{done}/{len(cases)}] {row['id']} faithfulness {value} ({seconds:.0f} s)", file=sys.stderr, flush=True)
+        return row
 
     previous = {}
     if args.rescore:
