@@ -63,6 +63,7 @@ class Food(BaseModel):
     section: str = ""  # supermarket section, for the shopping list
     synonyms: tuple[str, ...] = ()
     source: str = ""  # e.g. "CIQUAL 2020", "recipe", "approximation of bacalao"
+    serving_g: float | None = Field(default=None, gt=0)  # one serving of a recipe (Mis recetas), for «una ración»
 
     def nutrients_for(self, grams: float) -> Nutrients:
         return self.per_100g.scaled(grams / 100)

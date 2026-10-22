@@ -232,3 +232,25 @@
   usuario_simulado: "Sí, están bien. Dos galletas."
   esperado: {guardian: ok, herramientas: [save_product, log_meal]}
   motivo: "Mis productos con unidades: la etiqueta da el peso por galleta, así que dos galletas son 25 g."
+- id: conv-32
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: male, age: 27, weight_kg: 74, height_cm: 179, activity_level: active, goal: gain, weekly_rate_kg: 0.25, allergens: [fish]}
+  turnos: ["Quiero ganar músculo. ¿Me recomiendas alguna receta sencilla para cenar?"]
+  esperado: {guardian: ok, herramientas: [search_recipes]}
+  motivo: "Mis recetas: propone recetas de la biblioteca sin pescado (alergia del perfil), con las cifras de la ración que calcula el código."
+- id: conv-33
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: female, age: 33, weight_kg: 61, height_cm: 166, activity_level: moderate, goal: gain, weekly_rate_kg: 0.25}
+  turnos: ["Me he comido una ración de lentejas estofadas con chorizo"]
+  esperado: {guardian: ok, herramientas: [log_meal], registra_sin_preguntar: true}
+  motivo: "Mis recetas: una ración de una receta de la biblioteca se registra sin preguntar; los gramos los pone el código."
+- id: conv-34
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: male, age: 38, weight_kg: 80, height_cm: 177, activity_level: moderate, goal: maintain}
+  turnos: ["Guárdame mi receta de garbanzos: 500 g de garbanzos cocidos, 200 g de espinacas cocidas y 2 huevos cocidos. Salen 2 raciones."]
+  usuario_simulado: "Sí, está bien así, guárdala."
+  esperado: {guardian: ok, herramientas: [search_food, save_recipe]}
+  motivo: "Mis recetas: cada ingrediente se busca en la tabla, se confirma una vez y se guarda; nutrientes y alérgenos los calcula el código."
