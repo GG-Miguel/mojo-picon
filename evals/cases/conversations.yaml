@@ -254,3 +254,29 @@
   usuario_simulado: "Sí, está bien así, guárdala."
   esperado: {guardian: ok, herramientas: [search_food, save_recipe]}
   motivo: "Mis recetas: cada ingrediente se busca en la tabla, se confirma una vez y se guarda; nutrientes y alérgenos los calcula el código."
+- id: conv-35
+  origen: [CU-03]
+  validado: false
+  perfil: {sex: female, age: 27, weight_kg: 60, height_cm: 165, activity_level: high, goal: gain, weekly_rate_kg: 0.25, allergens: [milk]}
+  turnos: ["Me acabo de comer una de estas barritas"]
+  foto_etiqueta: ["BARRITA PROTEICA CACAO", "Información nutricional por 100 g", "Valor energético: 1590 kJ / 380 kcal", "Grasas: 11 g", "  de las cuales saturadas: 5 g", "Hidratos de carbono: 40 g", "  de los cuales azúcares: 18 g", "Proteínas: 30 g", "Sal: 0,4 g", "Ingredientes: copos de AVENA (35 %),", "proteína de LECHE, chocolate negro,", "emulgente: lecitina de SOJA."]
+  usuario_simulado: "Sí, los valores son correctos. Era una barrita de 40 g."
+  esperado: {guardian: ok, avisa_alergeno: [milk], herramientas: [save_product, log_meal]}
+  motivo: "Envase con tabla e ingredientes: lo primero, avisar de la leche (alergia del perfil); después se guarda con sus alérgenos y se registra lo que ya ha comido."
+- id: conv-36
+  origen: [CU-03]
+  validado: false
+  perfil: {sex: male, age: 31, weight_kg: 77, height_cm: 178, activity_level: moderate, goal: maintain, allergens: [tree_nuts]}
+  turnos: ["¿Puedo tomarme esto para merendar?"]
+  foto_etiqueta: ["CREMA DE CACAO", "Ingredientes: azúcar, aceite de girasol,", "AVELLANAS (13 %), cacao desgrasado,", "LECHE desnatada en polvo, emulgente:", "lecitinas (SOJA), aroma.", "Puede contener trazas de cacahuete."]
+  esperado: {guardian: ok, avisa_alergeno: [tree_nuts], sin_herramientas: [log_meal, save_product]}
+  motivo: "Solo la lista de ingredientes: lleva avellanas (alergia del perfil). Avisa y no registra nada, porque solo pregunta si puede tomarlo."
+- id: conv-37
+  origen: [CU-03]
+  validado: false
+  perfil: {sex: male, age: 35, weight_kg: 74, height_cm: 176, activity_level: moderate, goal: maintain}
+  turnos: ["Me he tomado esta salsa con el pollo"]
+  foto_etiqueta: ["SALSA BARBACOA", "Información nutricional por 100 g", "Valor energético: 640 kJ / 152 kcal", "Grasas: 0,3 g", "Hidratos de carbono: 36 g", "  de los cuales azúcares: 32 g", "Proteínas: 1,0 g", "Sal: 2,1 g", "Ingredientes: tomate, azúcar, vinagre,", "sal, mostaza, ajo, especias,", "conservador: metabisulfito sódico."]
+  usuario_simulado: "Sí, correcto. Unos 30 g."
+  esperado: {guardian: ok, herramientas: [save_product, log_meal]}
+  motivo: "Sin alergias: el flujo normal de Mis productos con tabla e ingredientes; los alérgenos (mostaza, sulfitos) se guardan con el producto sin alarmar al usuario."

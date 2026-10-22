@@ -29,6 +29,7 @@ INGREDIENTS = [
         ("Avellanas tostadas", Allergen.TREE_NUTS),
         ("harina de TRIGO", Allergen.GLUTEN),
         ("conservador E-220", Allergen.SULPHITES),
+        ("antioxidante (disulfito sódico)", Allergen.SULPHITES),
         ("semillas de sésamo", Allergen.SESAME),
         ("yema de huevo", Allergen.EGGS),
     ],

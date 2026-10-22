@@ -47,7 +47,15 @@ WORDS: dict[Allergen, tuple[str, ...]] = {
     Allergen.CELERY: ("apio",),
     Allergen.MUSTARD: ("mostaza",),
     Allergen.SESAME: ("sesamo", "ajonjoli", "tahin", "tahini"),
-    Allergen.SULPHITES: ("sulfito", "metabisulfito", "anhidrido sulfuroso", "dioxido de azufre", r"e-?22[0-8]"),
+    Allergen.SULPHITES: (
+        "sulfito",
+        "disulfito",
+        "bisulfito",
+        "metabisulfito",
+        "anhidrido sulfuroso",
+        "dioxido de azufre",
+        r"e-?22[0-8]",
+    ),
     Allergen.LUPIN: ("altramuz", "altramuces", "lupino"),
     Allergen.MOLLUSCS: ("molusco", "mejillon", "almeja", "berberecho", "calamar", "pulpo", "sepia", "ostra"),
 }

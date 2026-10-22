@@ -15,6 +15,9 @@ MAX_QUESTION_CHARS = 120
 MAX_QUESTIONS = 3
 MAX_ITEMS = 10
 MAX_INGREDIENTS = 40
+# The photo analysis travels at the end of the user's message between these tags (vision/extractor.py);
+# the API neutralises them in the user's own words, so only the analysis can carry them.
+PHOTO_OPEN, PHOTO_CLOSE = "<datos_foto>", "</datos_foto>"
 _IDS = frozenset(a.value for a in Allergen)
 ALLERGEN_IDS = ", ".join(sorted(_IDS))
 

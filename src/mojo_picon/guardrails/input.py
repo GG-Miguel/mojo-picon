@@ -1,5 +1,10 @@
 """Input guardian node: fast rules, then the LLM classifier; the stricter level wins.
 
+The guardian classifies the user's own words: the analysis of a photo, which the API appends between
+<datos_foto> tags, is left out (a warning such as "contains milk, in the user's allergies" read as a
+clinical case, 22 Oct). That block is data with its own defences: the vision prompt, the delimiters
+in the Coach's prompt and the output guardian.
+
 The classifier also sees the assistant's previous answer, as context only: a short reply such as
 "Me he tomado 30 g" after a product label is a meal, not a dose. The fast rules see only the user.
 
@@ -14,9 +19,11 @@ AgentContext): guardrails/ does not import agents/, which builds the graph with 
 from __future__ import annotations
 
 import logging
+import re
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
+from mojo_picon.domain.vision import PHOTO_CLOSE, PHOTO_OPEN
 from mojo_picon.guardrails.rules import GuardDecision, classify_by_rules, stricter
 from mojo_picon.llm import ModelProvider, Role, SafetyBlockedError
 from mojo_picon.prompts import load_prompt
@@ -24,12 +31,14 @@ from mojo_picon.prompts import load_prompt
 log = logging.getLogger(__name__)
 CLASSIFIER_FAILED = GuardDecision(level="aviso", category="classifier_failed", reason="fallback")
 CONTEXT_CHARS = 600  # the end of the previous answer, where its question to the user usually is
+_PHOTO_DATA = re.compile(rf"\s*{re.escape(PHOTO_OPEN)}.*{re.escape(PHOTO_CLOSE)}\s*\Z", re.DOTALL)
 
 
 def last_user_text(state: dict) -> str:
+    """The user's last message, without the photo analysis the API appended to it."""
     for message in reversed(state.get("messages", [])):
         if isinstance(message, HumanMessage) and message.name is None:
-            return message.text
+            return _PHOTO_DATA.sub("", message.text)
     return ""
 
 
