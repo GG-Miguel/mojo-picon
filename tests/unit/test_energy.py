@@ -111,6 +111,13 @@ def test_met_table_loads():
     assert table["weights_moderate"].speed_kmh is None
 
 
+@pytest.mark.parametrize("activity_id", ["swimming_easy", "swimming_vigorous", "cycling_leisure", "cycling_21kmh"])
+def test_swimming_and_cycling_can_be_logged(activity_id):
+    # conv-20 (22 Oct): an hour of swimming could not be logged, the table had only running,
+    # walking and weights
+    assert load_met_table()[activity_id].met > 1
+
+
 def test_per_kg_target():
     t = per_kg_target(70, 1.2, 2)
     assert (t.total_min, t.total_max) == (84, 140)

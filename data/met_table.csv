@@ -7,3 +7,9 @@ running_12kmh,Correr a 12 km/h,11.5,12.0,Compendium of Physical Activities 2011 
 weights_moderate,Pesas o máquinas (esfuerzo moderado),3.5,,Compendium of Physical Activities 2011 (02054) - pending verification
 weights_vigorous,Pesas (esfuerzo intenso),6.0,,Compendium of Physical Activities 2011 (02050) - pending verification
 walking_5kmh,Caminar a 5 km/h,3.5,5.0,Compendium of Physical Activities 2011 (17190) - pending verification
+swimming_easy,Nadar a ritmo suave (crol lento),5.8,,Compendium of Physical Activities 2011 (18310) - pending verification
+swimming_vigorous,Nadar a ritmo intenso (crol rápido),9.8,,Compendium of Physical Activities 2011 (18240) - pending verification
+cycling_leisure,Bicicleta de paseo (menos de 16 km/h),4.0,,Compendium of Physical Activities 2011 (01010) - pending verification
+cycling_17kmh,Bicicleta a 16-19 km/h (esfuerzo suave),6.8,17.7,Compendium of Physical Activities 2011 (01020) - pending verification
+cycling_21kmh,Bicicleta a 19-22 km/h (esfuerzo moderado),8.0,20.9,Compendium of Physical Activities 2011 (01030) - pending verification
+cycling_24kmh,Bicicleta a 22-26 km/h (esfuerzo intenso),10.0,24.1,Compendium of Physical Activities 2011 (01040) - pending verification
