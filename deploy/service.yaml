@@ -38,6 +38,8 @@ spec:
               value: gemini-3.8-flash
             - name: LANGFUSE_HOST
               value: https://cloud.langfuse.com # EU region
+            - name: PRIVACY_CONTACT # shown in the privacy policy for access, portability and objection
+              value: miguelguti250@gmail.com
             - name: QDRANT_URL # guideline index (RAG); not secret
               value: https://84d5ceea-c6e9-48b7-a73c-c5a8e9379ac8.europe-west3-0.gcp.cloud.qdrant.io
             # Secrets from Secret Manager (values added by the owner; Cloud Run reads only these)
