@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import httpx
 import pytest
 from langchain_core.messages import AIMessage
-from tests.fakes import FakeProvider, tool_call
+from tests.fakes import FakeProvider, consented, tool_call
 
 from mojo_picon.agents import build_graph
 from mojo_picon.api.app import RATE_LIMIT_PER_MINUTE, AppDeps, create_app
@@ -25,6 +25,9 @@ TOKENS = {"tok-ana": "ana", "tok-yolanda": "yolanda"}
 
 
 class FakeVerifier:
+    async def delete_account(self, uid: str) -> None:
+        pass  # no real account here
+
     async def verify(self, token: str) -> UserContext:
         if token not in TOKENS:
             raise InvalidTokenError("bad token")
@@ -34,6 +37,7 @@ class FakeVerifier:
 async def make_client(models, store=None, production=False, tracer=None):
     store = store or InMemoryStore()
     await store.save_profile(UserContext(uid="ana"), PROFILE)
+    await consented(store, "ana", "yolanda")
     deps = AppDeps(
         verifier=FakeVerifier(),
         store=store,
@@ -205,6 +209,7 @@ async def test_frontend_is_served_without_shadowing_the_api(tmp_path):
     (tmp_path / "index.html").write_text("<html>mojo</html>")
     store = InMemoryStore()
     await store.save_profile(UserContext(uid="ana"), PROFILE)
+    await consented(store, "ana")
     deps = AppDeps(
         verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),
         graph=build_graph(FakeProvider(), FOODS), tracer=NullTracer(), frontend_dir=tmp_path,
@@ -266,3 +271,49 @@ async def test_sign_in_helpers_are_proxied_from_our_domain_and_nothing_else():
         assert (await client.get("/__/other/handler")).status_code == 404
         assert (await client.post("/__/auth/handler")).status_code == 405  # GET only
     assert len(seen) == 1
+
+
+async def test_nothing_is_served_before_the_terms_are_accepted():
+    from mojo_picon.domain.consent import CONSENT_VERSION
+
+    client, store = await make_client(FakeProvider())
+    await store.delete_user(UserContext(uid="ana"))  # a new user: signed in, terms not accepted
+    async with client:
+        assert (await client.get("/me/profile", headers=ANA)).status_code == 403
+        assert (await client.post("/chat", headers=ANA, data={"message": "Hola"})).json()[
+            "detail"
+        ] == "consent_required"
+        assert (await client.get("/me/consent", headers=ANA)).json()["accepted"] is False
+        old = await client.post("/me/consent", headers=ANA, json={"version": "2020-01-01"})
+        assert old.status_code == 409  # only the current text can be accepted
+        accepted = await client.post("/me/consent", headers=ANA, json={"version": CONSENT_VERSION})
+        assert accepted.json()["accepted"] is True
+        assert (await client.get("/me/profile", headers=ANA)).status_code == 404  # served now: no profile yet
+
+
+class _ForgetfulTracer(NullTracer):
+    def __init__(self):
+        self.forgotten = []
+
+    async def forget_user(self, user_id: str) -> int:
+        self.forgotten.append(user_id)
+        return 3
+
+
+async def test_deleting_the_account_erases_the_data_the_traces_and_the_account(monkeypatch):
+    deleted_accounts = []
+
+    async def delete_account(self, uid):
+        deleted_accounts.append(uid)
+
+    monkeypatch.setattr(FakeVerifier, "delete_account", delete_account)
+    tracer = _ForgetfulTracer()
+    client, store = await make_client(FakeProvider(), tracer=tracer)
+    await store.save_profile(UserContext(uid="yolanda"), PROFILE)
+    async with client:
+        response = await client.delete("/me", headers=ANA)
+    assert response.json() == {"deleted": True, "traces_deleted": 3}
+    assert tracer.forgotten == ["ana"] and deleted_accounts == ["ana"]
+    assert await store.get_profile(UserContext(uid="ana")) is None
+    assert await store.get_consent(UserContext(uid="ana")) is None
+    assert await store.get_profile(UserContext(uid="yolanda")) == PROFILE  # only the caller's data

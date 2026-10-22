@@ -7,6 +7,7 @@ The uid always comes from the verified token, never from the request body or the
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import Protocol
 
 from mojo_picon.auth.context import UserContext
@@ -18,6 +19,10 @@ class InvalidTokenError(Exception):
 
 class TokenVerifier(Protocol):
     async def verify(self, token: str) -> UserContext: ...
+
+    async def delete_account(self, uid: str) -> None:
+        """Delete the sign-in account itself (right to erasure); its tokens stop working."""
+        ...
 
 
 class FirebaseTokenVerifier:
@@ -63,3 +68,9 @@ def bearer_token(authorization_header: str | None) -> str:
     if scheme.lower() != "bearer" or not token.strip():
         raise InvalidTokenError("expected a Bearer token")
     return token.strip()
+
+    async def delete_account(self, uid: str) -> None:
+        from firebase_admin import auth
+
+        with contextlib.suppress(auth.UserNotFoundError):  # already deleted: erasure is idempotent
+            await asyncio.to_thread(auth.delete_user, uid, app=self._app)

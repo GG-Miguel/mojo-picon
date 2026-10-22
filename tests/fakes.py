@@ -10,6 +10,8 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.runnables import RunnableLambda
 from pydantic import Field
 
+from mojo_picon.auth import UserContext
+from mojo_picon.domain.consent import CONSENT_VERSION, Consent
 from mojo_picon.llm import Role
 
 
@@ -63,3 +65,11 @@ class FakeProvider:
 
 def tool_call(name: str, call_id: str = "c1", **args: Any) -> AIMessage:
     return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": call_id, "type": "tool_call"}])
+
+
+async def consented(store, *uids: str) -> None:
+    """These users have accepted the current terms: the API serves nothing before that."""
+    from datetime import UTC, datetime
+
+    for uid in uids:
+        await store.save_consent(UserContext(uid=uid), Consent(version=CONSENT_VERSION, accepted_at=datetime.now(UTC)))

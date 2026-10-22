@@ -11,6 +11,7 @@ from typing import Protocol
 
 from mojo_picon.auth.context import UserContext
 from mojo_picon.domain import Profile
+from mojo_picon.domain.consent import Consent
 from mojo_picon.domain.diary import DiaryEntry, Session
 from mojo_picon.domain.food import Food
 
@@ -33,3 +34,11 @@ class Store(Protocol):
     async def get_session(self, ctx: UserContext, session_id: str) -> Session | None: ...
 
     async def save_session(self, ctx: UserContext, session: Session) -> None: ...
+
+    async def get_consent(self, ctx: UserContext) -> Consent | None: ...
+
+    async def save_consent(self, ctx: UserContext, consent: Consent) -> None: ...
+
+    async def delete_user(self, ctx: UserContext) -> None:
+        """Everything of the user: profile, diary, products, sessions and consent (right to erasure)."""
+        ...

@@ -27,6 +27,10 @@ class Tracer(Protocol):
 
     def event(self, name: str, metadata: dict[str, Any]) -> None: ...
 
+    async def forget_user(self, user_id: str) -> int:
+        """Delete every trace of a user (right to erasure); returns how many."""
+        ...
+
 
 class NullTracer:
     @asynccontextmanager
@@ -35,6 +39,9 @@ class NullTracer:
 
     def event(self, name: str, metadata: dict[str, Any]) -> None:
         pass
+
+    async def forget_user(self, user_id: str) -> int:
+        return 0
 
 
 class LangfuseTracer:
@@ -61,6 +68,22 @@ class LangfuseTracer:
 
     def event(self, name: str, metadata: dict[str, Any]) -> None:
         self._client.create_event(name=name, metadata=metadata)
+
+    async def forget_user(self, user_id: str) -> int:
+        """Every trace with this user id, deleted in batches (the traces carry the uid, never the email)."""
+        # All the ids first, page by page: Langfuse deletes asynchronously, so listing again after a
+        # delete could return the same traces and never end.
+        ids: list[str] = []
+        page_number = 1
+        while True:
+            page = await self._client.async_api.trace.list(user_id=user_id, page=page_number, limit=100, fields="core")
+            ids += [t.id for t in page.data]
+            if page_number >= page.meta.total_pages:
+                break
+            page_number += 1
+        for start in range(0, len(ids), 100):
+            await self._client.async_api.trace.delete_multiple(trace_ids=ids[start : start + 100])
+        return len(ids)
 
 
 def tracer_from_settings(settings) -> Tracer:

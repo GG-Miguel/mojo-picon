@@ -45,9 +45,9 @@ The user uploads a photo of the dish.
 From an external agent (another framework, e.g. Google ADK): «apunta que he comido paella y dime cuánta proteína me queda».
 - **Acceptance:** the meal is logged in **the diary of the token's owner**; the web panel shows it; a token cannot write to another user's diary.
 
-### UC-10 · Data rights
-The user exports or deletes their data.
-- **Acceptance:** `GET /me/export` returns everything; `DELETE /me` deletes profile, diary, memory and associated traces.
+### UC-10 · Terms, consent and data rights
+On the first visit the user reads the terms (an AI, not a health professional, general guidance without medical value or legal binding) and the privacy policy, and accepts them with an unticked box; they can delete their account at any time.
+- **Acceptance:** the API serves no data (`/me/profile`, `/day`, `/chat`) until the current version of the terms is accepted (`POST /me/consent`, 403 `consent_required` before); a new version of the text asks again. `DELETE /me` deletes the user's traces in Langfuse, every document under `users/{uid}` (profile, diary, products and recipes, sessions, consent) and the Firebase account. Access, portability and objection: by writing to the contact in the privacy policy (`PRIVACY_CONTACT`).
 
 ### UC-11 · Delegate a query to Mojo Picón (A2A) · milestone 3
 An external agent asks «¿qué ceno si mañana tengo carrera?».

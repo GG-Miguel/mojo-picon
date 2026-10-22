@@ -4,7 +4,7 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage
 from PIL import Image
-from tests.fakes import FakeProvider
+from tests.fakes import FakeProvider, consented
 from tests.unit.test_api import ANA, FakeVerifier, events
 
 from mojo_picon.agents import build_graph
@@ -84,6 +84,7 @@ async def test_chat_with_photo_streams_the_vision_step_and_never_stores_the_imag
         vision=[seen], guardian=[GuardDecision(level="ok", category="none")], coach=[AIMessage("¿Lleva salsa?")]
     )
     store = InMemoryStore()
+    await consented(store, "ana")
     await store.save_profile(UserContext(uid="ana"), Profile(age=34, sex=Sex.MALE, weight_kg=70, height_cm=175))
     deps = AppDeps(
         verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),
@@ -114,6 +115,7 @@ async def test_chat_with_photo_streams_the_vision_step_and_never_stores_the_imag
 async def test_invalid_photo_returns_400():
     models = FakeProvider()
     store = InMemoryStore()
+    await consented(store, "ana")
     deps = AppDeps(
         verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),
         graph=build_graph(models, FOODS), tracer=NullTracer(), models=models,

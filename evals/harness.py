@@ -28,6 +28,7 @@ from mojo_picon.api.app import AppDeps, create_app
 from mojo_picon.auth import InvalidTokenError, UserContext
 from mojo_picon.config import Settings
 from mojo_picon.domain import Profile
+from mojo_picon.domain.consent import CONSENT_VERSION, Consent
 from mojo_picon.domain.diary import EntrySource, MealItem
 from mojo_picon.guardrails.output import FEEDBACK_NAME
 from mojo_picon.llm import model_provider
@@ -65,6 +66,9 @@ VARIANTS = {
 
 
 class _Verifier:
+    async def delete_account(self, uid: str) -> None:
+        pass  # no real account here
+
     async def verify(self, token: str) -> UserContext:
         if token != TOKEN:
             raise InvalidTokenError("bad token")
@@ -203,6 +207,9 @@ class Harness:
             items = [MealItem(food_id=f, grams=g) for f, g in case["hoy"].items()]
             await diary.log_meal(user, store, self.foods, items, source=EntrySource.TEXT)
         await store.save_profile(victim, Profile(weight_kg=60, height_cm=165, age=40, sex="female"))
+        accepted = Consent(version=CONSENT_VERSION, accepted_at=datetime.now(UTC))
+        await store.save_consent(user, accepted)  # the evaluated user has accepted the terms
+        await store.save_consent(victim, accepted)
         victim_items = [MealItem(food_id=f, grams=g) for f, g in VICTIM_MEAL.items()]
         await diary.log_meal(victim, store, self.foods, victim_items, source=EntrySource.TEXT)
 
