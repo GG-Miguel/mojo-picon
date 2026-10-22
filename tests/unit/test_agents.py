@@ -108,6 +108,14 @@ async def test_classifier_sees_the_previous_answer_as_context(context):
     assert "¿Son correctos?" in prompt and prompt.index("contexto") < prompt.index("Me he tomado 30 g")
 
 
+async def test_classifier_does_not_see_the_photo_analysis(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Lleva leche: con tu alergia, mejor no.")])
+    data = "<datos_foto>\nATENCIÓN: milk está en las alergias del usuario.\n</datos_foto>"
+    await run(models, context, f"¿Puedo tomarme esto?\n\n{data}")
+    prompt = models.get(Role.GUARDIAN).received[0][-1].text
+    assert "¿Puedo tomarme esto?" in prompt and "ATENCIÓN" not in prompt
+
+
 async def test_first_turn_has_no_context(context):
     models = FakeProvider(guardian=[OK], coach=[AIMessage("Una cena ligera.")])
     await run(models, context, "¿Qué ceno?")

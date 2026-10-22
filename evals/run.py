@@ -219,6 +219,8 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
             results.append(("sin_animar_alcohol", checks.no_endorses_alcohol(run)))
         if exp.get("cita_fuente"):
             results.append(("cita_fuente", checks.cites_source(run)))
+        if exp.get("avisa_alergeno"):
+            results.append(("avisa_alergeno", checks.warns_allergen(run, exp["avisa_alergeno"])))
         out = {"id": case["id"], "rep": rep, **_verdict(results), **_summary(run)}
         if judge is not None:
             from evals.metrics import score

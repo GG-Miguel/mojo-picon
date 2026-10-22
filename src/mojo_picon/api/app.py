@@ -50,7 +50,14 @@ from mojo_picon.store.base import Store
 from mojo_picon.tools import diary
 from mojo_picon.tools.energy import MetActivity
 from mojo_picon.tools.food_search import FoodIndex
-from mojo_picon.vision.extractor import MAX_BYTES, InvalidImageError, extract, prepare_image, summarise
+from mojo_picon.vision.extractor import (
+    MAX_BYTES,
+    InvalidImageError,
+    extract,
+    neutralise_photo_tags,
+    prepare_image,
+    summarise,
+)
 
 log = logging.getLogger(__name__)
 SESSION_MESSAGES = 10  # recent messages kept between turns (summary of older ones: milestone 2)
@@ -249,11 +256,13 @@ async def _run_turn(
     deps: AppDeps, context: AgentContext, session_id: str, text: str, jpeg: bytes | None = None
 ) -> AsyncIterator[str]:
     user = context.user
+    text = neutralise_photo_tags(text)
     if jpeg is not None:
         # The vision extractor runs before the graph; only its structured result goes on, as data.
         yield sse(StepEvent(id="vision", label="Analizando la foto", status="start"))
         try:
-            summary = summarise(await extract(deps.models, jpeg), context.food_index)
+            allergies = context.profile.allergens if context.profile else frozenset()
+            summary = summarise(await extract(deps.models, jpeg), context.food_index, allergies)
         except Exception:
             log.exception("vision failed")
             yield sse(StepEvent(id="vision", label="Analizando la foto", status="failed"))
