@@ -18,6 +18,23 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   return (await response.json()) as T
 }
 
+export type ConsentState = {
+  accepted: boolean
+  version: string | null
+  required_version: string
+  contact: string
+}
+
+export const getConsent = (token: string) => request<ConsentState>(token, '/me/consent')
+export const acceptConsent = (token: string, version: string) =>
+  request<ConsentState>(token, '/me/consent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version }),
+  })
+export const deleteAccount = (token: string) =>
+  request<{ deleted: boolean; traces_deleted: number | null }>(token, '/me', { method: 'DELETE' })
+
 export const getDay = (token: string) => request<Day>(token, '/day')
 export const getProfile = (token: string) => request<Profile>(token, '/me/profile')
 export const putProfile = (token: string, profile: Profile) =>

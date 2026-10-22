@@ -53,6 +53,7 @@ class Settings:
     frontend_dir: str = ""  # compiled React app served by the API (set in the container image)
     langfuse_enabled: bool = False
     api_dev_tokens: dict[str, str] = field(default_factory=dict)
+    privacy_contact: str = ""  # who to write to for data rights (privacy policy); set it when deploying
     mcp_dev_tokens: dict[str, str] = field(default_factory=dict)
 
     def model_for(self, role: str) -> str:
@@ -89,5 +90,6 @@ class Settings:
             frontend_dir=env.get("FRONTEND_DIR", defaults.frontend_dir),
             langfuse_enabled=bool(env.get("LANGFUSE_PUBLIC_KEY") and env.get("LANGFUSE_SECRET_KEY")),
             api_dev_tokens=_pairs(env.get("API_DEV_TOKENS", "")),
+            privacy_contact=env.get("PRIVACY_CONTACT", defaults.privacy_contact),
             mcp_dev_tokens=_pairs(env.get("MCP_DEV_TOKENS", "")),
         )

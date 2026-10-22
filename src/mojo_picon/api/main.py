@@ -40,6 +40,7 @@ def build_app(settings: Settings):
         frontend_dir=Path(settings.frontend_dir) if settings.frontend_dir else None,
         production=settings.is_production,
         auth_proxy_host=f"{settings.gcp_project_id}.firebaseapp.com",
+        privacy_contact=settings.privacy_contact,
     )
     return create_app(deps)
 
