@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from mojo_picon.domain.food import Allergen
+from mojo_picon.vision.allergens import find
 
 # Nothing without a limit (Principles), and a defence against text written in the photo
 # (OWASP LLM01, indirect injection): whatever the model copies from the image cannot grow into
@@ -11,6 +14,9 @@ MAX_FOOD_CHARS = 60
 MAX_QUESTION_CHARS = 120
 MAX_QUESTIONS = 3
 MAX_ITEMS = 10
+MAX_INGREDIENTS = 40
+_IDS = frozenset(a.value for a in Allergen)
+ALLERGEN_IDS = ", ".join(sorted(_IDS))
 
 
 def _cut(text: str, limit: int) -> str:
@@ -64,18 +70,64 @@ class NutritionLabel(BaseModel):
         return _cut(value, MAX_FOOD_CHARS)
 
 
+# Package fields the model must always return, empty when the photo is not a package. As an optional
+# nested object, Gemini 3.8 Flash (through LiteLLM) filled the ingredients in 1 of 5 runs; as required
+# lists, in 6 of 6 (22 Oct). The code keeps defaults, so a result can be built without them.
+PACKAGE_FIELDS = ("product", "ingredients", "allergens", "may_contain")
+
+
+def _require_package_fields(schema: dict) -> None:
+    schema["required"] = [*schema.get("required", []), *PACKAGE_FIELDS]
+
+
 class VisionResult(BaseModel):
     """Structured output of the vision extractor (Análisis de fotos)."""
+
+    model_config = ConfigDict(json_schema_extra=_require_package_fields)
 
     is_food: bool
     items: list[VisionItem] = Field(default_factory=list)
     label: NutritionLabel | None = Field(default=None, description="solo si la foto es una tabla nutricional")
+    product: str = Field(default="", description="nombre del producto del envase; vacío si no es un envase")
+    ingredients: list[str] = Field(
+        default_factory=list, description="ingredientes del envase, copiados tal cual y en orden; vacía si no se ven"
+    )
+    # Strings, not list[Allergen]: the validator turns ids or Spanish names («leche», «frutos de cáscara»)
+    # into the 14 ids, and the code checks the ingredients again by keyword (vision/allergens.py).
+    allergens: list[str] = Field(
+        default_factory=list, description=f"alérgenos que contiene según los ingredientes ({ALLERGEN_IDS})"
+    )
+    may_contain: list[str] = Field(
+        default_factory=list, description=f"alérgenos de «puede contener» o «trazas» ({ALLERGEN_IDS})"
+    )
     questions: list[str] = Field(default_factory=list, description="preguntas generales sobre el plato")
+
+    @property
+    def is_package(self) -> bool:
+        return self.label is not None or bool(self.ingredients)
 
     @field_validator("items")
     @classmethod
     def _few_items(cls, value: list[VisionItem]) -> list[VisionItem]:
         return value[:MAX_ITEMS]
+
+    @field_validator("product")
+    @classmethod
+    def _short_product(cls, value: str) -> str:
+        return _cut(value, MAX_FOOD_CHARS) if value.strip() else ""
+
+    @field_validator("ingredients")
+    @classmethod
+    def _short_ingredients(cls, value: list[str]) -> list[str]:
+        return [_cut(i, MAX_FOOD_CHARS) for i in value if i.strip()][:MAX_INGREDIENTS]
+
+    @field_validator("allergens", "may_contain")
+    @classmethod
+    def _allergen_ids(cls, value: list[str]) -> list[str]:
+        ids: set[str] = set()
+        for name in value:
+            ids |= {name} if name in _IDS else {a.value for a in find(name)}
+        return sorted(ids)
 
     @field_validator("questions")
     @classmethod

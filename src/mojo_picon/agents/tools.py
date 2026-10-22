@@ -138,17 +138,24 @@ async def save_product(
     saturated_g: float = 0,
     fiber_g: float = 0,
     salt_g: float = 0,
+    allergens: list[str] | None = None,
+    may_contain: list[str] | None = None,
 ) -> str:
     """Guarda en «Mis productos» un producto leído de la etiqueta de una foto, con sus valores POR 100 g,
-    solo después de que el usuario los haya confirmado. Devuelve su food_id para registrarlo con
-    log_meal. Si las kcal no cuadran con los macronutrientes, devuelve un error: repasa la lectura."""
+    solo después de que el usuario los haya confirmado. Si se leyó la lista de ingredientes, pasa sus
+    alérgenos (`allergens`, `may_contain`) tal como los dio el análisis de la foto. Devuelve su food_id
+    para registrarlo con log_meal. Si las kcal no cuadran con los macronutrientes, devuelve un error:
+    repasa la lectura."""
     ctx = runtime.context
     try:
         product = await store_product(ctx.user, ctx.store, name, kcal, protein_g, carbs_g, fat_g,
-                                      sugars_g, saturated_g, fiber_g, salt_g)  # fmt: skip
+                                      sugars_g, saturated_g, fiber_g, salt_g,
+                                      allergens or [], may_contain or [])  # fmt: skip
     except ProductError as e:
         return _json({"error": str(e)})
-    return _json({"guardado": {"food_id": product.id, "name": product.name, "por_100g": product.per_100g}})
+    saved = {"food_id": product.id, "name": product.name, "por_100g": product.per_100g,
+             "alergenos": sorted(product.allergens)}  # fmt: skip
+    return _json({"guardado": saved})
 
 
 @tool

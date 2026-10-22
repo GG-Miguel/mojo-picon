@@ -253,7 +253,8 @@ async def _run_turn(
         # The vision extractor runs before the graph; only its structured result goes on, as data.
         yield sse(StepEvent(id="vision", label="Analizando la foto", status="start"))
         try:
-            summary = summarise(await extract(deps.models, jpeg), context.food_index)
+            allergies = context.profile.allergens if context.profile else frozenset()
+            summary = summarise(await extract(deps.models, jpeg), context.food_index, allergies)
         except Exception:
             log.exception("vision failed")
             yield sse(StepEvent(id="vision", label="Analizando la foto", status="failed"))

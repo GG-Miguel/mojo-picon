@@ -2,17 +2,20 @@
 
 A product is a Food with id «mi_<name>» in `users/{uid}/products`. The values come from the label as
 the vision model read it and the user confirmed it; before saving, the code checks that the kcal fit
-the macronutrients (4/4/9), which catches a misread figure. Products are for logging only: their
-allergens are unknown, so the planner never proposes them.
+the macronutrients (4/4/9), which catches a misread figure. The allergens come from the ingredients
+list when the user photographed it, "may contain" included (an allergic user avoids traces too), so
+check_allergens covers the product. Products are for logging only: a list read from a photo can be
+incomplete, so the planner never proposes them.
 """
 
 from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Sequence
 
 from mojo_picon.auth.context import UserContext
-from mojo_picon.domain.food import Food, Nutrients
+from mojo_picon.domain.food import Allergen, Food, Nutrients
 from mojo_picon.store.base import Store
 
 PREFIX = "mi_"
@@ -57,8 +60,14 @@ async def save_product(
     saturated_g: float = 0,
     fiber_g: float = 0,
     salt_g: float = 0,
+    allergens: Sequence[str] = (),
+    may_contain: Sequence[str] = (),
 ) -> Food:
     check_energy(kcal, protein_g, carbs_g, fat_g, fiber_g)
+    try:
+        declared = frozenset(Allergen(a) for a in [*allergens, *may_contain])
+    except ValueError as e:
+        raise ProductError(f"alérgeno desconocido: {e}; usa los 14 del Reglamento 1169/2011") from e
     if sugars_g > carbs_g or saturated_g > fat_g:
         raise ProductError("los azúcares no pueden superar los hidratos ni las saturadas las grasas")
     existing = {p.id for p in await store.get_products(ctx)}
@@ -78,6 +87,7 @@ async def save_product(
             fiber_g=fiber_g,
             sodium_mg=salt_g * SODIUM_MG_PER_G_SALT,
         ),
+        allergens=declared,
         category="mis_productos",
         source="etiqueta del envase (usuario)",
     )
