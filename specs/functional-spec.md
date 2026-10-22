@@ -53,6 +53,12 @@ On the first visit the user reads the terms (an AI, not a health professional, g
 An external agent asks «¿qué ceno si mañana tengo carrera?».
 - **Acceptance:** Mojo Picón reports progress, asks for the information it lacks and returns a verified plan with sources, with the same guardrails and authorization as the web. If it is not implemented, it remains a documented design.
 
+### UC-12 · My recipes (Mis recetas)
+«¿Qué receta sencilla ceno para ganar músculo?», «me he comido una ración de lentejas», «guárdame mi receta de garbanzos».
+- **Library:** `data/recipes.yaml`, simple Spanish (and Canarian) dishes high in protein, made of foods of the table, with servings and short steps written for Mojo Picón; `validado: false` until reviewed.
+- **Acceptance:** a recipe's nutrients and allergens come from its ingredients by code; recipes with the user's allergens are flagged and not proposed; «una ración» is logged in grams by code (`measure: racion`); a user's own recipe is saved only after one confirmation, with ingredients of the table only (`users/{uid}/products`, category `mis_recetas`).
+- **Next:** adding a recipe from a web page (schema.org Recipe) or a YouTube video (ingredients and link only, never the text); the planner proposing recipes; favourites; the shopping list from recipes.
+
 ## Non-functional requirements
 | Requirement | Target |
 |---|---|

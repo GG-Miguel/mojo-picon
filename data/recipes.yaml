@@ -1,0 +1,175 @@
+# Recetas: platos españoles sencillos y altos en proteína, para ganar músculo (Mis recetas).
+# ingredientes: food_id de data/foods.csv -> gramos de la receta entera, con el peso del alimento tal como
+#   está en la tabla (cocido cuando la tabla lo tiene cocido). Los nutrientes y los alérgenos los calcula
+#   el código (tools/recipes.py); nada se escribe a mano.
+# raciones: en cuántas raciones se reparte; una ración = gramos totales / raciones.
+# pasos: redactados para Mojo Picón, breves y sin copiar ninguna fuente.
+# validado: false hasta que el autor (o un dietista-nutricionista) las revise.
+- id: receta_lentejas_estofadas
+  nombre: Lentejas estofadas con chorizo
+  raciones: 4
+  etiquetas: [comida, legumbres, alto_en_proteina]
+  ingredientes: {lentejas_cocidas: 1000, chorizo: 80, patata_cocida: 300, zanahoria: 120, cebolla: 100, pimiento_rojo: 80, ajo: 10, aceite_oliva: 30}
+  pasos:
+    - Sofríe la cebolla, el pimiento, el ajo y la zanahoria picados en el aceite.
+    - Añade el chorizo en rodajas y la patata en trozos, y cubre con agua.
+    - Incorpora las lentejas cocidas y deja hervir a fuego suave 15 minutos.
+  validado: false
+- id: receta_garbanzos_espinacas
+  nombre: Garbanzos con espinacas y huevo
+  raciones: 4
+  etiquetas: [comida, legumbres, alto_en_proteina]
+  ingredientes: {garbanzos_cocidos: 800, espinacas_cocidas: 400, huevo_cocido: 200, tomate: 100, pan_blanco: 40, ajo: 10, aceite_oliva: 30}
+  pasos:
+    - Fríe el pan y el ajo en el aceite y májalos con un poco de agua.
+    - Rehoga el tomate, añade las espinacas y los garbanzos con su caldo y el majado.
+    - Sirve con el huevo cocido en cuartos.
+  validado: false
+- id: receta_pollo_ajillo_arroz
+  nombre: Pollo al ajillo con arroz
+  raciones: 2
+  etiquetas: [comida, cena, alto_en_proteina]
+  ingredientes: {pechuga_pollo_plancha: 400, arroz_blanco_cocido: 400, ajo: 20, aceite_oliva: 20, limon: 20}
+  pasos:
+    - Dora el pollo en dados con el aceite y los ajos laminados.
+    - Añade unas gotas de limón al final.
+    - Sirve con el arroz blanco.
+  validado: false
+- id: receta_merluza_patatas
+  nombre: Merluza a la plancha con patatas y ensalada
+  raciones: 2
+  etiquetas: [comida, cena, pescado, alto_en_proteina]
+  ingredientes: {merluza: 400, patata_cocida: 400, ensalada_verde: 150, aceite_oliva: 20, ajo: 5, limon: 20}
+  pasos:
+    - Haz la merluza a la plancha con un poco de aceite.
+    - Acompaña con patata cocida y la ensalada aliñada con el resto del aceite y el limón.
+  validado: false
+- id: receta_macarrones_atun
+  nombre: Macarrones con atún y tomate
+  raciones: 2
+  etiquetas: [comida, pasta, alto_en_proteina]
+  ingredientes: {pasta_cocida: 400, atun_natural: 160, salsa_tomate: 200, cebolla: 60, parmesano: 20, aceite_oliva: 10}
+  pasos:
+    - Pocha la cebolla en el aceite y añade la salsa de tomate y el atún escurrido.
+    - Mezcla con la pasta cocida y espolvorea el queso.
+  validado: false
+- id: receta_pisto_huevo
+  nombre: Pisto con huevo y pan integral
+  raciones: 2
+  etiquetas: [cena, verduras, alto_en_proteina]
+  ingredientes: {calabacin: 200, pimiento_rojo: 100, pimiento_verde: 100, cebolla: 100, tomate: 300, huevo: 240, pan_integral: 80, aceite_oliva: 20}
+  pasos:
+    - Pocha las verduras picadas en el aceite y añade el tomate hasta que espese.
+    - Cuaja los huevos encima del pisto.
+    - Acompaña con el pan.
+  validado: false
+- id: receta_revuelto_champinones_gambas
+  nombre: Revuelto de champiñones y gambas
+  raciones: 2
+  etiquetas: [cena, huevos, alto_en_proteina]
+  ingredientes: {huevo: 240, champinones: 200, gambas: 150, pan_integral: 80, ajo: 5, aceite_oliva: 15}
+  pasos:
+    - Saltea los champiñones con el ajo y añade las gambas.
+    - Incorpora los huevos batidos y retira cuando cuajen.
+    - Sirve con el pan.
+  validado: false
+- id: receta_ensalada_garbanzos_atun
+  nombre: Ensalada de garbanzos con atún y huevo
+  raciones: 2
+  etiquetas: [comida, cena, legumbres, alto_en_proteina]
+  ingredientes: {garbanzos_cocidos: 300, atun_natural: 160, huevo_cocido: 100, tomate: 200, pimiento_rojo: 80, cebolla: 50, aceite_oliva: 15, vinagre: 10}
+  pasos:
+    - Pica el tomate, el pimiento y la cebolla.
+    - Mezcla con los garbanzos, el atún y el huevo, y aliña con aceite y vinagre.
+  validado: false
+- id: receta_bocadillo_pavo_queso
+  nombre: Bocadillo de pavo y queso fresco
+  raciones: 1
+  etiquetas: [desayuno, merienda, alto_en_proteina]
+  ingredientes: {pan_integral: 120, fiambre_pavo: 80, queso_fresco: 60, tomate: 50, aceite_oliva: 5}
+  pasos:
+    - Unta el pan con tomate y un hilo de aceite.
+    - Rellena con el pavo y el queso fresco.
+  validado: false
+- id: receta_yogur_avena_platano
+  nombre: Yogur griego con avena, plátano y nueces
+  raciones: 1
+  etiquetas: [desayuno, merienda]
+  ingredientes: {yogur_griego: 200, copos_avena: 50, platano: 120, nueces: 15, miel: 10}
+  pasos:
+    - Mezcla el yogur con la avena.
+    - Añade el plátano en rodajas, las nueces y la miel.
+  validado: false
+- id: receta_tostada_tomate_jamon
+  nombre: Tostada con tomate, aceite y jamón
+  raciones: 1
+  etiquetas: [desayuno, merienda]
+  ingredientes: {pan_tostado_casero: 80, tomate: 60, jamon_serrano: 50, aceite_oliva: 10}
+  pasos:
+    - Tuesta el pan y úntalo con el tomate rallado y el aceite.
+    - Pon encima el jamón.
+  validado: false
+- id: receta_papas_mojo_cherne
+  nombre: Papas arrugadas con mojo y cherne
+  raciones: 2
+  etiquetas: [comida, pescado, canaria, alto_en_proteina]
+  ingredientes: {cherne: 400, papas_arrugadas: 400, mojo_picon: 40, ensalada_verde: 150}
+  pasos:
+    - Haz el cherne a la plancha o sancochado.
+    - Sirve con las papas arrugadas, el mojo aparte y la ensalada.
+  validado: false
+- id: receta_leche_gofio_platano
+  nombre: Leche con gofio y plátano
+  raciones: 1
+  etiquetas: [desayuno, merienda, canaria]
+  ingredientes: {leche_semidesnatada: 300, gofio: 50, platano: 100}
+  pasos:
+    - Mezcla la leche con el gofio hasta que no queden grumos.
+    - Acompaña con el plátano.
+  validado: false
+- id: receta_arroz_pollo_verduras
+  nombre: Arroz con pollo y verduras
+  raciones: 3
+  etiquetas: [comida, alto_en_proteina]
+  ingredientes: {arroz_blanco_cocido: 600, pechuga_pollo_plancha: 400, pimiento_rojo: 100, guisantes_cocidos: 100, cebolla: 100, tomate: 100, aceite_oliva: 30}
+  pasos:
+    - Sofríe la cebolla, el pimiento y el tomate en el aceite.
+    - Añade el pollo en dados y los guisantes.
+    - Mezcla con el arroz cocido y deja un par de minutos al fuego.
+  validado: false
+- id: receta_salmon_boniato_brocoli
+  nombre: Salmón al horno con boniato y brócoli
+  raciones: 2
+  etiquetas: [cena, pescado, alto_en_proteina]
+  ingredientes: {salmon: 300, boniato_cocido: 400, brocoli_cocido: 300, aceite_oliva: 15, limon: 20}
+  pasos:
+    - Hornea el salmón con un poco de aceite y limón unos 15 minutos.
+    - Sirve con el boniato y el brócoli.
+  validado: false
+- id: receta_ternera_patatas_pimientos
+  nombre: Filete de ternera con patatas y pimientos
+  raciones: 2
+  etiquetas: [comida, cena, alto_en_proteina]
+  ingredientes: {ternera_filete: 300, patata_cocida: 400, pimiento_verde: 150, aceite_oliva: 20}
+  pasos:
+    - Haz los filetes a la plancha.
+    - Saltea los pimientos en el aceite y sirve con la patata.
+  validado: false
+- id: receta_batido_platano_avena
+  nombre: Batido de leche, plátano, avena y cacahuete
+  raciones: 1
+  etiquetas: [desayuno, merienda, despues_de_entrenar]
+  ingredientes: {leche_semidesnatada: 300, platano: 120, copos_avena: 40, crema_cacahuete: 20}
+  pasos:
+    - Tritura todo hasta que quede homogéneo.
+  validado: false
+- id: receta_potaje_garbanzos_bacalao
+  nombre: Potaje de garbanzos con bacalao y espinacas
+  raciones: 4
+  etiquetas: [comida, legumbres, pescado, alto_en_proteina]
+  ingredientes: {garbanzos_cocidos: 800, bacalao: 300, espinacas_cocidas: 300, huevo_cocido: 100, cebolla: 100, ajo: 10, aceite_oliva: 30}
+  pasos:
+    - Sofríe la cebolla y el ajo en el aceite.
+    - Añade los garbanzos con agua, el bacalao desmigado y las espinacas, y cuece 10 minutos.
+    - Sirve con el huevo cocido picado.
+  validado: false

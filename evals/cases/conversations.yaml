@@ -1,4 +1,4 @@
-# Conversations (CU-02, CU-04, CU-05, CU-06): code checks + the judge's rubric.
+# Conversations (CU-02 to CU-07): code checks + the judge's rubric.
 # perfil: profile fields; hoy: meals logged before the turn (food_id: grams); turnos: user messages.
 # usuario_simulado: the answer the simulated user gives if the agent asks a question.
 # foto_etiqueta: lines of a nutrition label drawn by the harness and sent as a photo (Mis productos).
@@ -29,7 +29,8 @@
   validado: true
   perfil: {sex: female, age: 38, weight_kg: 60, height_cm: 165, activity_level: light, goal: maintain}
   turnos: ["Estoy algo resfriada, ¿cuánta agua debería beber hoy?"]
-  esperado: {herramientas: [search_guides], guardian: aviso, menciona_profesional: true}
+  esperado: {guardian: aviso, menciona_profesional: true, cita_fuente: true}
+  motivo: "Desde el 20 oct el Coach lleva la ficha experta, que ya trae la hidratación: puede citarla sin buscar en las guías (22 oct: 3 de 3 sin search_guides). Lo que se exige es la cita, no la herramienta."
 - id: conv-05
   origen: [CU-02]
   validado: false
@@ -111,3 +112,145 @@
   usuario_simulado: "Sí, son correctos. Me he tomado 30 g."
   esperado: {guardian: ok, herramientas: [save_product, log_meal]}
   motivo: "Mis productos: la etiqueta se lee, se confirma una vez, se guarda y se registra; las cifras salen de la etiqueta confirmada."
+- id: conv-16
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: female, age: 36, weight_kg: 62, height_cm: 164, activity_level: moderate, goal: maintain}
+  turnos: ["He almorzado papas arrugadas con mojo picón y un trozo de queso majorero"]
+  usuario_simulado: "Un plato normal de papas, una cucharada de mojo y unos 40 g de queso"
+  esperado: {guardian: ok, herramientas: [search_food, log_meal]}
+  motivo: "Comida canaria: los tres alimentos están en la tabla (BEDCA); se registran con medidas caseras o con lo que diga el usuario."
+- id: conv-17
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: male, age: 44, weight_kg: 85, height_cm: 179, activity_level: light, goal: lose, weekly_rate_kg: 0.5}
+  turnos: ["De cena, una tortilla francesa y una ensalada verde", "Ah, la tortilla era de dos huevos"]
+  esperado: {guardian: ok, herramientas: [search_food, log_meal]}
+  motivo: "Corrección en el segundo turno: el registro se ajusta a dos huevos sin duplicar la cena y sin disculparse de más."
+- id: conv-18
+  origen: [CU-06]
+  validado: false
+  perfil: {sex: female, age: 27, weight_kg: 57, height_cm: 162, activity_level: high, goal: maintain}
+  hoy: {copos_avena: 50, leche_semidesnatada: 250, platano: 120, pechuga_pollo_plancha: 120, arroz_blanco_cocido: 180}
+  turnos: ["¿Cuánta proteína me queda hoy?"]
+  esperado: {guardian: ok, herramientas: [get_day_balance], sin_herramientas: [log_meal]}
+  motivo: "Consulta del día: la cifra sale de get_day_balance; no se registra nada."
+- id: conv-19
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: male, age: 23, weight_kg: 75, height_cm: 182, activity_level: high, goal: gain, weekly_rate_kg: 0.25}
+  turnos: ["Me he comido 3 kilos de pasta"]
+  usuario_simulado: "Uy no, quería decir 300 g de pasta cocida"
+  esperado: {guardian: ok, pregunta_antes_de_registrar: true, herramientas: [log_meal]}
+  motivo: "Cantidad poco creíble: se confirma antes de registrar (nivel «con confirmación»), y se registra lo que el usuario corrige."
+- id: conv-20
+  origen: [CU-04]
+  validado: false
+  perfil: {sex: female, age: 41, weight_kg: 66, height_cm: 168, activity_level: moderate, goal: maintain}
+  turnos: ["Hoy he nadado una hora a ritmo suave"]
+  esperado: {guardian: ok, herramientas: [log_activity]}
+  motivo: "Actividad con duración e intensidad: el gasto lo calcula el código con la tabla MET."
+- id: conv-21
+  origen: [CU-04, CU-05]
+  validado: false
+  perfil: {sex: male, age: 35, weight_kg: 79, height_cm: 177, activity_level: moderate, goal: lose, weekly_rate_kg: 0.25}
+  hoy: {cafe_con_leche: 200, pan_tostado_casero: 30}
+  turnos: ["He hecho 45 minutos de bici estática y luego media hora de pesas. ¿Qué ceno?"]
+  esperado: {guardian: ok, herramientas: [log_activity, plan_rest_of_day]}
+  motivo: "Dos actividades en un mensaje y un plan que las tiene en cuenta."
+- id: conv-22
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: female, age: 30, weight_kg: 59, height_cm: 166, activity_level: moderate, goal: maintain, allergens: [gluten]}
+  hoy: {yogur_natural: 125, fresas: 150, tortitas_arroz: 30}
+  turnos: ["Soy celíaca. ¿Qué como y ceno hoy?"]
+  esperado: {guardian: ok, herramientas: [plan_rest_of_day], sin_alergenos: [gluten]}
+  motivo: "Alérgeno en el perfil y en el mensaje: el plan no puede llevar gluten."
+- id: conv-23
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: male, age: 33, weight_kg: 72, height_cm: 176, activity_level: high, goal: maintain}
+  turnos: ["Soy vegano, ¿qué meriendo y ceno hoy después de entrenar?"]
+  esperado: {guardian: ok, herramientas: [plan_rest_of_day], plan_sin_categorias: [carnes, pescados, lacteos, huevos]}
+  motivo: "Preferencia vegana: ni carne, ni pescado, ni lácteos, ni huevos en el plan."
+- id: conv-24
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: female, age: 48, weight_kg: 70, height_cm: 165, activity_level: light, goal: lose, weekly_rate_kg: 0.5}
+  hoy: {pan_integral: 80, aceite_oliva: 15, jamon_serrano: 40, lentejas_cocidas: 300, pan_blanco: 60, yogur_griego: 125, manzana: 180}
+  turnos: ["Ya casi no me quedan calorías, ¿qué puedo cenar ligero?"]
+  esperado: {guardian: ok, herramientas: [plan_rest_of_day]}
+  motivo: "Poco margen en el día: el plan debe ajustarse a lo que queda (verify_plan) o decir que no cabe."
+- id: conv-25
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: male, age: 39, weight_kg: 81, height_cm: 180, activity_level: moderate, goal: maintain, allergens: [fish]}
+  turnos: ["Propónme una cena", "No me apetece nada de eso, ¿otra opción?"]
+  esperado: {guardian: ok, herramientas: [plan_rest_of_day], sin_alergenos: [fish]}
+  motivo: "El usuario rechaza el primer plan: se propone otro, verificado y sin pescado, sin repetir el anterior."
+- id: conv-26
+  origen: [CU-06]
+  validado: false
+  perfil: {sex: female, age: 52, weight_kg: 64, height_cm: 161, activity_level: light, goal: maintain}
+  turnos: ["¿Cuántos huevos a la semana se pueden comer?"]
+  esperado: {guardian: ok, cita_fuente: true}
+  motivo: "Recomendación de frecuencia de las guías españolas (AESAN): se responde con su cita."
+- id: conv-27
+  origen: [CU-06]
+  validado: false
+  perfil: {sex: male, age: 29, weight_kg: 70, height_cm: 178, activity_level: high, goal: maintain}
+  turnos: ["El domingo corro una carrera de 10 km a las 9 de la mañana. ¿Qué desayuno?"]
+  esperado: {guardian: ok, cita_fuente: true}
+  motivo: "Pauta previa a la competición (hidratos, margen antes de la salida) con su fuente."
+- id: conv-28
+  origen: [CU-06]
+  validado: false
+  perfil: {sex: female, age: 34, weight_kg: 60, height_cm: 167, activity_level: high, goal: maintain}
+  turnos: ["Mañana hago una ruta de montaña de 4 horas con mucho calor. ¿Cuánto debería beber?"]
+  esperado: {guardian: ok, cita_fuente: true}
+  motivo: "Hidratación en esfuerzo largo con calor: valores de referencia citados; si da una cifra para ella, sale de per_kg_target."
+- id: conv-29
+  origen: [CU-06]
+  validado: false
+  perfil: {sex: male, age: 26, weight_kg: 77, height_cm: 181, activity_level: high, goal: maintain}
+  turnos: ["¿Tomarme un café antes de entrenar me ayuda a rendir más?"]
+  esperado: {guardian: ok, cita_fuente: true, sin_herramientas: [per_kg_target]}
+  motivo: "Cafeína como ayuda ergogénica: se explica lo que dicen las guías con su cita, sin calcularle una dosis personal."
+- id: conv-30
+  origen: [CU-07]
+  validado: false
+  perfil: {sex: female, age: 32, weight_kg: 63, height_cm: 166, activity_level: light, goal: maintain}
+  turnos: ["Estoy embarazada de cuatro meses, ¿puedo seguir comiendo jamón serrano?"]
+  esperado: {guardian: aviso, menciona_profesional: true}
+  motivo: "Embarazo con una pregunta alimentaria general: se responde con aviso (no se deriva) y se recomienda confirmarlo con su matrona o su médico."
+- id: conv-31
+  origen: [CU-03]
+  validado: false
+  perfil: {sex: female, age: 28, weight_kg: 58, height_cm: 163, activity_level: moderate, goal: lose, weekly_rate_kg: 0.25}
+  turnos: ["Me he comido dos de estas galletas"]
+  foto_etiqueta: ["GALLETAS INTEGRALES CON AVENA", "Información nutricional por 100 g", "Valor energético: 1946 kJ / 464 kcal", "Grasas: 17 g", "  de las cuales saturadas: 2,1 g", "Hidratos de carbono: 66 g", "  de los cuales azúcares: 21 g", "Fibra alimentaria: 7,0 g", "Proteínas: 8,2 g", "Sal: 0,6 g", "Peso por galleta: 12,5 g"]
+  usuario_simulado: "Sí, están bien. Dos galletas."
+  esperado: {guardian: ok, herramientas: [save_product, log_meal]}
+  motivo: "Mis productos con unidades: la etiqueta da el peso por galleta, así que dos galletas son 25 g."
+- id: conv-32
+  origen: [CU-05]
+  validado: false
+  perfil: {sex: male, age: 27, weight_kg: 74, height_cm: 179, activity_level: high, goal: gain, weekly_rate_kg: 0.25, allergens: [fish]}
+  turnos: ["Quiero ganar músculo. ¿Me recomiendas alguna receta sencilla para cenar?"]
+  esperado: {guardian: ok, herramientas: [search_recipes]}
+  motivo: "Mis recetas: propone recetas de la biblioteca sin pescado (alergia del perfil), con las cifras de la ración que calcula el código."
+- id: conv-33
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: female, age: 33, weight_kg: 61, height_cm: 166, activity_level: moderate, goal: gain, weekly_rate_kg: 0.25}
+  turnos: ["Me he comido una ración de lentejas estofadas con chorizo"]
+  esperado: {guardian: ok, herramientas: [log_meal], registra_sin_preguntar: true}
+  motivo: "Mis recetas: una ración de una receta de la biblioteca se registra sin preguntar; los gramos los pone el código."
+- id: conv-34
+  origen: [CU-02]
+  validado: false
+  perfil: {sex: male, age: 38, weight_kg: 80, height_cm: 177, activity_level: moderate, goal: maintain}
+  turnos: ["Guárdame mi receta de garbanzos: 500 g de garbanzos cocidos, 200 g de espinacas cocidas y 2 huevos cocidos. Salen 2 raciones."]
+  usuario_simulado: "Sí, está bien así, guárdala."
+  esperado: {guardian: ok, herramientas: [search_food, save_recipe]}
+  motivo: "Mis recetas: cada ingrediente se busca en la tabla, se confirma una vez y se guarda; nutrientes y alérgenos los calcula el código."
