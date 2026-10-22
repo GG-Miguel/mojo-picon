@@ -93,6 +93,27 @@ async def test_classifier_failure_falls_back_to_warning(context):
     assert final_text(state).endswith(WARNING_SENTENCE)
 
 
+async def test_classifier_sees_the_previous_answer_as_context(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Anotado.")])
+    graph = build_graph(models, FOODS)
+    history = [
+        HumanMessage("Me he tomado un batido con este polvo de proteína"),
+        tool_call("search_food", query="proteína whey"),
+        ToolMessage("guardado", tool_call_id="c1"),
+        AIMessage("La etiqueta dice 78 g de proteína por 100 g. ¿Son correctos?"),
+        HumanMessage("Sí. Me he tomado 30 g."),
+    ]
+    await graph.ainvoke({"messages": history}, context=context)
+    prompt = models.get(Role.GUARDIAN).received[0][-1].text
+    assert "¿Son correctos?" in prompt and prompt.index("contexto") < prompt.index("Me he tomado 30 g")
+
+
+async def test_first_turn_has_no_context(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Una cena ligera.")])
+    await run(models, context, "¿Qué ceno?")
+    assert "contexto" not in models.get(Role.GUARDIAN).received[0][-1].text
+
+
 # --- Coach with tools and output guardian ----------------------------------------------
 
 
