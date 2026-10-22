@@ -1,8 +1,11 @@
-"""The judge for G-Eval: GPT-OSS 120B on Groq (free tier), another model family than the agents (ADR-13).
+"""The judge for G-Eval: GPT-OSS 120B, another model family than the agents (ADR-13).
 
-It only sees synthetic test cases, never user data, so a provider outside the EU is acceptable here.
-On a rate limit (HTTP 429) it waits as long as Groq says and retries the SAME model: switching judges
-in the middle of a run would make the scores of different variants incomparable.
+Served by Vertex AI (default since 22 Oct: billed with the project, no daily cap that matters) or by Groq
+(JUDGE=groq; its free tier allows 200k tokens a day, about 16 judged conversations). Same model on both,
+so the calibration against the author holds; evals.calibrate checks it again when the provider changes.
+It only sees synthetic test cases, never user data, so a provider outside the EU is acceptable here
+(Vertex serves it on the global endpoint only). On a rate limit (HTTP 429) it waits and retries the SAME
+model: switching judges in the middle of a run would make the scores of different variants incomparable.
 """
 
 from __future__ import annotations
@@ -18,14 +21,31 @@ from pydantic import BaseModel
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 JUDGE_MODEL = "openai/gpt-oss-120b"
+VERTEX_URL = (
+    "https://aiplatform.googleapis.com/v1/projects/{project}/locations/global/endpoints/openapi/chat/completions"
+)
+VERTEX_JUDGE_MODEL = "openai/gpt-oss-120b-maas"
 MAX_ATTEMPTS = 8
 USER_AGENT = "mojo-picon-eval/0.1"  # Groq and other gateways reject generic HTTP-library agents
 
 
+def make_judge() -> DeepEvalBaseLLM:
+    """The judge chosen by JUDGE (vertex, the default, or groq)."""
+    provider = os.environ.get("JUDGE", "vertex")
+    if provider == "groq":
+        return GroqJudge()
+    if provider == "vertex":
+        return VertexJudge()
+    raise ValueError(f"unknown JUDGE {provider!r}: vertex or groq")
+
+
 class GroqJudge(DeepEvalBaseLLM):
+    provider = "Groq"
+
     def __init__(self, model: str = JUDGE_MODEL, api_key: str | None = None):
         self.model_name = model
         self._key = api_key or os.environ["GROQ_API_KEY"]
+        self._url = GROQ_URL
         self.calls = 0
         self.tokens = 0
 
@@ -33,7 +53,10 @@ class GroqJudge(DeepEvalBaseLLM):
         return self.model_name
 
     def get_model_name(self) -> str:
-        return f"{self.model_name} (Groq)"
+        return f"{self.model_name} ({self.provider})"
+
+    def _token(self) -> str:
+        return self._key
 
     def generate(self, prompt: str, schema: type[BaseModel] | None = None):
         return asyncio.run(self.a_generate(prompt, schema))
@@ -49,10 +72,10 @@ class GroqJudge(DeepEvalBaseLLM):
         return schema.model_validate_json(_json_block(text))
 
     async def _post(self, body: dict) -> str:
-        headers = {"authorization": f"Bearer {self._key}", "user-agent": USER_AGENT}
+        headers = {"authorization": f"Bearer {self._token()}", "user-agent": USER_AGENT}
         async with httpx.AsyncClient(timeout=120) as client:
             for attempt in range(MAX_ATTEMPTS):
-                response = await client.post(GROQ_URL, json=body, headers=headers)
+                response = await client.post(self._url, json=body, headers=headers)
                 if response.status_code == 429 or response.status_code >= 500:
                     await asyncio.sleep(_retry_after(response, attempt))
                     continue
@@ -62,6 +85,31 @@ class GroqJudge(DeepEvalBaseLLM):
                 self.tokens += data.get("usage", {}).get("total_tokens", 0)
                 return data["choices"][0]["message"]["content"]
         raise RuntimeError(f"judge unavailable after {MAX_ATTEMPTS} attempts")
+
+
+class VertexJudge(GroqJudge):
+    """The same GPT-OSS 120B as a model served by Vertex AI (OpenAI-compatible endpoint), with the
+    project's Application Default Credentials: no API key, billed with the rest of the project."""
+
+    provider = "Vertex AI"
+
+    def __init__(self, model: str = VERTEX_JUDGE_MODEL, project: str | None = None):
+        import google.auth
+
+        self._credentials, default_project = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        self.model_name = model
+        self._url = VERTEX_URL.format(project=project or os.environ.get("GCP_PROJECT_ID") or default_project)
+        self.calls = 0
+        self.tokens = 0
+
+    def _token(self) -> str:
+        import google.auth.transport.requests
+
+        if not self._credentials.valid:
+            self._credentials.refresh(google.auth.transport.requests.Request())
+        return self._credentials.token
 
 
 def _retry_after(response: httpx.Response, attempt: int) -> float:

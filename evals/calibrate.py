@@ -119,12 +119,13 @@ def compare(results: Path, sheet: Path = SHEET) -> None:
 def rescore(results: Path) -> None:
     import asyncio
 
-    from evals.judge import GroqJudge
+    from evals.judge import make_judge
     from evals.metrics import rubric, score
 
     data = json.loads(results.read_text())
     cases = {c["id"]: c for c in load("conversations")}
-    metrics = rubric(GroqJudge())
+    judge_model = make_judge()
+    metrics = rubric(judge_model)
 
     async def run() -> None:
         for row in data["results"]["conversations"]:
@@ -137,8 +138,8 @@ def rescore(results: Path) -> None:
             print(row["id"], {k: v["score"] for k, v in row["judge"].items()}, flush=True)
 
     asyncio.run(run())
-    data.setdefault("meta", {})["judge"] = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION} (re-puntuado)"
-    out = results.with_name(f"{results.stem}-{RUBRIC_VERSION}.json")
+    data.setdefault("meta", {})["judge"] = f"{judge_model.get_model_name()}, rúbrica {RUBRIC_VERSION} (re-puntuado)"
+    out = results.with_name(f"{results.stem}-{RUBRIC_VERSION}-{judge_model.provider.split()[0].lower()}.json")
     out.write_text(json.dumps(data, ensure_ascii=False, indent=1))
     print(out)
 
