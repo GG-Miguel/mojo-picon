@@ -20,9 +20,9 @@ from langgraph.runtime import Runtime
 from mojo_picon.agents.coach import make_coach
 from mojo_picon.agents.planner import build_planner
 from mojo_picon.agents.state import AgentContext, CoachState
-from mojo_picon.agents.tools import EXECUTABLE_TOOLS, PLAN_TOOL
+from mojo_picon.agents.tools import COACH_TOOLS, PLAN_TOOL
 from mojo_picon.guardrails.input import make_input_guard
-from mojo_picon.guardrails.output import output_guard, route_after_output_guard
+from mojo_picon.guardrails.output import make_output_guard, route_after_output_guard
 from mojo_picon.guardrails.responses import fixed_response
 from mojo_picon.llm import ModelProvider
 from mojo_picon.tools import diary
@@ -126,16 +126,19 @@ def route_after_coach(state: CoachState) -> str:
     return "output_guard"
 
 
-def build_graph(models: ModelProvider, foods):
+def build_graph(models: ModelProvider, foods, *, guides: bool = True, number_check: bool = True):
+    """The production graph. `guides=False` (no search_guides) and `number_check=False` (the output
+    guardian only records) are the variants the evaluation compares against (Evidencias para la memoria)."""
+    tools = [t for t in COACH_TOOLS if guides or t.name != "search_guides"]
     graph = StateGraph(CoachState, context_schema=AgentContext)
     graph.add_node("input_guard", make_input_guard(models))
     graph.add_node("fixed_response", fixed_response_node)
-    graph.add_node("coach", make_coach(models))
+    graph.add_node("coach", make_coach(models, tools))
     # Any tool error goes back to the model as a ToolMessage (it can correct the call or tell the
     # user); it never aborts the turn.
-    graph.add_node("tools", ToolNode(EXECUTABLE_TOOLS, handle_tool_errors=True))
+    graph.add_node("tools", ToolNode([t for t in tools if t.name != PLAN_TOOL], handle_tool_errors=True))
     graph.add_node("planner", make_planner_node(models, foods))
-    graph.add_node("output_guard", output_guard)
+    graph.add_node("output_guard", make_output_guard(number_check))
 
     graph.add_edge(START, "input_guard")
     graph.add_conditional_edges(

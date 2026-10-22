@@ -4,7 +4,7 @@ import hashlib
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 from qdrant_client import AsyncQdrantClient
-from tests.fakes import FakeProvider, tool_call
+from tests.fakes import FakeProvider, consented, tool_call
 from tests.unit.test_agents import OK, context  # noqa: F401  (fixture)
 
 from mojo_picon.agents import build_graph
@@ -245,6 +245,7 @@ async def test_parallel_searches_stream_and_cite_through_the_api():
     )
     models = FakeProvider(guardian=[OK], coach=[two_searches, AIMessage("Bebe 2,5 L al día [EFSA DRV 2017, p. 21].")])
     store = InMemoryStore()
+    await consented(store, "ana")
     await store.save_profile(UserContext(uid="ana"), Profile(age=34, sex=Sex.MALE, weight_kg=70, height_cm=175))
     deps = AppDeps(
         verifier=FakeVerifier(), store=store, foods=FOODS, activities=load_met_table(),

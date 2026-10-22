@@ -22,6 +22,7 @@ from fastapi import Depends, FastAPI, Form, Header, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
+from pydantic import BaseModel
 
 from mojo_picon.agents import AgentContext
 from mojo_picon.api.auth_proxy import auth_proxy
@@ -38,6 +39,7 @@ from mojo_picon.api.events import (
 )
 from mojo_picon.auth import InvalidTokenError, TokenVerifier, UserContext, bearer_token
 from mojo_picon.domain import Food, Profile
+from mojo_picon.domain.consent import CONSENT_VERSION, Consent
 from mojo_picon.domain.diary import Session, SessionMessage
 from mojo_picon.guardrails.number_origin import citations
 from mojo_picon.guardrails.output import FEEDBACK_NAME, RETRIEVAL_TOOL
@@ -48,12 +50,23 @@ from mojo_picon.store.base import Store
 from mojo_picon.tools import diary
 from mojo_picon.tools.energy import MetActivity
 from mojo_picon.tools.food_search import FoodIndex
-from mojo_picon.vision.extractor import MAX_BYTES, InvalidImageError, extract, prepare_image, summarise
+from mojo_picon.vision.extractor import (
+    MAX_BYTES,
+    InvalidImageError,
+    extract,
+    neutralise_photo_tags,
+    prepare_image,
+    summarise,
+)
 
 log = logging.getLogger(__name__)
 SESSION_MESSAGES = 10  # recent messages kept between turns (summary of older ones: milestone 2)
 MAX_MESSAGE_CHARS = 2000
 RATE_LIMIT_PER_MINUTE = 30
+
+
+class ConsentRequest(BaseModel):
+    version: str
 
 
 @dataclass
@@ -71,6 +84,7 @@ class AppDeps:
     guides: GuideSearch | None = None  # guideline index (RAG); None: expert brief only
     production: bool = False  # no API docs and no trace links for users (security review 2026-10-16)
     auth_proxy_host: str | None = None  # <project>.firebaseapp.com: sign-in served from our domain (Safari)
+    privacy_contact: str = ""  # shown in the privacy policy, for data rights
 
 
 class RateLimiter:
@@ -119,7 +133,43 @@ def create_app(deps: AppDeps) -> FastAPI:
             user = UserContext(uid=user.uid, roles=user.roles, timezone=profile.timezone)
         return user
 
-    User = Annotated[UserContext, Depends(current_user)]
+    async def consented_user(user: Annotated[UserContext, Depends(current_user)]) -> UserContext:
+        """No data is read or processed until the user has accepted the current terms (consent, art. 9.2.a)."""
+        consent = await deps.store.get_consent(user)
+        if consent is None or consent.version != CONSENT_VERSION:
+            raise HTTPException(status_code=403, detail="consent_required")
+        return user
+
+    SignedIn = Annotated[UserContext, Depends(current_user)]  # authenticated, before accepting the terms
+    User = Annotated[UserContext, Depends(consented_user)]
+
+    @app.get("/me/consent")
+    async def get_consent(user: SignedIn) -> dict:
+        consent = await deps.store.get_consent(user)
+        return {"accepted": consent is not None and consent.version == CONSENT_VERSION,
+                "version": consent.version if consent else None, "required_version": CONSENT_VERSION,
+                "contact": deps.privacy_contact}  # fmt: skip
+
+    @app.post("/me/consent")
+    async def accept_consent(user: SignedIn, body: ConsentRequest) -> dict:
+        if body.version != CONSENT_VERSION:
+            raise HTTPException(status_code=409, detail=f"the current terms are version {CONSENT_VERSION}")
+        await deps.store.save_consent(user, Consent(version=body.version, accepted_at=datetime.now(UTC)))
+        return {"accepted": True, "version": body.version, "required_version": CONSENT_VERSION,
+                "contact": deps.privacy_contact}  # fmt: skip
+
+    @app.delete("/me")
+    async def delete_me(user: SignedIn) -> dict:
+        """Right to erasure: the traces, every document of the user and the sign-in account, in that
+        order (the account last: after it, the token no longer works)."""
+        try:
+            traces = await deps.tracer.forget_user(user.uid)
+        except Exception:  # Langfuse down must not keep the user's data: report it and go on
+            log.exception("could not delete the traces of a user")
+            traces = None
+        await deps.store.delete_user(user)
+        await deps.verifier.delete_account(user.uid)
+        return {"deleted": True, "traces_deleted": traces}
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -206,11 +256,13 @@ async def _run_turn(
     deps: AppDeps, context: AgentContext, session_id: str, text: str, jpeg: bytes | None = None
 ) -> AsyncIterator[str]:
     user = context.user
+    text = neutralise_photo_tags(text)
     if jpeg is not None:
         # The vision extractor runs before the graph; only its structured result goes on, as data.
         yield sse(StepEvent(id="vision", label="Analizando la foto", status="start"))
         try:
-            summary = summarise(await extract(deps.models, jpeg), context.food_index)
+            allergies = context.profile.allergens if context.profile else frozenset()
+            summary = summarise(await extract(deps.models, jpeg), context.food_index, allergies)
         except Exception:
             log.exception("vision failed")
             yield sse(StepEvent(id="vision", label="Analizando la foto", status="failed"))

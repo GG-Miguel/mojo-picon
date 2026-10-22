@@ -1,7 +1,7 @@
 """Review sheet for the author: every case with its context, why the result is expected, what the agent
 actually did in the last run and boxes to decide (Plan de evaluación: the author validates the cases).
 
-    uv run --group eval python -m evals.review_sheet <out.md> [--chunks chunks.json]
+    uv run --group eval python -m evals.review_sheet <out.md> [--chunks chunks.json] [--sets conversations] [--ids conv-16,conv-17]
 
 It reads the newest result of each set in evals/results/. --chunks (tag -> passage text) adds the start
 of the retrieved passages to the RAG cases.
@@ -115,18 +115,23 @@ def section_attacks(lines: list[str]) -> None:
                   "**Respuesta del agente:**", "", quote(turn.get("answer", "")), "", *decision()]  # fmt: skip
 
 
-def section_conversations(lines: list[str]) -> None:
+def section_conversations(lines: list[str], ids: set[str] | None = None) -> None:
     results = latest("conversations")
     lines += ["## 3. Conversaciones", "",
               "Revisa que el contexto sea realista y que lo esperado (herramientas, nivel, restricciones) sea lo que "
               "haría un buen dietista. La nota del juez es orientativa; tu opinión es la que calibra al juez.", ""]  # fmt: skip
     for case in load("conversations"):
+        if ids and case["id"] not in ids:
+            continue
         r = results.get(case["id"], {})
         exp = case["esperado"]
         today = [food_line(f, g) for f, g in case.get("hoy", {}).items()]
         lines += [f"### {case['id']} · {', '.join(case['origen'])} · partición {partition(case)}", "",
                   f"**Perfil:** {profile_text(case.get('perfil', {}))}", "",
-                  f"**Ya registrado hoy:** {'; '.join(today) if today else 'nada'}", ""]  # fmt: skip
+                  f"**Ya registrado hoy:** {'; '.join(today) if today else 'nada'}", "",
+                  f"**Mensajes del usuario:** {' → '.join(f'«{t}»' for t in case['turnos'])}", ""]  # fmt: skip
+        if case.get("foto_etiqueta"):
+            lines += [f"**Foto de la etiqueta:** {' · '.join(line.strip() for line in case['foto_etiqueta'])}", ""]
         if case.get("usuario_simulado"):
             lines += [f"**Si el agente pregunta, el usuario simulado responde:** «{case['usuario_simulado']}»", ""]
         expected = [f"herramientas {', '.join(exp.get('herramientas', []))}" if exp.get("herramientas") else None,
@@ -135,9 +140,14 @@ def section_conversations(lines: list[str]) -> None:
                     f"plan sin {', '.join(exp['plan_sin_categorias'])}" if exp.get("plan_sin_categorias") else None,
                     "recomienda un profesional" if exp.get("menciona_profesional") else None,
                     "pregunta antes de registrar" if exp.get("pregunta_antes_de_registrar") else None,
-                    "cita la fuente" if exp.get("cita_fuente") else None]  # fmt: skip
-        lines += [f"**Esperado:** {'; '.join(e for e in expected if e)}", "",
-                  f"**Última ejecución:** {outcome(r)}", "", *checks_text(r), ""]  # fmt: skip
+                    "cita la fuente" if exp.get("cita_fuente") else None,
+                    f"no llama a {', '.join(exp['sin_herramientas'])}" if exp.get("sin_herramientas") else None,
+                    "registra en el primer turno sin preguntar" if exp.get("registra_sin_preguntar") else None,
+                    "no anima a beber alcohol" if exp.get("sin_animar_alcohol") else None]  # fmt: skip
+        lines += [f"**Esperado:** {'; '.join(e for e in expected if e)}", ""]
+        if case.get("motivo"):
+            lines += [f"**Por qué:** {case['motivo']}", ""]
+        lines += [f"**Última ejecución:** {outcome(r)}", "", *checks_text(r), ""]
         if r.get("judge"):
             notes = ", ".join(f"{k} {1 + 4 * v['score']:.1f}/5" for k, v in r["judge"].items())
             lines += [f"**Juez:** {notes}", ""]
@@ -218,7 +228,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("out")
     parser.add_argument("--chunks")
+    parser.add_argument("--sets", default="", help="only these sections, e.g. conversations")
+    parser.add_argument("--ids", default="", help="only these conversation ids (with --sets conversations)")
     args = parser.parse_args()
+    sets = {s for s in args.sets.split(",") if s}
+    ids = {i for i in args.ids.split(",") if i} or None
     chunks = json.loads(Path(args.chunks).read_text()) if args.chunks else {}
     lines = ["---", "tags: [evaluacion, revision]", "---", "", "# Revisión de los casos de evaluación", "",
              "> [!todo] Cómo rellenarla",
@@ -226,10 +240,18 @@ def main() -> None:
              "(explica qué en el comentario) · ❌ no sirve. Empieza por **Seguridad**, que es lo que más pesa. "
              "Cuando termines, avisa a Claude: pasa tus decisiones a `evals/cases/*.yaml` (`validado: true`) y "
              "repite la evaluación. Las respuestas son de la última ejecución con Gemini real.", ""]  # fmt: skip
-    for fn in (section_safety, section_attacks, section_conversations, section_planner):
-        fn(lines)
-    section_rag(lines, chunks)
-    section_numbers(lines)
+    if not sets or "safety" in sets:
+        section_safety(lines)
+    if not sets or "attacks" in sets:
+        section_attacks(lines)
+    if not sets or "conversations" in sets:
+        section_conversations(lines, ids)
+    if not sets or "planner" in sets:
+        section_planner(lines)
+    if not sets or "rag" in sets:
+        section_rag(lines, chunks)
+    if not sets or "numbers" in sets:
+        section_numbers(lines)
     Path(args.out).write_text("\n".join(lines), encoding="utf-8")
     print(f"written {args.out}: {sum(1 for x in lines if x.startswith('### '))} cases")
 

@@ -2,8 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { Chat } from './components/Chat'
 import { DayPanel } from './components/DayPanel'
 import { EmailLogin } from './components/EmailLogin'
+import { ConsentScreen, PrivacyDialog } from './components/Privacy'
 import { ProfileForm } from './components/ProfileForm'
-import { ApiError, getDay, getProfile, putProfile } from './lib/api'
+import {
+  acceptConsent,
+  ApiError,
+  deleteAccount,
+  getConsent,
+  getDay,
+  getProfile,
+  putProfile,
+  type ConsentState,
+} from './lib/api'
 import {
   authConfigured,
   checkVerified,
@@ -21,6 +31,8 @@ export default function App() {
   const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined)
   const [day, setDay] = useState<Day | null>(null)
   const [editing, setEditing] = useState<Profile | null>(null) // open profile editor (chat stays mounted)
+  const [consent, setConsent] = useState<ConsentState | undefined>(undefined)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
 
   useEffect(() => watchSession(setSession), [])
 
@@ -32,13 +44,22 @@ export default function App() {
     if (!session?.verified) return
     session
       .token()
+      .then(getConsent)
+      .then(setConsent)
+      .catch(() => setConsent(undefined))
+  }, [session])
+
+  useEffect(() => {
+    if (!session?.verified || !consent?.accepted) return
+    session
+      .token()
       .then(getProfile)
       .then(() => {
         setHasProfile(true)
         return refreshDay()
       })
       .catch((e) => setHasProfile(e instanceof ApiError && e.status === 404 ? false : undefined))
-  }, [session, refreshDay])
+  }, [session, consent, refreshDay])
 
   if (session === undefined) return <Centered>Cargando…</Centered>
   if (!authConfigured)
@@ -60,6 +81,18 @@ export default function App() {
   if (!session.verified) {
     return <VerifyEmail onVerified={(s) => setSession(s)} session={session} />
   }
+  if (consent === undefined) return <Centered>Cargando…</Centered>
+  if (!consent.accepted) {
+    return (
+      <ConsentScreen
+        contact={consent.contact}
+        onAccept={async () =>
+          setConsent(await acceptConsent(await session.token(), consent.required_version))
+        }
+        onLeave={signOut}
+      />
+    )
+  }
 
   return (
     <div className="flex h-full flex-col bg-stone-50 text-stone-800">
@@ -76,6 +109,9 @@ export default function App() {
               Perfil
             </button>
           )}
+          <button onClick={() => setPrivacyOpen(true)} className="underline">
+            Privacidad
+          </button>
           <span className="max-sm:hidden">{session.name}</span>
           {!devMode && (
             <button onClick={signOut} className="underline">
@@ -114,6 +150,19 @@ export default function App() {
             />
           </div>
         </div>
+      )}
+      {privacyOpen && (
+        <PrivacyDialog
+          contact={consent.contact}
+          onClose={() => setPrivacyOpen(false)}
+          onDelete={async () => {
+            await deleteAccount(await session.token())
+            setPrivacyOpen(false)
+            setHasProfile(undefined)
+            setConsent({ ...consent, accepted: false, version: null }) // nothing left: back to the terms
+            await signOut()
+          }}
+        />
       )}
       <footer className="border-t border-stone-200 bg-white px-4 py-1">
         <AiNotice />

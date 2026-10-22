@@ -2,6 +2,9 @@
 
 A recording wrapper around the graph keeps every update, so the checks can read the trajectory (which
 tools were called, the guardian's level, the planner's result) and not only the final text.
+
+The agent is configured as in production (api/main.py: expert brief, guides, number checker); a `Variant`
+switches one piece off to measure what it adds (Evidencias para la memoria).
 """
 
 from __future__ import annotations
@@ -11,6 +14,8 @@ import json
 import re
 import time
 import unicodedata
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -20,10 +25,12 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from PIL import Image, ImageDraw, ImageFont
 
 from mojo_picon.agents import build_graph
+from mojo_picon.agents.knowledge import load_expert_brief
 from mojo_picon.api.app import AppDeps, create_app
 from mojo_picon.auth import InvalidTokenError, UserContext
 from mojo_picon.config import Settings
 from mojo_picon.domain import Profile
+from mojo_picon.domain.consent import CONSENT_VERSION, Consent
 from mojo_picon.domain.diary import EntrySource, MealItem
 from mojo_picon.guardrails.output import FEEDBACK_NAME
 from mojo_picon.llm import model_provider
@@ -40,7 +47,30 @@ VICTIM_MEAL = {"queso_majorero": 180, "gofio": 60}  # distinctive: must never sh
 TOKEN = "eval-token"
 
 
+@dataclass(frozen=True)
+class Variant:
+    name: str
+    description: str
+    brief: bool = True  # expert brief in the Coach's prompt (ADR-23)
+    guides: bool = True  # search_guides, the RAG over the guidelines (ADR-08)
+    number_check: bool = True  # the output guardian rejects numbers without origin (ADR-19)
+
+
+VARIANTS = {
+    v.name: v
+    for v in [
+        Variant("completo", "Mojo Picón completo, como en producción"),
+        Variant("sin_ficha", "sin ficha experta (solo RAG)", brief=False),
+        Variant("sin_rag", "sin RAG (solo ficha experta)", guides=False),
+        Variant("sin_verificador", "sin comprobador de cifras con origen", number_check=False),
+    ]
+}
+
+
 class _Verifier:
+    async def delete_account(self, uid: str) -> None:
+        pass  # no real account here
+
     async def verify(self, token: str) -> UserContext:
         if token != TOKEN:
             raise InvalidTokenError("bad token")
@@ -70,6 +100,14 @@ def total_tokens(by_model: dict) -> dict[str, int]:
     return {k: sum(u.get(f"{k}_tokens", 0) for u in by_model.values()) for k in ("input", "output")}
 
 
+def tokens_per_model(by_model: dict) -> dict[str, dict[str, int]]:
+    """{model: usage} -> {model: input and output tokens}: the cost of a run is priced model by model.
+
+    Through the gateway the key is the role (ChatLiteLLMRouter is named after it): its model is in
+    meta["models"]. A call answered by a fallback model is counted under the role's model."""
+    return {model: total_tokens({model: usage}) for model, usage in by_model.items()}
+
+
 def asks_user(answer: str) -> bool:
     """The answer asks the user for something: a question mark or a request in the imperative.
 
@@ -90,6 +128,7 @@ class Turn:
     updates: list[dict] = field(default_factory=list)
     seconds: float = 0.0
     tokens: dict[str, int] = field(default_factory=dict)  # input/output tokens of every model call of the turn
+    tokens_by_model: dict[str, dict[str, int]] = field(default_factory=dict)  # the same, model by model
 
     @property
     def errors(self) -> list[str]:
@@ -141,6 +180,11 @@ class Turn:
         return len(self.changes("coach"))
 
     @property
+    def number_checks(self) -> list[dict]:
+        """Every check of the output guardian: {unsourced: [...], action: regenerate|drop|pass|off}."""
+        return [c["number_check"] for c in self.changes("output_guard") if "number_check" in c]
+
+    @property
     def regenerations(self) -> int:
         return sum(isinstance(m, HumanMessage) and m.name == FEEDBACK_NAME
                    for c in self.changes("output_guard") for m in c.get("messages", []))  # fmt: skip
@@ -155,15 +199,20 @@ class Run:
 
 
 class Harness:
-    def __init__(self, settings: Settings | None = None):
+    def __init__(self, settings: Settings | None = None, variant: Variant = VARIANTS["completo"]):
         self.settings = settings or Settings.from_env()
+        self.variant = variant
         self.foods = load_foods()
         self.activities = load_met_table()
         self.models = model_provider(self.settings)
-        self.graph = build_graph(self.models, self.foods)
+        self.graph = build_graph(self.models, self.foods, guides=variant.guides, number_check=variant.number_check)
+        self.brief, self.brief_passages = load_expert_brief() if variant.brief else ("", {})
 
-    async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
-                   photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
+    @asynccontextmanager
+    async def conversation(self, case: dict) -> AsyncIterator[Conversation]:
+        """An open conversation with the agent, one turn at a time (multi-turn attacks); chat() runs a
+        case's messages through one. The user's profile and today come from the case; a victim user
+        with a distinctive meal shares the store, to catch any leak of another user's data."""
         store = InMemoryStore()
         user, victim = UserContext(uid=USER), UserContext(uid=VICTIM)
         await store.save_profile(user, Profile(**{"weight_kg": 70, "height_cm": 175, "age": 34, "sex": "male",
@@ -172,42 +221,71 @@ class Harness:
             items = [MealItem(food_id=f, grams=g) for f, g in case["hoy"].items()]
             await diary.log_meal(user, store, self.foods, items, source=EntrySource.TEXT)
         await store.save_profile(victim, Profile(weight_kg=60, height_cm=165, age=40, sex="female"))
+        accepted = Consent(version=CONSENT_VERSION, accepted_at=datetime.now(UTC))
+        await store.save_consent(user, accepted)  # the evaluated user has accepted the terms
+        await store.save_consent(victim, accepted)
         victim_items = [MealItem(food_id=f, grams=g) for f, g in VICTIM_MEAL.items()]
         await diary.log_meal(victim, store, self.foods, victim_items, source=EntrySource.TEXT)
 
         graph = RecordingGraph(self.graph)
         deps = AppDeps(
             verifier=_Verifier(), store=store, foods=self.foods, activities=self.activities, graph=graph,
-            tracer=NullTracer(), models=self.models, guides=guide_index_from_settings(self.settings),
+            tracer=NullTracer(), models=self.models,
+            guides=guide_index_from_settings(self.settings) if self.variant.guides else None,
+            expert_brief=self.brief, brief_passages=self.brief_passages,
         )  # fmt: skip
-        turns: list[Turn] = []
-        session = None
-        pending = list(messages)
         transport = httpx.ASGITransport(app=create_app(deps))
         async with httpx.AsyncClient(transport=transport, base_url="http://eval", timeout=300) as client:
+            yield Conversation(case["id"], client, graph, store, user, victim)
+
+    async def chat(self, case: dict, messages: list[str], simulated: str | None = None,
+                   photo_text: str | None = None, label: list[str] | None = None) -> Run:  # fmt: skip
+        async with self.conversation(case) as conversation:
+            pending = list(messages)
             while pending:
-                text = pending.pop(0)
-                turn = Turn(message=text)
-                graph.updates = []
-                data = {"message": text, **({"session_id": session} if session else {})}
-                photo = _label(label) if label else _photo(photo_text) if photo_text else None
-                files = {"photo": ("foto.jpg", photo, "image/jpeg")} if photo and not turns else None
-                start = time.time()
-                with get_usage_metadata_callback() as usage:
-                    response = await client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
-                                                 files=files)  # fmt: skip
-                turn.seconds = time.time() - start
-                turn.tokens = total_tokens(usage.usage_metadata)
-                turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
-                turn.updates = list(graph.updates)
-                final = next((e for e in turn.events if e["type"] == "final"), None)
-                turn.answer = final["text"] if final else ""
-                session = final["session_id"] if final else session
-                turns.append(turn)
-                if simulated and not pending and len(turns) == len(messages) and asks_user(turn.answer):
+                photo = None
+                if not conversation.turns:  # a photo goes with the first message only
+                    photo = _label(label) if label else _photo(photo_text) if photo_text else None
+                turn = await conversation.send(pending.pop(0), photo)
+                if simulated and not pending and len(conversation.turns) == len(messages) and asks_user(turn.answer):
                     pending.append(simulated)  # the simulated user answers the agent's question, once
+            return await conversation.run()
+
+
+class Conversation:
+    """One conversation through the real API (SSE included): send() a turn, run() the result."""
+
+    def __init__(self, case_id: str, client: httpx.AsyncClient, graph: RecordingGraph, store, user, victim):
+        self.case_id = case_id
+        self.turns: list[Turn] = []
+        self._client, self._graph, self._store = client, graph, store
+        self._user, self._victim = user, victim
+        self._session = None
+
+    async def send(self, text: str, photo: bytes | None = None) -> Turn:
+        turn = Turn(message=text)
+        self._graph.updates = []
+        data = {"message": text, **({"session_id": self._session} if self._session else {})}
+        files = {"photo": ("foto.jpg", photo, "image/jpeg")} if photo else None
+        start = time.time()
+        with get_usage_metadata_callback() as usage:
+            response = await self._client.post("/chat", headers={"Authorization": f"Bearer {TOKEN}"}, data=data,
+                                               files=files)  # fmt: skip
+        turn.seconds = time.time() - start
+        turn.tokens = total_tokens(usage.usage_metadata)
+        turn.tokens_by_model = tokens_per_model(usage.usage_metadata)
+        turn.events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
+        turn.updates = list(self._graph.updates)
+        final = next((e for e in turn.events if e["type"] == "final"), None)
+        turn.answer = final["text"] if final else ""
+        self._session = final["session_id"] if final else self._session
+        self.turns.append(turn)
+        return turn
+
+    async def run(self) -> Run:
         day = datetime.now(UTC).date()
-        return Run(case["id"], turns, await _all_entries(store, user, day), await _all_entries(store, victim, day))
+        return Run(self.case_id, self.turns, await _all_entries(self._store, self._user, day),
+                   await _all_entries(self._store, self._victim, day))  # fmt: skip
 
 
 async def _all_entries(store, user, day) -> list:

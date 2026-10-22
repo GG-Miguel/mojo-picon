@@ -93,6 +93,35 @@ async def test_classifier_failure_falls_back_to_warning(context):
     assert final_text(state).endswith(WARNING_SENTENCE)
 
 
+async def test_classifier_sees_the_previous_answer_as_context(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Anotado.")])
+    graph = build_graph(models, FOODS)
+    history = [
+        HumanMessage("Me he tomado un batido con este polvo de proteína"),
+        tool_call("search_food", query="proteína whey"),
+        ToolMessage("guardado", tool_call_id="c1"),
+        AIMessage("La etiqueta dice 78 g de proteína por 100 g. ¿Son correctos?"),
+        HumanMessage("Sí. Me he tomado 30 g."),
+    ]
+    await graph.ainvoke({"messages": history}, context=context)
+    prompt = models.get(Role.GUARDIAN).received[0][-1].text
+    assert "¿Son correctos?" in prompt and prompt.index("contexto") < prompt.index("Me he tomado 30 g")
+
+
+async def test_classifier_does_not_see_the_photo_analysis(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Lleva leche: con tu alergia, mejor no.")])
+    data = "<datos_foto>\nATENCIÓN: milk está en las alergias del usuario.\n</datos_foto>"
+    await run(models, context, f"¿Puedo tomarme esto?\n\n{data}")
+    prompt = models.get(Role.GUARDIAN).received[0][-1].text
+    assert "¿Puedo tomarme esto?" in prompt and "ATENCIÓN" not in prompt
+
+
+async def test_first_turn_has_no_context(context):
+    models = FakeProvider(guardian=[OK], coach=[AIMessage("Una cena ligera.")])
+    await run(models, context, "¿Qué ceno?")
+    assert "contexto" not in models.get(Role.GUARDIAN).received[0][-1].text
+
+
 # --- Coach with tools and output guardian ----------------------------------------------
 
 
@@ -134,6 +163,30 @@ async def test_invented_number_twice_is_removed(context):
     models = FakeProvider(guardian=[OK], coach=toast_script(["Te quedan 2.500 kcal.", "Te quedan 3.000 kcal."]))
     state = await run(models, context, "He desayunado dos tostadas")
     assert final_text(state) == NO_RELIABLE_FIGURE
+
+
+async def test_every_number_check_is_recorded(context):
+    models = FakeProvider(guardian=[OK], coach=toast_script(["Te quedan 2.500 kcal.", "Te quedan 3.000 kcal."]))
+    state = await run(models, context, "He desayunado dos tostadas")
+    assert state["number_check"] == {"unsourced": ["3.000 kcal"], "action": "drop"}
+
+
+async def test_without_the_number_checker_an_invented_number_reaches_the_user_and_is_recorded(context):
+    """The variant the evaluation compares against: the guardian records, but does not correct."""
+    models = FakeProvider(guardian=[OK], coach=toast_script(["Te quedan 2.500 kcal."]))
+    graph = build_graph(models, FOODS, number_check=False)
+    state = await graph.ainvoke({"messages": [HumanMessage("He desayunado dos tostadas")]}, context=context)
+    assert final_text(state) == "Te quedan 2.500 kcal."
+    assert "output_attempts" not in state
+    assert state["number_check"] == {"unsourced": ["2.500 kcal"], "action": "off"}
+
+
+async def test_without_guides_search_guides_cannot_run(context):
+    models = FakeProvider(guardian=[OK], coach=[tool_call("search_guides", query="agua"), AIMessage("Bebe agua.")])
+    graph = build_graph(models, FOODS, guides=False)
+    state = await graph.ainvoke({"messages": [HumanMessage("¿Cuánta agua bebo?")]}, context=context)
+    result = next(m for m in state["messages"] if isinstance(m, ToolMessage))
+    assert result.status == "error" and "search_guides" in result.text
 
 
 async def test_warning_level_adds_the_recommendation(context):

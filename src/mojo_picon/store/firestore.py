@@ -4,6 +4,8 @@ Layout (specs: data model):
     users/{uid}/profile/current
     users/{uid}/days/{YYYY-MM-DD}/entries/{entry_id}
     users/{uid}/sessions/{session_id}
+    users/{uid}/products/{food_id}
+    users/{uid}/consent/current
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ from pydantic import TypeAdapter
 
 from mojo_picon.auth.context import UserContext
 from mojo_picon.domain import Goal, Profile
+from mojo_picon.domain.consent import Consent
 from mojo_picon.domain.diary import DiaryEntry, Session
 from mojo_picon.domain.food import Food
 from mojo_picon.domain.profile import MAX_WEEKLY_GAIN_KG
@@ -74,3 +77,15 @@ class FirestoreStore:
 
     async def save_session(self, ctx: UserContext, session: Session) -> None:
         await self._user(ctx).collection("sessions").document(session.id).set(session.model_dump(mode="json"))
+
+    async def get_consent(self, ctx: UserContext) -> Consent | None:
+        snapshot = await self._user(ctx).collection("consent").document("current").get()
+        return Consent.model_validate(snapshot.to_dict()) if snapshot.exists else None
+
+    async def save_consent(self, ctx: UserContext, consent: Consent) -> None:
+        await self._user(ctx).collection("consent").document("current").set(consent.model_dump(mode="json"))
+
+    async def delete_user(self, ctx: UserContext) -> None:
+        # The user document and every subcollection under it (profile, days and entries, products,
+        # sessions, consent): nothing of the user stays in Firestore.
+        await self._db.recursive_delete(self._user(ctx))

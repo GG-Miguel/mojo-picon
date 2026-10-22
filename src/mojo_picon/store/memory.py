@@ -7,6 +7,7 @@ from datetime import date
 
 from mojo_picon.auth.context import UserContext
 from mojo_picon.domain import Profile
+from mojo_picon.domain.consent import Consent
 from mojo_picon.domain.diary import DiaryEntry, Session
 from mojo_picon.domain.food import Food
 
@@ -17,6 +18,7 @@ class InMemoryStore:
         self._entries: dict[tuple[str, date], dict[str, DiaryEntry]] = defaultdict(dict)
         self._sessions: dict[tuple[str, str], Session] = {}
         self._products: dict[str, dict[str, Food]] = defaultdict(dict)
+        self._consents: dict[str, Consent] = {}
 
     async def get_profile(self, ctx: UserContext) -> Profile | None:
         return self._profiles.get(ctx.uid)
@@ -41,3 +43,18 @@ class InMemoryStore:
 
     async def save_session(self, ctx: UserContext, session: Session) -> None:
         self._sessions[(ctx.uid, session.id)] = session
+
+    async def get_consent(self, ctx: UserContext) -> Consent | None:
+        return self._consents.get(ctx.uid)
+
+    async def save_consent(self, ctx: UserContext, consent: Consent) -> None:
+        self._consents[ctx.uid] = consent
+
+    async def delete_user(self, ctx: UserContext) -> None:
+        self._profiles.pop(ctx.uid, None)
+        self._consents.pop(ctx.uid, None)
+        self._products.pop(ctx.uid, None)
+        for key in [k for k in self._entries if k[0] == ctx.uid]:
+            del self._entries[key]
+        for key in [k for k in self._sessions if k[0] == ctx.uid]:
+            del self._sessions[key]

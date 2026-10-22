@@ -26,10 +26,14 @@ from mojo_picon.tools.energy import per_kg_target as compute_per_kg_target
 from mojo_picon.tools.food_search import check_allergens as compute_allergens
 from mojo_picon.tools.food_search import get_nutrients as compute_nutrients
 from mojo_picon.tools.measures import measure_label, measure_options, to_grams
-from mojo_picon.tools.products import ProductError, matching
+from mojo_picon.tools.products import MAX_PRODUCTS, ProductError, matching
 from mojo_picon.tools.products import save_product as store_product
+from mojo_picon.tools.recipes import USER_CATEGORY, RecipeError, build_user_recipe, load_recipes
+from mojo_picon.tools.recipes import matching as matching_recipes
 
 PLAN_TOOL = "plan_rest_of_day"  # handled by the Planner subgraph, not by the ToolNode
+RECIPE_SERVING = "racion"  # log_meal measure for one serving of a recipe (Mis recetas)
+MAX_RECIPES_SHOWN = 6
 
 
 def _json(value: object) -> str:
@@ -38,8 +42,9 @@ def _json(value: object) -> str:
 
 
 async def _foods(ctx) -> dict:
-    """The food table plus the user's own products (Mis productos), for this turn."""
-    return {**ctx.foods, **{p.id: p for p in await ctx.store.get_products(ctx.user)}}
+    """The food table, the recipe library and the user's own products and recipes, for this turn."""
+    library = {food.id: food for _, food in load_recipes(ctx.foods).values()}
+    return {**ctx.foods, **library, **{p.id: p for p in await ctx.store.get_products(ctx.user)}}
 
 
 @tool
@@ -65,11 +70,11 @@ async def get_nutrients(food_id: str, grams: float, runtime: ToolRuntime) -> str
 
 
 @tool
-def check_allergens(food_ids: list[str], runtime: ToolRuntime) -> str:
-    """Qué alimentos de la lista contienen alérgenos del perfil del usuario."""
+async def check_allergens(food_ids: list[str], runtime: ToolRuntime) -> str:
+    """Qué alimentos o recetas de la lista contienen alérgenos del perfil del usuario."""
     profile = runtime.context.profile
     allergens = profile.allergens if profile else frozenset()
-    found = compute_allergens(runtime.context.foods, food_ids, allergens)
+    found = compute_allergens(await _foods(runtime.context), food_ids, allergens)
     return _json({food_id: sorted(a.value for a in found_allergens) for food_id, found_allergens in found.items()})
 
 
@@ -79,7 +84,8 @@ class MealPortion(BaseModel):
     food_id: str
     grams: float | None = Field(default=None, gt=0)
     measure: str | None = Field(
-        default=None, description="`id` de una medida de search_food, p. ej. unidad, cucharada_sopera, plato"
+        default=None,
+        description="`id` de una medida de search_food (unidad, cucharada_sopera, plato…); `racion` en una receta",
     )
     count: float = Field(default=1, gt=0, description="cuántas medidas, p. ej. 2 para «dos manzanas»")
 
@@ -99,12 +105,19 @@ async def log_meal(items: list[MealPortion], runtime: ToolRuntime) -> str:
     foods = await _foods(ctx)
     meal, assumed = [], []
     for item in items:
-        grams = item.grams if item.measure is None else to_grams(item.food_id, item.measure, item.count)
+        if item.measure == RECIPE_SERVING:
+            serving = foods[item.food_id].serving_g if item.food_id in foods else None
+            if serving is None:
+                raise ValueError(f"{item.food_id} no es una receta: «racion» solo vale para recetas")
+            grams = round(serving * item.count, 1)
+        else:
+            grams = item.grams if item.measure is None else to_grams(item.food_id, item.measure, item.count)
         product = item.food_id not in ctx.foods and item.food_id in foods
         meal.append(MealItem(food_id=item.food_id, grams=grams, name=foods[item.food_id].name if product else None))
         if item.measure is not None:
             assumed.append(
-                f"{item.count:g} × {measure_label(item.measure)} de {foods[item.food_id].name} = {grams:g} g"
+                f"{item.count:g} × {'ración' if item.measure == RECIPE_SERVING else measure_label(item.measure)} "
+                f"de {foods[item.food_id].name} = {grams:g} g"
             )
     entry = await diary.log_meal(ctx.user, ctx.store, foods, meal, source=EntrySource.TEXT)
     logged = json.loads(await _logged_with_balance(ctx, entry))
@@ -125,17 +138,24 @@ async def save_product(
     saturated_g: float = 0,
     fiber_g: float = 0,
     salt_g: float = 0,
+    allergens: list[str] | None = None,
+    may_contain: list[str] | None = None,
 ) -> str:
     """Guarda en «Mis productos» un producto leído de la etiqueta de una foto, con sus valores POR 100 g,
-    solo después de que el usuario los haya confirmado. Devuelve su food_id para registrarlo con
-    log_meal. Si las kcal no cuadran con los macronutrientes, devuelve un error: repasa la lectura."""
+    solo después de que el usuario los haya confirmado. Si se leyó la lista de ingredientes, pasa sus
+    alérgenos (`allergens`, `may_contain`) tal como los dio el análisis de la foto. Devuelve su food_id
+    para registrarlo con log_meal. Si las kcal no cuadran con los macronutrientes, devuelve un error:
+    repasa la lectura."""
     ctx = runtime.context
     try:
         product = await store_product(ctx.user, ctx.store, name, kcal, protein_g, carbs_g, fat_g,
-                                      sugars_g, saturated_g, fiber_g, salt_g)  # fmt: skip
+                                      sugars_g, saturated_g, fiber_g, salt_g,
+                                      allergens or [], may_contain or [])  # fmt: skip
     except ProductError as e:
         return _json({"error": str(e)})
-    return _json({"guardado": {"food_id": product.id, "name": product.name, "por_100g": product.per_100g}})
+    saved = {"food_id": product.id, "name": product.name, "por_100g": product.per_100g,
+             "alergenos": sorted(product.allergens)}  # fmt: skip
+    return _json({"guardado": saved})
 
 
 @tool
@@ -209,6 +229,75 @@ async def search_guides(query: str, runtime: ToolRuntime) -> Command | str:
     return Command(update={"sources": {h.tag: h.text for h in hits}, "messages": [message]})
 
 
+def _recipe_card(food, recipe, foods: dict, allergens: frozenset) -> dict:
+    """A recipe for the model: one serving's nutrients (computed by code), allergens, ingredients and steps."""
+    serving = food.serving_g
+    card = {
+        "food_id": food.id,
+        "nombre": food.name,
+        "racion_g": serving,
+        # rounded as log_meal does: two decimals of kcal would be a precision the table does not have
+        "por_racion": {
+            k: round(v) if k == "kcal" else round(v, 1) for k, v in food.nutrients_for(serving).model_dump().items()
+        },
+        "alergenos": sorted(a.value for a in food.allergens),
+        "alergenos_del_usuario": sorted(a.value for a in food.allergens & allergens),
+    }
+    if recipe is not None:
+        card["raciones"] = recipe.raciones
+        card["ingredientes_por_racion"] = {
+            foods[f].name: round(g / recipe.raciones) for f, g in recipe.ingredientes.items()
+        }
+        card["pasos"] = recipe.pasos
+        card["etiquetas"] = recipe.etiquetas
+    return card
+
+
+@tool
+async def search_recipes(runtime: ToolRuntime, query: str = "") -> str:
+    """Recetas de la biblioteca (platos españoles sencillos y altos en proteína) y las guardadas por el
+    usuario. `query` filtra por nombre o etiqueta (p. ej. «cena», «legumbres», «pescado», «desayuno»);
+    vacío, las primeras. Cada receta trae los nutrientes de una ración calculados por código y sus
+    alérgenos (`alergenos_del_usuario` = los de su perfil: no la propongas). Para registrar una ración,
+    usa log_meal con su `food_id`, `measure`: "racion" y `count`."""
+    ctx = runtime.context
+    library = load_recipes(ctx.foods)
+    own = [p for p in await ctx.store.get_products(ctx.user) if p.category == USER_CATEGORY]
+    index = [(rid, rec.nombre, rec.etiquetas) for rid, (rec, _) in library.items()]
+    index += [(p.id, p.name, ["mis recetas"]) for p in own]
+    ids = matching_recipes(index, query) if query.strip() else [rid for rid, _, _ in index]
+    foods = await _foods(ctx)
+    allergens = ctx.profile.allergens if ctx.profile else frozenset()
+    cards = []
+    for rid in ids[:MAX_RECIPES_SHOWN]:
+        recipe = library[rid][0] if rid in library else None
+        cards.append(_recipe_card(foods[rid], recipe, foods, allergens))
+    return _json({"recetas": cards, "total": len(ids)})
+
+
+class RecipeIngredient(BaseModel):
+    food_id: str = Field(description="food_id de search_food")
+    grams: float = Field(gt=0, description="gramos de este ingrediente en la receta entera")
+
+
+@tool
+async def save_recipe(name: str, servings: int, ingredients: list[RecipeIngredient], runtime: ToolRuntime) -> str:
+    """Guarda una receta propia del usuario en «Mis recetas», SOLO después de que el usuario haya
+    confirmado los ingredientes, sus gramos (de la receta entera) y el número de raciones. Busca antes
+    cada ingrediente con search_food. Los nutrientes y alérgenos los calcula el código."""
+    ctx = runtime.context
+    try:
+        recipe = build_user_recipe(name, servings, {i.food_id: i.grams for i in ingredients}, ctx.foods)
+        existing = {p.id for p in await ctx.store.get_products(ctx.user)}
+        if recipe.id not in existing and len(existing) >= MAX_PRODUCTS:
+            raise RecipeError(f"ya tienes {MAX_PRODUCTS} productos y recetas guardados")
+    except RecipeError as e:
+        return _json({"error": str(e)})
+    await ctx.store.save_product(ctx.user, recipe)
+    allergens = ctx.profile.allergens if ctx.profile else frozenset()
+    return _json({"guardada": _recipe_card(recipe, None, ctx.foods, allergens), "raciones": servings})
+
+
 @tool(PLAN_TOOL)
 def plan_rest_of_day(meals: list[str], preferences: str = "") -> str:
     """Propone qué comer el resto del día (p. ej. meals=["merienda", "cena"]) y lo verifica con código
@@ -222,6 +311,8 @@ COACH_TOOLS = [
     check_allergens,
     log_meal,
     save_product,
+    search_recipes,
+    save_recipe,
     list_activities,
     log_activity,
     get_day_balance,
@@ -229,4 +320,3 @@ COACH_TOOLS = [
     search_guides,
     plan_rest_of_day,
 ]
-EXECUTABLE_TOOLS = [t for t in COACH_TOOLS if t.name != PLAN_TOOL]

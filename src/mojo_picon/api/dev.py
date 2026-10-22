@@ -28,6 +28,10 @@ class DevTokenVerifier:
     def __init__(self, tokens: dict[str, str]):
         self._tokens = tokens
 
+    async def delete_account(self, uid: str) -> None:
+
+        pass  # no real account here
+
     async def verify(self, token: str) -> UserContext:
         for known, uid in self._tokens.items():
             if hmac.compare_digest(known, token):
@@ -52,6 +56,7 @@ def build_dev_app(settings: Settings):
         expert_brief=brief,
         brief_passages=passages,
         frontend_dir=Path(settings.frontend_dir) if settings.frontend_dir else None,
+        privacy_contact=settings.privacy_contact,
     )
     return create_app(deps)
 

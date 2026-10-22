@@ -5,6 +5,10 @@
    the sentences with unsourced numbers are removed.
 3. "aviso" level: the recommendation to see a professional must be there; if not, it is added.
 
+Every check is recorded in the state (`number_check`), so the evaluation can count what the checker
+caught. `make_output_guard(number_check=False)` only records: the variant without the checker that the
+evaluation compares against (Evidencias para la memoria); production always checks.
+
 Nodes take the graph state as a dict and an unparametrised Runtime (runtime.context is an
 AgentContext): guardrails/ does not import agents/, which builds the graph with these nodes.
 """
@@ -47,43 +51,56 @@ def turn_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
     return messages
 
 
-async def output_guard(state: dict, runtime: Runtime) -> dict:
-    messages = state["messages"]
-    answer = messages[-1]
-    if not isinstance(answer, AIMessage):
-        return {}
-    text = answer.text
-    norm = normalize(text)
+def make_output_guard(number_check: bool = True):
+    async def output_guard(state: dict, runtime: Runtime) -> dict:
+        messages = state["messages"]
+        answer = messages[-1]
+        if not isinstance(answer, AIMessage):
+            return {}
+        text = answer.text
+        norm = normalize(text)
 
-    if _FORBIDDEN.search(norm):
-        return {"messages": [AIMessage(content=DEFAULT_REFERRAL, id=answer.id)], "stop_reason": "forbidden_advice"}
+        if _FORBIDDEN.search(norm):
+            return {"messages": [AIMessage(content=DEFAULT_REFERRAL, id=answer.id)], "stop_reason": "forbidden_advice"}
 
-    turn = turn_messages(messages)
-    profile = runtime.context.profile
-    sources = TurnSources(
-        tool_results=[m.text for m in turn if isinstance(m, ToolMessage) and m.name != RETRIEVAL_TOOL],
-        profile=profile.model_dump(mode="json") if profile else {},
-        user_message=turn[0].text if turn else "",
-        passages={**runtime.context.brief_passages, **state.get("sources", {})},
-    )
-    violations = check_numbers(text, sources)
-    attempts = state.get("output_attempts", 0)
-    if violations and attempts < MAX_REGENERATIONS:
-        return {
-            "messages": [HumanMessage(content=feedback(violations), name=FEEDBACK_NAME)],
-            "output_attempts": attempts + 1,
-        }
-    if violations:
-        text = drop_sentences(text, violations)
-        if not text.strip() or text.strip() == NO_RELIABLE_FIGURE:
-            text = NO_RELIABLE_FIGURE
+        turn = turn_messages(messages)
+        profile = runtime.context.profile
+        sources = TurnSources(
+            tool_results=[m.text for m in turn if isinstance(m, ToolMessage) and m.name != RETRIEVAL_TOOL],
+            profile=profile.model_dump(mode="json") if profile else {},
+            user_message=turn[0].text if turn else "",
+            passages={**runtime.context.brief_passages, **state.get("sources", {})},
+        )
+        violations = check_numbers(text, sources)
+        unsourced = [v.quantity.text for v in violations]
+        attempts = state.get("output_attempts", 0)
+        if not number_check:
+            record = {"unsourced": unsourced, "action": "off"}
+        elif violations and attempts < MAX_REGENERATIONS:
+            return {
+                "messages": [HumanMessage(content=feedback(violations), name=FEEDBACK_NAME)],
+                "output_attempts": attempts + 1,
+                "number_check": {"unsourced": unsourced, "action": "regenerate"},
+            }
+        elif violations:
+            record = {"unsourced": unsourced, "action": "drop"}
+            text = drop_sentences(text, violations)
+            if not text.strip() or text.strip() == NO_RELIABLE_FIGURE:
+                text = NO_RELIABLE_FIGURE
+        else:
+            record = {"unsourced": [], "action": "pass"}
 
-    if state.get("guard_level") == "aviso" and not _PROFESSIONAL.search(normalize(text)):
-        text = f"{text.rstrip()}\n\n{WARNING_SENTENCE}"
+        if state.get("guard_level") == "aviso" and not _PROFESSIONAL.search(normalize(text)):
+            text = f"{text.rstrip()}\n\n{WARNING_SENTENCE}"
 
-    if text != answer.text:
-        return {"messages": [AIMessage(content=text, id=answer.id)]}
-    return {}
+        if text != answer.text:
+            return {"messages": [AIMessage(content=text, id=answer.id)], "number_check": record}
+        return {"number_check": record}
+
+    return output_guard
+
+
+output_guard = make_output_guard()
 
 
 def route_after_output_guard(state: dict) -> str:

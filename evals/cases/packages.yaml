@@ -1,0 +1,16 @@
+# Real package photos (Open Food Facts, CC BY-SA; see evals/fixtures/packages/SOURCES.md), resized to
+# 1024 px as the app does. What is expected was read from the photos by the AI assistant (pending the
+# author's review), not taken from Open Food Facts' crowd-sourced fields (the tuna's 97 kcal there is wrong).
+# contiene / puede_contener: allergens (ids of domain.Allergen). admite: extra allergens that are not an
+# error (refined soy oil is exempt from labelling, but warning about it is acceptable).
+# kcal: per 100 g (or 100 ml) as printed; several values when the table has several columns.
+- {codigo: "8000500267035", producto: Kinder Délice, contiene: [milk, gluten, eggs, soy], kcal: [452], nota: "tabla en italiano, pequeña"}
+- {codigo: "8410376009392", producto: Gullón galleta de fibra, contiene: [gluten, soy], puede_contener: [milk], kcal: [431], nota: "ingredientes girados 90° y en letra muy pequeña"}
+- {codigo: "8436547770137", producto: Kéfir natural, contiene: [milk], kcal: [74], nota: "tabla de 164 px de ancho"}
+- {codigo: "8480000180025", producto: Atún claro en aceite, contiene: [fish], kcal: [357, 245], nota: "tabla con peso neto y escurrido"}
+- {codigo: "8480000260291", producto: Garbanzo cocido, contiene: [sulphites], kcal: [90], nota: "sulfitos como «disulfito sódico»; la tabla es una captura de la web del súper"}
+- {codigo: "8480000399007", producto: Gazpacho fresco, contiene: [], kcal: [75], nota: "sin alérgenos: cualquier aviso es una falsa alarma"}
+- {codigo: "8480000671400", producto: Crema de cacahuete, contiene: [peanuts], puede_contener: [tree_nuts], kcal: [618]}
+- {codigo: "8480000679727", producto: Pechuga de pavo, contiene: [soy], kcal: [78], nota: "soja como «proteína de soja», sin destacar"}
+- {codigo: "8480000808585", producto: Hummus, contiene: [sesame], kcal: [311]}
+- {codigo: "8722700136224", producto: Mayonesa Ligeresa, contiene: [gluten, eggs], admite: [soy], kcal: [277], nota: "por 100 ml; aceite de soja refinado, exento"}

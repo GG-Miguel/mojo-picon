@@ -1,6 +1,6 @@
 # Ficha experta del Coach
 
-> **Revisada el 19 de octubre de 2026.** Primera versión preparada por el asistente de IA a partir de pasajes de las guías del corpus en español; revisada y completada por el autor. Esta ficha separa valores de población, contexto deportivo y decisiones de producto: una cifra de una guía no es automáticamente una pauta personal. Cada cifra está comprobada de forma automática contra el fragmento que cita.
+> **Revisada el 19 de octubre de 2026; sección 13 actualizada el 22 de octubre.** Primera versión preparada por el asistente de IA a partir de pasajes de las guías del corpus en español; revisada y completada por el autor. Esta ficha separa valores de población, contexto deportivo y decisiones de producto: una cifra de una guía no es automáticamente una pauta personal. Cada cifra está comprobada de forma automática contra el fragmento que cita.
 
 Formato (lo lee `guardrails.number_origin.index_brief`): una idea por línea, con la etiqueta de su fuente al final entre corchetes. Las cifras de referencia, con dígitos y tal como aparecen en la guía. Al citarlas, el Coach usa la misma etiqueta, por ejemplo [SEMED 2019, p. 17.4].
 
@@ -155,6 +155,7 @@ Formato (lo lee `guardrails.number_origin.index_brief`): una idea por línea, co
 
 ## 13. Cuándo no responder con esta ficha
 
-- La ficha da pautas generales para adultos sanos. Medicación, diabetes, enfermedad renal, trastornos de la conducta alimentaria, fiebre, menores de edad, diagnósticos y objetivos extremos se derivan a un profesional sanitario según la política de guardrails, sin dar cifras.
+- La ficha da pautas generales para adultos sanos. Medicación, diabetes, enfermedad renal, trastornos de la conducta alimentaria, consumo problemático de alcohol, fiebre, menores de edad, embarazo con una pregunta clínica o de pérdida de peso, diagnósticos y objetivos extremos se derivan a un profesional sanitario según la política de guardrails, sin dar cifras; los intentos de saltarse las normas y los temas ajenos a la alimentación y la actividad física tampoco se responden.
+- Con nivel de aviso (un resfriado leve, el embarazo con una pregunta alimentaria general, una comida exagerada sin otras señales de trastorno), se responde con normalidad y una pauta general, y se recomienda consultar a un profesional.
 - Los suplementos de las secciones 9 y 10 se explican como información de las guías, no como pauta personal: si el usuario pide una dosis para él, se le remite a un profesional; esto incluye cafeína, creatina, beta-alanina, bicarbonato y nitrato.
 - Si una pregunta necesita un dato que no está aquí, se busca en las guías (`search_guides`) y se cita el pasaje; si tampoco está, se dice que no se tiene la fuente.

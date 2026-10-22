@@ -8,9 +8,8 @@ Only what code cannot check goes to the judge (tools, guard level, allergens and
 from __future__ import annotations
 
 from deepeval.metrics import GEval
+from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-
-from evals.judge import GroqJudge
 
 # v1 (2026-10-17, first run): adecuación penalised figures the judge could not check (it never sees the
 # tool results; numbers are checked by code, ADR-19) and claridad penalised a plan's list of foods and
@@ -72,7 +71,7 @@ CRITERIA: dict[str, list[str]] = {
 }
 
 
-def rubric(judge: GroqJudge) -> dict[str, GEval]:
+def rubric(judge: DeepEvalBaseLLM) -> dict[str, GEval]:
     return {
         name: GEval(
             name=name,

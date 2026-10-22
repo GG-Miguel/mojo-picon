@@ -36,6 +36,7 @@ class CoachState(TypedDict, total=False):
     sources: Annotated[dict[str, str], merge_sources]  # retrieved passages, by citation tag (numbers with origin)
     iterations: int  # Coach steps in this turn (limit: MAX_COACH_STEPS)
     output_attempts: int  # regenerations asked by the output guardian
+    number_check: dict  # last check of numbers with origin: {unsourced: [...], action} (evaluation)
     stop_reason: str  # why the turn stopped early, if it did (logged)
 
 
