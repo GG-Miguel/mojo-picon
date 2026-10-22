@@ -235,7 +235,7 @@
 - id: conv-32
   origen: [CU-05]
   validado: false
-  perfil: {sex: male, age: 27, weight_kg: 74, height_cm: 179, activity_level: active, goal: gain, weekly_rate_kg: 0.25, allergens: [fish]}
+  perfil: {sex: male, age: 27, weight_kg: 74, height_cm: 179, activity_level: high, goal: gain, weekly_rate_kg: 0.25, allergens: [fish]}
   turnos: ["Quiero ganar músculo. ¿Me recomiendas alguna receta sencilla para cenar?"]
   esperado: {guardian: ok, herramientas: [search_recipes]}
   motivo: "Mis recetas: propone recetas de la biblioteca sin pescado (alergia del perfil), con las cifras de la ración que calcula el código."
