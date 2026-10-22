@@ -129,6 +129,8 @@ def rescore(results: Path) -> None:
 
     async def run() -> None:
         for row in data["results"]["conversations"]:
+            if not row.get("turns"):  # a case that broke before answering (e.g. the judge's quota): nothing to score
+                continue
             case, turns = cases.get(row["id"], {}), row["turns"]
             context = [f"Perfil: {case.get('perfil')}", f"Registrado hoy antes de la conversación: {case.get('hoy', {})}",
                        f"Nivel del guardián: {turns[0].get('guard')}"]  # fmt: skip
