@@ -75,7 +75,11 @@ class GroqJudge(DeepEvalBaseLLM):
         headers = {"authorization": f"Bearer {self._token()}", "user-agent": USER_AGENT}
         async with httpx.AsyncClient(timeout=120) as client:
             for attempt in range(MAX_ATTEMPTS):
-                response = await client.post(self._url, json=body, headers=headers)
+                try:
+                    response = await client.post(self._url, json=body, headers=headers)
+                except httpx.TimeoutException:  # a slow moment of the provider: wait and try again
+                    await asyncio.sleep(min(2**attempt, 60))
+                    continue
                 if response.status_code == 429 or response.status_code >= 500:
                     await asyncio.sleep(_retry_after(response, attempt))
                     continue
