@@ -339,10 +339,10 @@ async def main() -> None:
     h = Harness(variant=VARIANTS[args.variant])
     judge = None
     if not args.no_judge and "conversations" in args.sets:
-        from evals.judge import GroqJudge
+        from evals.judge import make_judge
         from evals.metrics import rubric
 
-        judge_model = GroqJudge()
+        judge_model = make_judge()
         judge = rubric(judge_model)
     started = datetime.now()
     start = time.time()
@@ -354,7 +354,7 @@ async def main() -> None:
         print(f"{name}: {len(cases)} casos…", flush=True)
         fn = globals()[f"eval_{name}"]
         results[name] = await fn(cases, h=h, repeat=args.repeat, judge=judge)
-    judge_name = f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION}" if judge else None
+    judge_name = f"{judge_model.get_model_name()}, rúbrica {RUBRIC_VERSION}" if judge else None
     meta = {"started": started.strftime("%Y-%m-%d %H:%M"), "partition": args.partition, "repeat": args.repeat,
             "model": h.settings.gemini_model, "models": {r: h.settings.model_for(r) for r in ROLES},
             "judge": judge_name, "variant": args.variant,

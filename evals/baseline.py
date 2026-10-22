@@ -182,10 +182,11 @@ async def main() -> None:
     guides = guide_index_from_settings(h.settings)
     judge = None
     if not args.no_judge:
-        from evals.judge import GroqJudge
+        from evals.judge import make_judge
         from evals.metrics import rubric
 
-        judge = rubric(GroqJudge())
+        judge_model = make_judge()
+        judge = rubric(judge_model)
 
     async def one(case):
         row = await chatbot(h, guides, case)
@@ -217,7 +218,7 @@ async def main() -> None:
     bot = [{"id": r["id"], **measures(r, by_case[r["id"]], h.foods, r["passages"])} for r in bot_rows]
     agent = [{"id": r["id"], **measures(agent_rows[r["id"]], by_case[r["id"]], h.foods, None)} for r in bot_rows]
     meta = {"started": started.strftime("%Y-%m-%d %H:%M"), "model": h.settings.gemini_model, "agent_run": args.agent_run.name,
-            "judge": f"openai/gpt-oss-120b (Groq), rúbrica {RUBRIC_VERSION}" if judge else None, "criteria": list(CRITERIA), "errors": errors}  # fmt: skip
+            "judge": f"{judge_model.get_model_name()}, rúbrica {RUBRIC_VERSION}" if judge else None, "criteria": list(CRITERIA), "errors": errors}  # fmt: skip
     stem = RESULTS / f"{started.strftime('%Y%m%d-%H%M%S')}-baseline"
     stem.with_suffix(".json").write_text(
         json.dumps(
