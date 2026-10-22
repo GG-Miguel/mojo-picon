@@ -2,7 +2,8 @@
 
 The AI gateway is LiteLLM (ADR-04): Gemini on Vertex AI (EU endpoint) first and, if a call fails or
 times out, the fallback models in order on the same EU endpoint (another Gemini, then Claude Haiku).
-LLM_GATEWAY=direct calls Gemini without LiteLLM, as before. Tests inject a provider with fake models.
+LLM_GATEWAY=direct calls Gemini without LiteLLM, as before. Each role uses GEMINI_MODEL unless MODEL_<ROLE>
+gives it another model (config.Settings.model_for). Tests inject a provider with fake models.
 """
 
 from __future__ import annotations
@@ -64,23 +65,31 @@ class GeminiProvider:
     "global"/us-central1, but not on the europe-west1 or europe-west4 regional endpoints.
     """
 
-    def __init__(self, project: str, location: str, endpoint: str, model: str):
+    def __init__(self, project: str, location: str, endpoint: str, model: str, role_models: dict | None = None):
         self._project = project
         self._location = location
         self._endpoint = endpoint
         self._model = model
+        self._role_models = role_models or {}
         self._cache: dict[Role, BaseChatModel] = {}
 
     @classmethod
     def from_settings(cls, settings) -> GeminiProvider:
-        return cls(settings.gcp_project_id, settings.vertex_location, settings.vertex_endpoint, settings.gemini_model)
+        return cls(
+            settings.gcp_project_id,
+            settings.vertex_location,
+            settings.vertex_endpoint,
+            settings.gemini_model,
+            settings.role_models,
+        )
 
     def get(self, role: Role) -> BaseChatModel:
         if role not in self._cache:
             from langchain_google_genai import ChatGoogleGenerativeAI
 
+            model = self._role_models.get(role.value, self._model)
             self._cache[role] = ChatGoogleGenerativeAI(
-                model=self._model,
+                model=model,
                 vertexai=True,
                 project=self._project,
                 location=self._location,
@@ -89,7 +98,7 @@ class GeminiProvider:
                 max_output_tokens=MAX_OUTPUT_TOKENS[role],
                 timeout=TIMEOUT_SECONDS[role],
                 max_retries=MAX_RETRIES,
-                **({"thinking_config": thinking_config(self._model, THINKING[role])} if role in THINKING else {}),
+                **({"thinking_config": thinking_config(model, THINKING[role])} if role in THINKING else {}),
             )
         return self._cache[role]
 
@@ -114,16 +123,27 @@ class LiteLLMProvider:
     All on Vertex AI with the same credentials (ADC) and the EU multi-region endpoint, so the data
     stays in the EU whichever model answers (Principles #8). Each model has its own quota, so another
     Gemini covers the frequent 429 of the shared quota; another family (Claude) also covers a Gemini
-    outage. Without fallback models it is Gemini alone through LiteLLM.
+    outage. Without fallback models it is Gemini alone through LiteLLM. A role with its own model
+    (MODEL_<ROLE>) keeps the same chain, without the fallback that is already its model.
     """
 
     def __init__(
-        self, project: str, location: str, endpoint: str, model: str, fallback_models: list[str], fallback_location: str
+        self,
+        project: str,
+        location: str,
+        endpoint: str,
+        model: str,
+        fallback_models: list[str],
+        fallback_location: str,
+        role_models: dict | None = None,
     ):
         self._project = project
+        self._location = location
         self._endpoint = endpoint
-        self._primary = self._target(model, location)
-        self._fallbacks = [self._target(m, fallback_location) for m in fallback_models]
+        self._model = model
+        self._role_models = role_models or {}
+        self._fallback_models = fallback_models
+        self._fallback_location = fallback_location
         self._cache: dict[Role, BaseChatModel] = {}
 
     def _target(self, model: str, location: str) -> dict:
@@ -141,6 +161,7 @@ class LiteLLMProvider:
             settings.gemini_model,
             settings.fallback_models,
             settings.fallback_location,
+            settings.role_models,
         )
 
     def _params(self, target: dict, role: Role) -> dict:
@@ -164,9 +185,12 @@ class LiteLLMProvider:
 
             litellm.telemetry = False
             litellm.suppress_debug_info = True
-            deployments = [{"model_name": role.value, "litellm_params": self._params(self._primary, role)}]
-            names = [f"{role.value}-fallback-{i}" for i in range(1, len(self._fallbacks) + 1)]
-            for name, target in zip(names, self._fallbacks, strict=True):
+            model = self._role_models.get(role.value, self._model)
+            primary = self._target(model, self._location)
+            chain = [self._target(m, self._fallback_location) for m in self._fallback_models if m != model]
+            deployments = [{"model_name": role.value, "litellm_params": self._params(primary, role)}]
+            names = [f"{role.value}-fallback-{i}" for i in range(1, len(chain) + 1)]
+            for name, target in zip(names, chain, strict=True):
                 deployments.append({"model_name": name, "litellm_params": self._params(target, role)})
             fallbacks = [{role.value: names}] if names else []
             router = Router(model_list=deployments, fallbacks=fallbacks, num_retries=MAX_RETRIES)

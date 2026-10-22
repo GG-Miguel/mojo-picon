@@ -1,5 +1,5 @@
 import pytest
-from evals.harness import VARIANTS, Harness, asks_user
+from evals.harness import VARIANTS, Harness, asks_user, tokens_per_model
 
 from mojo_picon.config import Settings
 
@@ -26,3 +26,14 @@ def test_the_harness_runs_the_agent_as_production_with_the_expert_brief(monkeypa
     assert complete.brief and complete.brief_passages
     without = Harness(Settings.from_env(), VARIANTS["sin_ficha"])
     assert without.brief == "" and without.brief_passages == {}
+
+
+def test_tokens_are_kept_model_by_model_to_price_a_run():
+    usage = {
+        "gemini-3.8-flash": {"input_tokens": 900, "output_tokens": 120, "total_tokens": 1020},
+        "gemini-3.5-flash-lite": {"input_tokens": 300, "output_tokens": 10, "total_tokens": 310},
+    }
+    assert tokens_per_model(usage) == {
+        "gemini-3.8-flash": {"input": 900, "output": 120},
+        "gemini-3.5-flash-lite": {"input": 300, "output": 10},
+    }

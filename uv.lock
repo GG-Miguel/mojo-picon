@@ -416,6 +416,25 @@ wheels = [
 ]
 
 [[package]]
+name = "deepteam"
+version = "1.0.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "deepeval" },
+    { name = "grpcio" },
+    { name = "openai" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "tabulate" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/1b/d656c68c49c1d33585b9e83564e678057a978c2545c64801c320f4eb5119/deepteam-1.0.10.tar.gz", hash = "sha256:aad9a3c8bd6cdcb5b34987bcb0f0107b5071ae0bd8392c0fa6790111ced3806b", size = 492328, upload-time = "2026-10-16T19:34:53.894Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/a9/068f3b7bcdccea5f571adeb7e8c8b87757980d3fdf7481098a3d60a47ece/deepteam-1.0.10-py3-none-any.whl", hash = "sha256:ab818f5f3fd7924104e11e3e3951df8a19a6d029e305be55339b477b99605a76", size = 873756, upload-time = "2026-10-16T19:34:55.681Z" },
+]
+
+[[package]]
 name = "distlib"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1558,6 +1577,8 @@ dev = [
 ]
 eval = [
     { name = "deepeval" },
+    { name = "deepteam" },
+    { name = "sentry-sdk" },
 ]
 
 [package.metadata]
@@ -1592,7 +1613,11 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
     { name = "ruff", specifier = ">=0.7" },
 ]
-eval = [{ name = "deepeval", specifier = ">=4.3.1" }]
+eval = [
+    { name = "deepeval", specifier = ">=4.3.1" },
+    { name = "deepteam", specifier = ">=1.0.10" },
+    { name = "sentry-sdk", specifier = ">=2.72.0" },
+]
 
 [[package]]
 name = "more-itertools"
@@ -2546,6 +2571,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl", hash = "sha256:0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137", size = 15554, upload-time = "2025-11-23T19:02:51.545Z" },
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "2.72.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/c1/d2bbb2b03bdc2ef14b35e02b647b8489156c50b6e0b8bacc5fa303902e23/sentry_sdk-2.72.0.tar.gz", hash = "sha256:0d2ffbc28ee2e63cbaf3d015e93b448cffcc3ef3be03a44704ad36ade72faa95", size = 1069699, upload-time = "2026-10-12T13:08:11.195Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/0b/0dd9686842d9dc49c3ee84cced31c54bceb0fb52a826be7d3d4fe30d882a/sentry_sdk-2.72.0-py3-none-any.whl", hash = "sha256:3e13ace4ffd0b3cc78288236edfc4e4bd90eb12a396cc5845fa10a58ff289f50", size = 544754, upload-time = "2026-10-12T13:08:01.619Z" },
 ]
 
 [[package]]

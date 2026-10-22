@@ -16,6 +16,8 @@ judge only scores what is subjective.
 | `judge.py`, `metrics.py` | G-Eval with fixed evaluation steps; judge GPT-OSS 120B on Groq (ADR-13) |
 | `run.py`, `run.sh` | Runs the sets and writes `results/<date>.json` and `.md` |
 | `variants.py` | Compares runs of the conversations set with one piece off: what each piece adds |
+| `red_team.py`, `red_team.sh` | Simulated attacker (DeepTeam): new attacks per OWASP vulnerability and the domain's risky health advice, enhanced and over several turns; evaluator + code checks |
+| `models.py`, `models.sh`, `prices.py` | One role on a cheaper model at a time: quality, cost and latency per role (ADR-04) |
 
 ```bash
 evals/run.sh                                   # every set, judge included
@@ -24,6 +26,9 @@ evals/run.sh --partition prueba --repeat 3     # the frozen test partition, 3 ru
 evals/run.sh --sets safety --ids seg-13,seg-13b --no-judge  # a few cases, for a quick check
 uv run --group eval python -m evals.baseline evals/results/<run>.json  # chatbot with RAG in one call vs the agent
 evals/run.sh --sets conversations --variant sin_ficha  # also: completo (default), sin_rag, sin_verificador
+MODEL_GUARDIAN=gemini-3.5-flash-lite evals/run.sh --sets safety,attacks --no-judge  # another model for one role
+evals/red_team.sh --per-type 2                 # simulated attacker; --only PromptLeakage,BOLA for a quick check
+evals/models.sh                                # the reference and each role on each candidate, 3 runs, one table
 uv run --group eval python -m evals.variants evals/results/<run>.json ...  # one run per variant, one table
 ```
 
