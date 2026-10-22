@@ -37,3 +37,13 @@ def test_a_role_model_comes_from_its_variable_and_the_rest_use_gemini_model(monk
     assert settings.role_models == {"guardian": "gemini-3.5-flash-lite"}
     assert settings.model_for("guardian") == "gemini-3.5-flash-lite"
     assert settings.model_for("planner") == settings.gemini_model
+
+
+def test_the_guardian_runs_on_flash_lite_and_the_other_roles_on_gemini_model(monkeypatch):
+    for role in ("COACH", "PLANNER", "GUARDIAN", "VISION"):
+        monkeypatch.delenv(f"MODEL_{role}", raising=False)
+    settings = Settings.from_env()
+    assert settings.model_for("guardian") == "gemini-3.5-flash-lite"
+    assert {settings.model_for(r) for r in ("coach", "planner", "vision")} == {settings.gemini_model}
+    monkeypatch.setenv("MODEL_GUARDIAN", "gemini-3.8-flash")  # back to the main model without a code change
+    assert Settings.from_env().model_for("guardian") == "gemini-3.8-flash"
