@@ -80,7 +80,8 @@ exists gcloud storage buckets describe "gs://$BUILD_BUCKET" --project "$PROJECT"
 # --- Cloud Run runtime identity -------------------------------------------------------
 exists gcloud iam service-accounts describe "$RUN_SA_EMAIL" --project "$PROJECT" ||
   run gcloud iam service-accounts create "$RUN_SA" --display-name "Mojo Picón (Cloud Run)" --project "$PROJECT"
-for role in roles/datastore.user roles/aiplatform.user roles/firebaseauth.viewer; do
+# firebaseauth.admin, not viewer: DELETE /me deletes the user's sign-in account (right to erasure, UC-10)
+for role in roles/datastore.user roles/aiplatform.user roles/firebaseauth.admin; do
   retry run gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$RUN_SA_EMAIL" \
     --role "$role" --condition None --quiet >/dev/null
 done
