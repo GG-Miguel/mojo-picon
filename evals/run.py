@@ -233,7 +233,10 @@ async def eval_conversations(cases, h: Harness, repeat=1, judge=None, **_):
                 answer = run.turns[0].answer
             else:  # a dialogue, so the judge sees what was asked and answered in order
                 answer = "\n\n".join(f"Usuario: {t.message}\nMojo: {t.answer}" for t in run.turns)
-            out["judge"] = await score(judge, user_input, answer, context)
+            try:
+                out["judge"] = await score(judge, user_input, answer, context)
+            except RuntimeError as e:  # the judge's quota ran out: keep the code checks, the score is missing
+                out["judge_error"] = str(e)[:200]
         return out
 
     return await bounded([(c, r) for c in cases for r in range(repeat)], one, limit=2)
