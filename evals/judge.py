@@ -11,6 +11,7 @@ model: switching judges in the middle of a run would make the scores of differen
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import time
@@ -25,7 +26,12 @@ VERTEX_URL = (
     "https://aiplatform.googleapis.com/v1/projects/{project}/locations/global/endpoints/openapi/chat/completions"
 )
 VERTEX_JUDGE_MODEL = "openai/gpt-oss-120b-maas"
-MAX_ATTEMPTS = 8
+# Fail fast rather than hang: on 22 Oct, with Vertex slow, 120 s per call and 8 attempts let one
+# control run go past an hour without a word. A call now gives up after about 3 minutes in the worst
+# case; JUDGE_TIMEOUT and JUDGE_ATTEMPTS widen it for a patient run (e.g. Groq's rate limits).
+TIMEOUT = float(os.environ.get("JUDGE_TIMEOUT", "45"))
+MAX_ATTEMPTS = int(os.environ.get("JUDGE_ATTEMPTS", "4"))
+MAX_WAIT = 20  # seconds between attempts, at most
 USER_AGENT = "mojo-picon-eval/0.1"  # Groq and other gateways reject generic HTTP-library agents
 
 
@@ -73,12 +79,12 @@ class GroqJudge(DeepEvalBaseLLM):
 
     async def _post(self, body: dict) -> str:
         headers = {"authorization": f"Bearer {self._token()}", "user-agent": USER_AGENT}
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             for attempt in range(MAX_ATTEMPTS):
                 try:
                     response = await client.post(self._url, json=body, headers=headers)
                 except httpx.TimeoutException:  # a slow moment of the provider: wait and try again
-                    await asyncio.sleep(min(2**attempt, 60))
+                    await asyncio.sleep(min(2**attempt, MAX_WAIT))
                     continue
                 if response.status_code == 429 or response.status_code >= 500:
                     await asyncio.sleep(_retry_after(response, attempt))
@@ -122,8 +128,8 @@ def _retry_after(response: httpx.Response, attempt: int) -> float:
         if value:
             seconds = _seconds(value)
             if seconds is not None:
-                return min(seconds + 0.5, 90)
-    return min(2**attempt, 60)
+                return min(seconds + 0.5, MAX_WAIT)
+    return min(2**attempt, MAX_WAIT)
 
 
 def _seconds(value: str) -> float | None:
@@ -140,9 +146,20 @@ def _seconds(value: str) -> float | None:
 
 
 def _json_block(text: str) -> str:
-    """The JSON object in the answer (some models wrap it in ```json fences)."""
+    """The JSON object in the answer (some models wrap it in ```json fences, and GPT-OSS now and then
+    as {"final": "<json>"}, its own output channel leaking into the answer)."""
+    if not text:  # an empty answer is invalid JSON, so the caller retries or reports it
+        return ""
     match = re.search(r"\{.*\}", text, re.S)
-    return match.group(0) if match else text
+    block = match.group(0) if match else text
+    try:
+        data = json.loads(block)
+    except ValueError:
+        return block
+    if isinstance(data, dict) and len(data) == 1 and next(iter(data)).startswith("final"):
+        inner = next(iter(data.values()))  # {"final": "<json>"}, or {"final{": {...}} when the leak is worse
+        return _json_block(inner) if isinstance(inner, str) else json.dumps(inner, ensure_ascii=False)
+    return block
 
 
 if __name__ == "__main__":  # quick check: uv run --group eval python -m evals.judge
