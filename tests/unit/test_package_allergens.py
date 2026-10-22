@@ -48,6 +48,12 @@ def test_may_contain_entries_are_traces():
     assert traces == {Allergen.TREE_NUTS, Allergen.PEANUTS}
 
 
+def test_a_contains_sentence_copied_with_the_ingredients_is_read_by_the_code():
+    # Kinder Délice, 22 Oct: soy only in «CONTIENE: ...», which the model did not mark once
+    contains, traces = in_ingredients(["lecitinas", "CONTIENE: LECHE, TRIGO (GLUTEN), HUEVOS, SOYA"])
+    assert contains == {Allergen.MILK, Allergen.GLUTEN, Allergen.EGGS, Allergen.SOY} and traces == frozenset()
+
+
 def test_the_code_adds_the_allergens_the_model_missed_and_warns_the_allergic_user():
     result = VisionResult(is_food=True, product="Barrita proteica", ingredients=INGREDIENTS, allergens=["gluten"])
     summary = summarise(result, INDEX, frozenset({Allergen.MILK}))
