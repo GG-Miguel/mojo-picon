@@ -229,7 +229,10 @@ def _recipe_card(food, recipe, foods: dict, allergens: frozenset) -> dict:
         "food_id": food.id,
         "nombre": food.name,
         "racion_g": serving,
-        "por_racion": to_jsonable_python(food.nutrients_for(serving)),
+        # rounded as log_meal does: two decimals of kcal would be a precision the table does not have
+        "por_racion": {
+            k: round(v) if k == "kcal" else round(v, 1) for k, v in food.nutrients_for(serving).model_dump().items()
+        },
         "alergenos": sorted(a.value for a in food.allergens),
         "alergenos_del_usuario": sorted(a.value for a in food.allergens & allergens),
     }
