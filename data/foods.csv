@@ -99,9 +99,9 @@ queso_palmero,Queso palmero,lacteos,353,21.6,0,29.8,0,20.6,0,471,1.81,1460,false
 parmesano,Queso parmesano,lacteos,406,31.1,0,31,0,20.6,0,628,1.57,1690,false,CIQUAL 2020,12120,"Parmesan cheese, from cow's milk",milk,50,lacteos,parmesano rallado,
 nata,Nata líquida (30 %),lacteos,297,2.49,1.94,30.7,1.94,21.4,1.5,29,0.073,1220,false,CIQUAL 2020,19415,"Liquid cream 30% fat, UHT",milk,100,lacteos,nata para cocinar;nata para montar,
 mantequilla,Mantequilla,grasas,753,0.7,0.9,82.9,0.83,55.4,0,25,0.063,3100,false,CIQUAL 2020,16400,"Butter, 82% fat, unsalted",milk,30,lacteos,,
-bebida_soja,Bebida de soja,lacteos,37.1,3.31,0.7,2.07,0.2,0.26,0.6,24.3,0.061,155,false,CIQUAL 2020,18900,"Soy drink, plain, prepacked",soy,500,lacteos,leche de soja,
-bebida_avena,Bebida de avena,lacteos,42.6,0.23,7.8,1.1,5,0.2,0.25,26.4,0.066,179,false,CIQUAL 2020,18905,"Oat-based drink, plain, prepacked",gluten,500,lacteos,leche de avena,
-bebida_almendra,Bebida de almendra,lacteos,44.4,0.69,3.96,2.8,3.44,0.58,0.25,38.1,0.095,185,false,CIQUAL 2020,18110,"Almond-based drink, sweet, fortified with calcium, prepacked",tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
+bebida_soja,Bebida de soja,bebidas,37.1,3.31,0.7,2.07,0.2,0.26,0.6,24.3,0.061,155,false,CIQUAL 2020,18900,"Soy drink, plain, prepacked",soy,500,lacteos,leche de soja,
+bebida_avena,Bebida de avena,bebidas,42.6,0.23,7.8,1.1,5,0.2,0.25,26.4,0.066,179,false,CIQUAL 2020,18905,"Oat-based drink, plain, prepacked",gluten,500,lacteos,leche de avena,
+bebida_almendra,Bebida de almendra,bebidas,44.4,0.69,3.96,2.8,3.44,0.58,0.25,38.1,0.095,185,false,CIQUAL 2020,18110,"Almond-based drink, sweet, fortified with calcium, prepacked",tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
 huevo,Huevo,huevos,140,12.7,0.27,9.83,0.27,2.64,0,124,0.31,584,false,CIQUAL 2020,22000,"Egg, raw",eggs,200,huevos,huevos;huevo crudo,
 huevo_cocido,Huevo cocido,huevos,134,13.5,0.52,8.62,0.52,2.55,0,123,0.31,557,false,CIQUAL 2020,22010,"Egg, hard-boiled",eggs,200,huevos,huevo duro,
 clara_huevo,Clara de huevo,huevos,48.1,10.8,0.85,0.19,0.71,0,0,166,0.42,204,false,CIQUAL 2020,22001,"Egg white, raw",eggs,300,huevos,claras,

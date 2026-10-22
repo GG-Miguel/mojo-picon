@@ -99,9 +99,9 @@ queso_palmero,Queso palmero,lacteos,ciqual,12810,,milk,100,lacteos,palmero,Appro
 parmesano,Queso parmesano,lacteos,ciqual,12120,,milk,50,lacteos,parmesano rallado,
 nata,Nata líquida (30 %),lacteos,ciqual,19415,,milk,100,lacteos,nata para cocinar;nata para montar,
 mantequilla,Mantequilla,grasas,ciqual,16400,,milk,30,lacteos,,
-bebida_soja,Bebida de soja,lacteos,ciqual,18900,,soy,500,lacteos,leche de soja,
-bebida_avena,Bebida de avena,lacteos,ciqual,18905,,gluten,500,lacteos,leche de avena,
-bebida_almendra,Bebida de almendra,lacteos,ciqual,18110,,tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
+bebida_soja,Bebida de soja,bebidas,ciqual,18900,,soy,500,lacteos,leche de soja,
+bebida_avena,Bebida de avena,bebidas,ciqual,18905,,gluten,500,lacteos,leche de avena,
+bebida_almendra,Bebida de almendra,bebidas,ciqual,18110,,tree_nuts,500,lacteos,leche de almendra,CIQUAL: sweetened and calcium-fortified
 huevo,Huevo,huevos,ciqual,22000,,eggs,200,huevos,huevos;huevo crudo,
 huevo_cocido,Huevo cocido,huevos,ciqual,22010,,eggs,200,huevos,huevo duro,
 clara_huevo,Clara de huevo,huevos,ciqual,22001,,eggs,300,huevos,claras,

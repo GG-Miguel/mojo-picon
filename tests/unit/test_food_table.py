@@ -36,6 +36,12 @@ def test_demo_foods_are_present(food_id):
     assert food_id in load_foods()
 
 
+@pytest.mark.parametrize("food_id", ["bebida_soja", "bebida_avena", "bebida_almendra"])
+def test_plant_drinks_are_not_dairy(food_id):
+    # A vegan plan excludes the lacteos category; plant drinks must stay out of it.
+    assert load_foods()[food_id].category == "bebidas"
+
+
 def test_every_row_has_a_traceable_source():
     for row in _rows():
         if row["source"] == "CIQUAL 2020":
