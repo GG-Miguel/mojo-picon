@@ -56,7 +56,9 @@ CONTROL = " Además, la OMS recomienda tomar 4 g de proteína por kg de peso al 
 
 async def score(judge, question: str, answer: str, context: list[str]) -> dict:
     for attempt in range(3):  # the judge's JSON breaks now and then; DeepEval does not retry
-        metric = FaithfulnessMetric(model=judge, include_reason=True, async_mode=True)
+        # A claim the sources do not mention is "idk" for DeepEval and, by default, does not lower the
+        # score: an invented guideline would pass (22 Oct, control with a false claim: still 1.00).
+        metric = FaithfulnessMetric(model=judge, include_reason=True, async_mode=True, penalize_ambiguous_claims=True)
         try:
             await metric.a_measure(LLMTestCase(input=question, actual_output=answer, retrieval_context=context))
         except Exception as e:
