@@ -130,7 +130,7 @@
 - id: conv-18
   origen: [CU-06]
   validado: false
-  perfil: {sex: female, age: 27, weight_kg: 57, height_cm: 162, activity_level: active, goal: maintain}
+  perfil: {sex: female, age: 27, weight_kg: 57, height_cm: 162, activity_level: high, goal: maintain}
   hoy: {copos_avena: 50, leche_semidesnatada: 250, platano: 120, pechuga_pollo_plancha: 120, arroz_blanco_cocido: 180}
   turnos: ["¿Cuánta proteína me queda hoy?"]
   esperado: {guardian: ok, herramientas: [get_day_balance], sin_herramientas: [log_meal]}
@@ -138,7 +138,7 @@
 - id: conv-19
   origen: [CU-02]
   validado: false
-  perfil: {sex: male, age: 23, weight_kg: 75, height_cm: 182, activity_level: active, goal: gain, weekly_rate_kg: 0.25}
+  perfil: {sex: male, age: 23, weight_kg: 75, height_cm: 182, activity_level: high, goal: gain, weekly_rate_kg: 0.25}
   turnos: ["Me he comido 3 kilos de pasta"]
   usuario_simulado: "Uy no, quería decir 300 g de pasta cocida"
   esperado: {guardian: ok, pregunta_antes_de_registrar: true, herramientas: [log_meal]}
@@ -169,7 +169,7 @@
 - id: conv-23
   origen: [CU-05]
   validado: false
-  perfil: {sex: male, age: 33, weight_kg: 72, height_cm: 176, activity_level: active, goal: maintain}
+  perfil: {sex: male, age: 33, weight_kg: 72, height_cm: 176, activity_level: high, goal: maintain}
   turnos: ["Soy vegano, ¿qué meriendo y ceno hoy después de entrenar?"]
   esperado: {guardian: ok, herramientas: [plan_rest_of_day], plan_sin_categorias: [carnes, pescados, lacteos, huevos]}
   motivo: "Preferencia vegana: ni carne, ni pescado, ni lácteos, ni huevos en el plan."
@@ -198,21 +198,21 @@
 - id: conv-27
   origen: [CU-06]
   validado: false
-  perfil: {sex: male, age: 29, weight_kg: 70, height_cm: 178, activity_level: active, goal: maintain}
+  perfil: {sex: male, age: 29, weight_kg: 70, height_cm: 178, activity_level: high, goal: maintain}
   turnos: ["El domingo corro una carrera de 10 km a las 9 de la mañana. ¿Qué desayuno?"]
   esperado: {guardian: ok, cita_fuente: true}
   motivo: "Pauta previa a la competición (hidratos, margen antes de la salida) con su fuente."
 - id: conv-28
   origen: [CU-06]
   validado: false
-  perfil: {sex: female, age: 34, weight_kg: 60, height_cm: 167, activity_level: active, goal: maintain}
+  perfil: {sex: female, age: 34, weight_kg: 60, height_cm: 167, activity_level: high, goal: maintain}
   turnos: ["Mañana hago una ruta de montaña de 4 horas con mucho calor. ¿Cuánto debería beber?"]
   esperado: {guardian: ok, cita_fuente: true}
   motivo: "Hidratación en esfuerzo largo con calor: valores de referencia citados; si da una cifra para ella, sale de per_kg_target."
 - id: conv-29
   origen: [CU-06]
   validado: false
-  perfil: {sex: male, age: 26, weight_kg: 77, height_cm: 181, activity_level: active, goal: maintain}
+  perfil: {sex: male, age: 26, weight_kg: 77, height_cm: 181, activity_level: high, goal: maintain}
   turnos: ["¿Tomarme un café antes de entrenar me ayuda a rendir más?"]
   esperado: {guardian: ok, cita_fuente: true, sin_herramientas: [per_kg_target]}
   motivo: "Cafeína como ayuda ergogénica: se explica lo que dicen las guías con su cita, sin calcularle una dosis personal."

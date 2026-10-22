@@ -37,3 +37,13 @@ def test_tokens_are_kept_model_by_model_to_price_a_run():
         "gemini-3.8-flash": {"input": 900, "output": 120},
         "gemini-3.5-flash-lite": {"input": 300, "output": 10},
     }
+
+
+def test_every_conversation_profile_is_a_valid_profile():
+    """A typo in a case (activity_level: active) fails here, not in the middle of an evaluation run."""
+    from evals.cases import load
+
+    from mojo_picon.domain import Profile
+
+    for case in load("conversations"):
+        Profile(**{"weight_kg": 70, "height_cm": 175, "age": 34, "sex": "male", **case.get("perfil", {})})
