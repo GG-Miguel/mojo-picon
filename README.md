@@ -50,10 +50,16 @@ uv run --group data python data/build_foods.py   # rebuild the food table (see d
 
 Configuration is read from environment variables; see [`.env.example`](.env.example). Never commit a `.env` file.
 
-## Data attribution
+## Data and licences
 
-Food composition data: *Anses. 2020. Ciqual French food composition table* (Etalab Open Licence 2.0). Six Spanish and Canary products: *AESAN/BEDCA Base de Datos Española de Composición de Alimentos v1.0 (2010)*, used for educational purposes while AESAN's authorisation is pending (the repository stays private meanwhile). See [`data/DATASHEET.md`](data/DATASHEET.md).
+The code is under the [MIT licence](LICENSE). The data and texts below are not the author's and keep their own terms; the MIT licence does not cover them.
+
+- **Food composition:** *Anses. 2020. Ciqual French food composition table*, [Etalab Open Licence 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) (reuse, including commercial, with attribution).
+- **Six Spanish and Canary products** (gofio, mojo picón, queso majorero, vieja, chorizo, paella): *AESAN/BEDCA Base de Datos Española de Composición de Alimentos v1.0 (2010)*. AESAN replied by email (October 2026) that their use in this educational, non-commercial project is fine. Values are kept unmodified; any commercial use needs AESAN's authorisation. A table without them: `uv run --group data python data/build_foods.py --no-bedca`. See [`data/DATASHEET.md`](data/DATASHEET.md).
+- **Guidelines of the RAG:** the repository keeps only their references and licences ([`data/guides.json`](data/guides.json)); the texts are downloaded from the official sites by `scripts/fetch_guides.py` and are not redistributed.
+- **Package photos** for the evaluation: Open Food Facts contributors, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); each file and its source in [`evals/fixtures/packages/SOURCES.md`](evals/fixtures/packages/SOURCES.md).
+- **Activity METs:** *Compendium of Physical Activities* (Ainsworth et al., 2011), cited by activity code in `data/met_table.csv`.
 
 ## License
 
-No license yet: all rights reserved while the repository is private.
+[MIT](LICENSE) for the code; the data keep their own terms (see above).

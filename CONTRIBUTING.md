@@ -40,8 +40,8 @@ Rules for working in this repository, for people and for the AI coding assistant
 ## Before making the repository public
 
 - [ ] AESAN has authorised the use of BEDCA data, **or** `data/foods.csv` has been rebuilt with `uv run --group data python data/build_foods.py --no-bedca` (no row with source BEDCA). Check the whole history too: earlier commits of `foods.csv` with BEDCA rows are also published.
-- [ ] A licence has been chosen and added.
-- [ ] Secret scan of the whole history.
+- [x] A licence has been chosen and added (MIT for the code; data terms in the README).
+- [x] Secret scan of the whole history (22 Oct 2026: no keys, tokens or credential files in any commit).
 
 ## Local checks
 
