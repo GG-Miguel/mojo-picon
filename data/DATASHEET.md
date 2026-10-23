@@ -17,7 +17,7 @@ Curated table of about 200 foods commonly eaten in Spain (including Canary Islan
 | Source | Use | Licence and attribution |
 |---|---|---|
 | **CIQUAL 2020** (ANSES), English Excel table, 7 July 2020 | Main source | [Etalab Open Licence 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/): reuse, including commercial, with attribution. *«Anses. 2020. Ciqual French food composition table.»* |
-| **BEDCA** (AESAN), official XML query interface of bedca.net, downloaded 2026-10-12 | 6 Spanish and Canary products missing in CIQUAL (gofio, mojo picón, queso majorero, vieja, chorizo, paella) | Personal, educational or non-commercial use with attribution; values may not be modified; reproduction in electronic format requires AESAN's express authorisation. **Authorisation requested on 2026-10-12; used meanwhile as educational use while the repository is private.** Attribution: *«AESAN/BEDCA Base de Datos Española de Composición de Alimentos v1.0 (2010)»* |
+| **BEDCA** (AESAN), official XML query interface of bedca.net, downloaded 2026-10-12 | 6 Spanish and Canary products missing in CIQUAL (gofio, mojo picón, queso majorero, vieja, chorizo, paella) | Personal, educational or non-commercial use with attribution; values may not be modified; reproduction in electronic format requires AESAN's express authorisation. Authorisation requested on 2026-10-12; **AESAN replied by email (October 2026) that the use in this educational, non-commercial project is fine.** Attribution: *«AESAN/BEDCA Base de Datos Española de Composición de Alimentos v1.0 (2010)»* |
 | Recipes and approximations | Foods that are a combination of rows, or close equivalents | Computed from other rows of this table |
 
 To rebuild, download the CIQUAL table to `data/raw/ciqual_2020_en.xls`:
@@ -29,7 +29,7 @@ uv run --group data python data/build_foods.py
 ```
 
 > [!WARNING]
-> **Publishing:** until AESAN authorises it, any public release (public repository, published dataset) must be built with `--no-bedca`, which replaces the BEDCA rows with their recipe or approximation.
+> **Publishing:** the six BEDCA rows are published under AESAN's reply for educational, non-commercial use. Any other use (commercial, or a dataset released on its own) must be built with `--no-bedca`, which replaces them with their recipe or approximation.
 
 File used for the current build: 3,632,640 bytes, SHA-256 `5551841f12f40fb6c869f80aa14e9db33bcfb7dcc135f000cb994a2cca4dc2f5`.
 
@@ -57,7 +57,7 @@ File used for the current build: 3,632,640 bytes, SHA-256 `5551841f12f40fb6c869f
 
 ## Limitations
 - CIQUAL describes foods as sold in France; some Spanish products are approximated (noted in `review_note`), e.g. queso fresco, queso curado, morcilla, salsa de tomate.
-- Six Spanish and Canary products come from BEDCA pending AESAN's authorisation; without it, they fall back to recipes or approximations, which differ from BEDCA by −23 % to +66 % in kcal (see the build report). Queso palmero and cherne are approximations in any case.
+- Six Spanish and Canary products come from BEDCA (educational, non-commercial use with AESAN's conformity); built with `--no-bedca`, they fall back to recipes or approximations, which differ from BEDCA by −23 % to +66 % in kcal (see the build report). Queso palmero and cherne are approximations in any case.
 - BEDCA's «Vieja, cruda» gives 4.9 g of carbohydrate, unusual for a raw fish; kept verbatim (values may not be modified). The downloaded BEDCA values were checked by the author against bedca.net on 2026-10-12 and match.
 - Recipes stand for a typical home-made version; real dishes vary (a seafood paella and a Valencian paella differ).
 - About 200 foods do not cover everything: what is missing is asked about or looked up by barcode.

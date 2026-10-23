@@ -5,7 +5,7 @@ Curated table of about **200 foods** used by `search_food`, `get_nutrients`, `ch
 **Principle:** nutrient values are **never typed by hand** and **never invented by an LLM**. They come from official databases through a reproducible script (`data/build_foods.py`).
 
 ## Sources (in order of priority)
-Revised on 2026-10-12 (ADR-25): **CIQUAL is the main source**; BEDCA is only used for six Spanish and Canary products that CIQUAL lacks. AESAN's authorisation was requested on 2026-10-12; meanwhile BEDCA is used as **educational use while the repository is private**, and any public release is built with `--no-bedca`.
+Revised on 2026-10-12 (ADR-25): **CIQUAL is the main source**; BEDCA is only used for six Spanish and Canary products that CIQUAL lacks. AESAN's authorisation was requested on 2026-10-12, and AESAN replied (October 2026) that this educational, non-commercial use is fine; `--no-bedca` remains for any other use.
 
 | # | Source | Coverage | Access | Licence |
 |---|---|---|---|---|

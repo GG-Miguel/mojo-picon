@@ -7,10 +7,12 @@ search_food and get_nutrients failed there while every test and evaluation (outs
 import re
 from pathlib import Path
 
-from mojo_picon.tools import energy, foods, measures
+from mojo_picon.tools import energy, foods, measures, recipes
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME_DATA = [foods.DEFAULT_FOODS, energy.DEFAULT_MET_TABLE, measures.DEFAULT_MEASURES, measures.DEFAULT_DEFINITIONS]
+# 22 Oct: the recipe library was missing too; log_meal, get_nutrients and check_allergens load it
+RUNTIME_DATA = [foods.DEFAULT_FOODS, energy.DEFAULT_MET_TABLE, measures.DEFAULT_MEASURES, measures.DEFAULT_DEFINITIONS,
+                recipes.DEFAULT_RECIPES]  # fmt: skip
 
 
 def test_every_runtime_data_file_is_copied_into_the_image():
