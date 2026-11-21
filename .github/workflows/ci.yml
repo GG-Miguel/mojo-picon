@@ -1,0 +1,277 @@
+# GitHub Actions port of .gitlab-ci.yml (lint and tests on every push and pull request; the
+# evaluation gate on develop and main; build and deploy to Cloud Run from main only, after the gate).
+#
+# GitLab CI/CD -> GitHub Actions mapping:
+#   stages [lint, test, secret-detection, eval, deploy, release] -> jobs chained with `needs`
+#   image ghcr.io/astral-sh/uv:python3.12-bookworm-slim           -> ubuntu-latest + setup-python 3.12 + setup-uv
+#   image node:22-slim                                            -> ubuntu-latest + actions/setup-node 22
+#   image gcr.io/.../google-cloud-cli:slim                        -> ubuntu-latest (gcloud is preinstalled)
+#   GitLab Secret Detection template                              -> gitleaks/gitleaks-action (matches the repo's pre-commit gitleaks)
+#   id_tokens GITLAB_OIDC_TOKEN (aud gitlab)                      -> GitHub OIDC id_token via core.getIDToken(audience)
+#   protected branches + masked vars                              -> GitHub environments (production) + repo vars/secrets
+#   artifacts/expire_in                                           -> actions/upload-artifact with retention-days
+#
+# GCP prerequisite (this CANNOT live in the YAML): GitLab's pipeline authenticates to GCP through a
+# Workload Identity Federation provider whose issuer is https://gitlab.com. That provider will not
+# accept a GitHub token. Before eval-gate / deploy / release can pass, create a GitHub-issuer WIF
+# provider and let the service accounts trust it:
+#   issuer  https://token.actions.githubusercontent.com
+#   subject e.g. repo:GG-Miguel/mojo-picon:environment:production  (deploy)
+#             repo:GG-Miguel/mojo-picon:ref:refs/heads/develop     (eval, develop)
+#   allowed audience  //iam.googleapis.com/<projects/.../providers/<name>>
+# then grant roles: gitlab-eval SA (Vertex AI + secretmanager on qdrant-api-key) and the deploy SA
+# (roles/cloudbuild.builds.builder, roles/run.admin, Artifact Registry tagger) to the new principal
+# set. Finally export the provider path and SA emails as the repo variables below.
+#
+# Required repository VARIABLES (Settings -> Secrets and variables -> Actions -> Variables):
+#   GCP_PROJECT_ID, GCP_REGION, GCP_BUILD_BUCKET, GCP_WIF_PROVIDER, GCP_DEPLOY_SA, GCP_EVAL_SA
+# Required repository/environment SECRETS:
+#   VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_APP_ID  (the AIza... key stays out of git)
+#
+# Validate with: actionlint .github/workflows/ci.yml  (the CONTRIBUTING rule for GitLab CI editor applies here too).
+
+name: CI
+
+on:
+  push:
+    branches: ['**']   # every branch, like the GitLab default rules
+    tags: ['v*']       # release tags feed the release-image job
+  pull_request:
+
+# Least privilege by default; jobs that mint an OIDC token opt into id-token: write.
+permissions:
+  contents: read
+
+env:
+  UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
+  UV_LINK_MODE: copy
+
+jobs:
+  lint: # stage: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  frontend: # stage: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx oxlint src
+      - run: npx prettier --check "src/**/*.{ts,tsx,css}"
+      - run: npm run build
+
+  test: # stage: test
+    needs: [lint, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+      - run: uv sync --frozen
+      - run: uv run pytest -m "not integration" --junitxml=report.xml
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report
+          path: report.xml
+
+  secret-detection: # stage: secret-detection
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks needs history to scan the push range
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  eval-gate: # stage: eval
+    # Runs only on develop/main once GCP WIF is configured (mirrors the GitLab rules); an empty
+    # gate here does not block deploy, exactly like GitLab ignoring an empty stage.
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+      vars.GCP_WIF_PROVIDER != '' && vars.GCP_EVAL_SA != ''
+    needs: [secret-detection]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # mint the OIDC token that is exchanged for GCP credentials
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+      GCP_EVAL_SA: ${{ vars.GCP_EVAL_SA }}
+      QDRANT_URL: https://84d5ceea-c6e9-48b7-a73c-c5a8e9379ac8.europe-west3-0.gcp.cloud.qdrant.io
+      DEEPEVAL_TELEMETRY_OPT_OUT: 'YES'
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci_gcp_creds.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+      - name: Mint GitHub OIDC token for GCP Workload Identity
+        uses: actions/github-script@v7
+        env:
+          WIF_AUD: //iam.googleapis.com/${{ vars.GCP_WIF_PROVIDER }}
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync('.ci_oidc_token', await core.getIDToken(process.env.WIF_AUD));
+      - run: uv sync --frozen --group eval
+      - run: uv run python -m evals.ci_credentials adc
+      - run: echo "QDRANT_API_KEY=$(uv run python -m evals.ci_credentials qdrant)" >> "$GITHUB_ENV"
+      - run: uv run python -m evals.run --sets numbers,rag,safety,attacks --partition desarrollo --no-judge --gate
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results/
+          retention-days: 30
+
+  deploy: # stage: deploy
+    # Cloud Run deploy from main only, after the gate. It proceeds when the eval gate either passed
+    # or was skipped (no gate configured) but never when an earlier stage failed.
+    if: >
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.GCP_WIF_PROVIDER != '' &&
+      needs.secret-detection.result == 'success' &&
+      (needs.eval-gate.result == 'success' || needs.eval-gate.result == 'skipped')
+    needs: [secret-detection, eval-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: production
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_BUILD_BUCKET: ${{ vars.GCP_BUILD_BUCKET }}
+      GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+      GCP_DEPLOY_SA: ${{ vars.GCP_DEPLOY_SA }}
+      FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+      FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require the Firebase web config before touching GCP
+        if: env.FIREBASE_API_KEY == ''
+        run: |
+          echo "::error::VITE_FIREBASE_API_KEY secret is not set; refusing to deploy without the Firebase web config."
+          exit 1
+      - name: Compute image tag
+        run: echo "IMAGE=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/mojo-picon/app:${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+      - name: Mint GitHub OIDC token for GCP Workload Identity
+        uses: actions/github-script@v7
+        env:
+          WIF_AUD: //iam.googleapis.com/${{ vars.GCP_WIF_PROVIDER }}
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync('.ci_oidc_token', await core.getIDToken(process.env.WIF_AUD));
+      - name: Authenticate via Workload Identity Federation (no keys)
+        run: |
+          gcloud iam workload-identity-pools create-cred-config "$GCP_WIF_PROVIDER" \
+            --service-account "$GCP_DEPLOY_SA" \
+            --credential-source-file .ci_oidc_token --output-file .ci_gcp_creds.json
+          gcloud auth login --cred-file .ci_gcp_creds.json --quiet
+          gcloud config set project "$GCP_PROJECT_ID"
+      - name: Build image with Cloud Build
+        run: |
+          gcloud builds submit --config deploy/cloudbuild.yaml \
+            --substitutions "_IMAGE=$IMAGE,_FIREBASE_API_KEY=$FIREBASE_API_KEY,_FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN,_FIREBASE_APP_ID=$FIREBASE_APP_ID" \
+            --region "$GCP_REGION" \
+            --service-account "projects/$GCP_PROJECT_ID/serviceAccounts/$GCP_DEPLOY_SA" \
+            --gcs-source-staging-dir "gs://$GCP_BUILD_BUCKET/source"
+      - name: Deploy to Cloud Run
+        run: |
+          sed "s|\${IMAGE}|$IMAGE|" deploy/service.yaml > .ci_service.yaml
+          # Public access was granted once by scripts/bootstrap_gcp.sh; replace keeps it
+          gcloud run services replace .ci_service.yaml --region "$GCP_REGION"
+          gcloud run services describe mojo-picon --region "$GCP_REGION" --format 'value(status.url)'
+
+  release-image: # stage: release
+    # A release tag also tags its image, so the registry cleanup policy keeps it and any delivered
+    # version can be deployed again exactly.
+    if: >
+      github.event_name == 'push' &&
+      github.ref_type == 'tag' && startsWith(github.ref_name, 'v') &&
+      vars.GCP_WIF_PROVIDER != '' && needs.secret-detection.result == 'success'
+    needs: [secret-detection]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+      GCP_DEPLOY_SA: ${{ vars.GCP_DEPLOY_SA }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mint GitHub OIDC token for GCP Workload Identity
+        uses: actions/github-script@v7
+        env:
+          WIF_AUD: //iam.googleapis.com/${{ vars.GCP_WIF_PROVIDER }}
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync('.ci_oidc_token', await core.getIDToken(process.env.WIF_AUD));
+      - name: Authenticate via Workload Identity Federation (no keys)
+        run: |
+          gcloud iam workload-identity-pools create-cred-config "$GCP_WIF_PROVIDER" \
+            --service-account "$GCP_DEPLOY_SA" \
+            --credential-source-file .ci_oidc_token --output-file .ci_gcp_creds.json
+          gcloud auth login --cred-file .ci_gcp_creds.json --quiet
+      - name: Tag the deployed image with the release version
+        run: |
+          IMAGE_REPO="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/mojo-picon/app"
+          gcloud artifacts docker tags add "${IMAGE_REPO}:${GITHUB_SHA::7}" "${IMAGE_REPO}:${GITHUB_REF_NAME}"
